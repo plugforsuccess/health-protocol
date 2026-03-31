@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -36,842 +37,883 @@
     --check-gut: #4ade80;
   }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 300;
-    min-height: 100vh;
-    padding-bottom: 80px;
-    overflow-x: hidden;
-  }
-
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(139,92,246,0.025) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(139,92,246,0.025) 1px, transparent 1px);
-    background-size: 36px 36px;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  /* ── STICKY HEADER ── */
-  .sticky-header {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: rgba(9,9,14,0.94);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .header-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 18px 10px;
-  }
-
-  .logo {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 19px;
-    letter-spacing: 0.12em;
-    color: #fff;
-  }
-
-  .logo .mode-nt { color: var(--d); transition: color 0.3s; }
-  .logo .mode-gut { color: var(--gut1); display: none; }
-
-  .streak-badge {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    background: var(--surface2);
-    border: 1px solid var(--border2);
-    border-radius: 20px;
-    padding: 4px 11px;
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: var(--label);
-    transition: all 0.2s;
-  }
-  .streak-badge.active-nt { border-color: var(--g); color: var(--g); }
-  .streak-badge.active-gut { border-color: var(--check-gut); color: var(--check-gut); }
-
-  /* TAB SWITCHER */
-  .tab-switcher {
-    display: flex;
-    margin: 0 18px 10px;
-    background: var(--surface2);
-    border: 1px solid var(--border2);
-    border-radius: 8px;
-    padding: 3px;
-    gap: 3px;
-  }
-
-  .tab-btn {
-    flex: 1;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    letter-spacing: 0.08em;
-    text-align: center;
-    cursor: pointer;
-    border: none;
-    background: transparent;
-    color: var(--muted);
-    transition: all 0.25s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-  }
-
-  .tab-btn.active-nt {
-    background: var(--d-dim);
-    color: var(--d);
-    border: 1px solid rgba(139,92,246,0.25);
-  }
-
-  .tab-btn.active-gut {
-    background: var(--gut1-dim);
-    color: var(--gut1);
-    border: 1px solid rgba(34,197,94,0.25);
-  }
-
-  /* PROGRESS */
-  .progress-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 0 18px 12px;
-  }
-
-  .progress-bar-bg {
-    flex: 1;
-    height: 3px;
-    background: var(--border2);
-    border-radius: 2px;
-    overflow: hidden;
-  }
-
-  .progress-bar-fill {
-    height: 100%;
-    border-radius: 2px;
-    transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
-    width: 0%;
-  }
-
-  .fill-nt { background: linear-gradient(90deg, var(--d), var(--s)); }
-  .fill-gut { background: linear-gradient(90deg, var(--gut1), var(--gut3)); }
-
-  .progress-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    color: var(--label);
-    min-width: 40px;
-    text-align: right;
-  }
-
-  /* PHASE PILLS */
-  .phase-pills {
-    display: flex;
-    gap: 6px;
-    padding: 0 18px;
-    margin-bottom: 10px;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .phase-pills::-webkit-scrollbar { display: none; }
-
-  .phase-pill {
-    flex-shrink: 0;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.08em;
-    border: 1px solid var(--border2);
-    color: var(--muted);
-    cursor: pointer;
-    transition: all 0.2s;
-    background: transparent;
-  }
-
-  .phase-pill.done-nt { border-color: var(--check); color: var(--check); background: rgba(34,197,94,0.08); }
-  .phase-pill.done-gut { border-color: var(--check-gut); color: var(--check-gut); background: rgba(74,222,128,0.08); }
-  .phase-pill.nt-active { border-color: var(--d); color: var(--d); background: var(--d-dim); }
-  .phase-pill.gut-active { border-color: var(--gut1); color: var(--gut1); background: var(--gut1-dim); }
-
-  /* PANELS */
-  .panel { display: none; position: relative; z-index: 1; }
-  .panel.active { display: block; }
-
-  .wrap {
-    max-width: 700px;
-    margin: 0 auto;
-    padding: 20px 16px;
-  }
-
-  /* DATE BAR */
-  .date-bar {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-    margin-bottom: 24px;
-    animation: fadeUp 0.4s ease both;
-  }
-
-  .date-day {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 38px;
-    line-height: 1;
-    color: #fff;
-  }
-
-  .date-info {
-    font-size: 11px;
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-  }
-
-  .reset-note {
-    margin-left: auto;
-    font-size: 10px;
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-  }
-
-  /* COMPLETE BANNER */
-  .complete-banner {
-    display: none;
-    border-radius: 10px;
-    padding: 16px 20px;
-    text-align: center;
-    margin-bottom: 20px;
-    animation: fadeUp 0.4s ease both;
-  }
-
-  .complete-banner.nt-banner {
-    background: linear-gradient(135deg, rgba(139,92,246,0.1), rgba(6,182,212,0.08));
-    border: 1px solid rgba(139,92,246,0.3);
-  }
-
-  .complete-banner.gut-banner {
-    background: linear-gradient(135deg, rgba(34,197,94,0.1), rgba(20,184,166,0.08));
-    border: 1px solid rgba(34,197,94,0.3);
-  }
-
-  .complete-banner.show { display: block; }
-
-  .complete-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 20px;
-    letter-spacing: 0.1em;
-    margin-bottom: 3px;
-  }
-
-  .nt-banner .complete-title { color: var(--d); }
-  .gut-banner .complete-title { color: var(--check-gut); }
-
-  .complete-sub { font-size: 11px; color: var(--label); }
-
-  /* SECTION */
-  .section {
-    margin-bottom: 28px;
-    animation: fadeUp 0.45s ease both;
-  }
-
-  .section:nth-child(3) { animation-delay: 0.07s; }
-  .section:nth-child(4) { animation-delay: 0.12s; }
-  .section:nth-child(5) { animation-delay: 0.17s; }
-  .section:nth-child(6) { animation-delay: 0.22s; }
-
-  .section-head {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 9px;
-    padding: 0 2px;
-  }
-
-  .section-time {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 17px;
-    letter-spacing: 0.05em;
-    color: #fff;
-  }
-
-  .section-tag {
-    font-family: 'DM Mono', monospace;
-    font-size: 9px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--muted);
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    padding: 3px 7px;
-    border-radius: 3px;
-  }
-
-  .section-count {
-    margin-left: auto;
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    color: var(--muted);
-    transition: color 0.2s;
-  }
-
-  .section-count.all-done { color: var(--check); }
-
-  /* SUPPLEMENT ITEM */
-  .supp-item {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    margin-bottom: 6px;
-    overflow: hidden;
-    transition: border-color 0.2s, background 0.2s;
-  }
-
-  .supp-item.checked-nt {
-    border-color: rgba(139,92,246,0.2);
-    background: rgba(139,92,246,0.03);
-  }
-
-  .supp-item.checked-gut {
-    border-color: rgba(34,197,94,0.22);
-    background: rgba(34,197,94,0.03);
-  }
-
-  .supp-item.checked-nt .supp-name,
-  .supp-item.checked-gut .supp-name {
-    text-decoration: line-through;
-    color: var(--muted);
-  }
-
-  .supp-row {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    padding: 12px 13px;
-    cursor: pointer;
-    user-select: none;
-  }
-
-  .check-circle {
-    width: 21px;
-    height: 21px;
-    border-radius: 50%;
-    border: 1.5px solid var(--border2);
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-  }
-
-  .checked-nt .check-circle { background: var(--d); border-color: var(--d); }
-  .checked-gut .check-circle { background: var(--check-gut); border-color: var(--check-gut); }
-
-  .check-circle svg { opacity: 0; transform: scale(0.5); transition: all 0.2s; }
-  .checked-nt .check-circle svg,
-  .checked-gut .check-circle svg { opacity: 1; transform: scale(1); }
-
-  .supp-main { flex: 1; min-width: 0; }
-
-  .supp-name {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text);
-    transition: color 0.2s;
-  }
-
-  .supp-meta {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 2px;
-  }
-
-  .supp-dose {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    color: var(--label);
-  }
-
-  .nt-dots { display: flex; gap: 3px; }
-  .nt-dot { width: 6px; height: 6px; border-radius: 50%; }
-  .nt-dot.d { background: var(--d); }
-  .nt-dot.s { background: var(--s); }
-  .nt-dot.a { background: var(--a); }
-  .nt-dot.g { background: var(--g); }
-  .nt-dot.g1 { background: var(--gut1); }
-  .nt-dot.g2 { background: var(--gut2); }
-  .nt-dot.g3 { background: var(--gut3); }
-  .nt-dot.g4 { background: var(--gut4); }
-
-  .expand-btn {
-    width: 26px;
-    height: 26px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 5px;
-    color: var(--muted);
-    transition: all 0.2s;
-    flex-shrink: 0;
-  }
-  .expand-btn:hover { background: var(--border); }
-  .expand-btn svg { transition: transform 0.25s; }
-  .supp-item.open .expand-btn svg { transform: rotate(180deg); }
-
-  /* DRAWER */
-  .drawer { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1); }
-  .supp-item.open .drawer { max-height: 320px; }
-
-  .drawer-inner {
-    padding: 12px 14px 14px 44px;
-    border-top: 1px solid var(--border);
-  }
-
-  .drawer-why {
-    font-size: 12px;
-    color: var(--label);
-    line-height: 1.75;
-    margin-bottom: 10px;
-  }
-
-  .drawer-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 9px; }
-
-  .drawer-tag {
-    font-size: 10px;
-    font-family: 'DM Mono', monospace;
-    padding: 2px 8px;
-    border-radius: 3px;
-    letter-spacing: 0.04em;
-  }
-
-  .drawer-tag.d { background: var(--d-dim); color: var(--d); }
-  .drawer-tag.s { background: var(--s-dim); color: var(--s); }
-  .drawer-tag.a { background: var(--a-dim); color: var(--a); }
-  .drawer-tag.g { background: var(--g-dim); color: var(--g); }
-  .drawer-tag.g1 { background: var(--gut1-dim); color: var(--gut1); }
-  .drawer-tag.g2 { background: var(--gut2-dim); color: var(--gut2); }
-  .drawer-tag.g3 { background: var(--gut3-dim); color: var(--gut3); }
-  .drawer-tag.g4 { background: var(--gut4-dim); color: var(--gut4); }
-
-  .drawer-brand { font-size: 10px; color: var(--muted); font-family: 'DM Mono', monospace; }
-  .drawer-brand span { color: var(--s); }
-
-  .warn-item { border-color: rgba(239,68,68,0.15) !important; }
-
-  /* LIFESTYLE GRID */
-  .lifestyle-list {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 7px;
-  }
-
-  .life-item {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 11px 12px;
-    display: flex;
-    align-items: flex-start;
-    gap: 9px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .life-item.checked-nt { border-color: rgba(139,92,246,0.2); background: rgba(139,92,246,0.03); }
-  .life-item.checked-gut { border-color: rgba(34,197,94,0.22); background: rgba(34,197,94,0.03); }
-  .life-item.checked-nt .life-title,
-  .life-item.checked-gut .life-title { text-decoration: line-through; color: var(--muted); }
-
-  .life-check {
-    width: 16px;
-    height: 16px;
-    border-radius: 4px;
-    border: 1.5px solid var(--border2);
-    flex-shrink: 0;
-    margin-top: 1px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-  }
-
-  .life-item.checked-nt .life-check { background: var(--d); border-color: var(--d); }
-  .life-item.checked-gut .life-check { background: var(--check-gut); border-color: var(--check-gut); }
-  .life-check svg { opacity: 0; transform: scale(0.5); transition: all 0.2s; }
-  .life-item.checked-nt .life-check svg,
-  .life-item.checked-gut .life-check svg { opacity: 1; transform: scale(1); }
-
-  .life-content { flex: 1; }
-  .life-title { font-size: 12px; font-weight: 500; color: var(--text); transition: color 0.2s; margin-bottom: 2px; }
-  .life-desc { font-size: 10px; color: var(--muted); line-height: 1.5; }
-
-  /* GUT ACCENT CARD */
-  .gut-intro {
-    background: linear-gradient(135deg, rgba(34,197,94,0.07), rgba(20,184,166,0.05));
-    border: 1px solid rgba(34,197,94,0.15);
-    border-radius: 8px;
-    padding: 14px 16px;
-    margin-bottom: 24px;
-    animation: fadeUp 0.4s ease both;
-  }
-
-  .gut-intro-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 13px;
-    letter-spacing: 0.15em;
-    color: var(--gut1);
-    margin-bottom: 5px;
-  }
-
-  .gut-intro-text {
-    font-size: 12px;
-    color: var(--label);
-    line-height: 1.7;
-  }
-
-  /* RESET */
-  .reset-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    width: 100%;
-    padding: 13px;
-    background: transparent;
-    border: 1px solid var(--border2);
-    border-radius: 8px;
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    cursor: pointer;
-    margin-top: 28px;
-    transition: all 0.2s;
-  }
-  .reset-btn:hover { border-color: var(--warn); color: var(--warn); }
-
-  .export-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    width: 100%;
-    padding: 13px;
-    background: transparent;
-    border: 1px solid var(--border2);
-    border-radius: 8px;
-    color: var(--label);
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    cursor: pointer;
-    margin-top: 8px;
-    transition: all 0.2s;
-  }
-  .export-btn:hover { border-color: var(--s); color: var(--s); }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  @media (max-width: 480px) {
-    .lifestyle-list { grid-template-columns: 1fr; }
-    .drawer-inner { padding-left: 14px; }
-  }
-
-  /* ── DIET TAB ── */
-  .mode-diet { color: var(--diet); display: none; }
-  :root { --diet: #f97316; --diet-dim: rgba(249,115,22,0.12); }
-
-  .tab-btn.active-diet { background: var(--diet-dim); color: var(--diet); border: 1px solid rgba(249,115,22,0.25); }
-
-  /* AVOID BANNER */
-  .avoid-banner {
-    background: rgba(239,68,68,0.06);
-    border: 1px solid rgba(239,68,68,0.18);
-    border-radius: 8px;
-    padding: 14px 16px;
-    margin-bottom: 20px;
-    animation: fadeUp 0.4s ease both;
-  }
-  .avoid-title {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.15em;
-    color: var(--warn);
-    margin-bottom: 10px;
-  }
-  .avoid-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-  .avoid-pill {
-    font-size: 11px;
-    padding: 4px 10px;
-    border-radius: 4px;
-    background: rgba(239,68,68,0.08);
-    border: 1px solid rgba(239,68,68,0.2);
-    color: #f87171;
-    font-family: 'DM Mono', monospace;
-  }
-
-  /* WEEK NAV */
-  .week-nav {
-    margin-bottom: 16px;
-    animation: fadeUp 0.4s ease both;
-    animation-delay: 0.05s;
-  }
-  .week-nav-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-  }
-  .week-label {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 17px;
-    letter-spacing: 0.05em;
-    color: #fff;
-  }
-  .prep-btn {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.08em;
-    padding: 5px 12px;
-    border-radius: 6px;
-    border: 1px solid var(--border2);
-    background: transparent;
-    color: var(--label);
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .prep-btn.active { border-color: var(--diet); color: var(--diet); background: var(--diet-dim); }
-  .day-tabs {
-    display: flex;
-    gap: 5px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    padding-bottom: 2px;
-  }
-  .day-tabs::-webkit-scrollbar { display: none; }
-  .day-tab {
-    flex-shrink: 0;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.08em;
-    border: 1px solid var(--border2);
-    color: var(--muted);
-    cursor: pointer;
-    transition: all 0.2s;
-    background: transparent;
-  }
-  .day-tab.active { border-color: var(--diet); color: var(--diet); background: var(--diet-dim); }
-
-  /* MEAL CARDS */
-  .meal-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    margin-bottom: 8px;
-    overflow: hidden;
-    transition: border-color 0.2s;
-    animation: fadeUp 0.35s ease both;
-  }
-  .meal-card:nth-child(2) { animation-delay: 0.05s; }
-  .meal-card:nth-child(3) { animation-delay: 0.1s; }
-  .meal-card:nth-child(4) { animation-delay: 0.15s; }
-
-  .meal-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 13px 14px;
-    cursor: pointer;
-    user-select: none;
-  }
-
-  .meal-time-badge {
-    font-family: 'DM Mono', monospace;
-    font-size: 9px;
-    letter-spacing: 0.1em;
-    padding: 3px 8px;
-    border-radius: 3px;
-    text-transform: uppercase;
-    flex-shrink: 0;
-  }
-  .meal-time-badge.breakfast { background: rgba(245,158,11,0.12); color: var(--g); }
-  .meal-time-badge.lunch { background: rgba(6,182,212,0.12); color: var(--s); }
-  .meal-time-badge.dinner { background: rgba(139,92,246,0.12); color: var(--d); }
-  .meal-time-badge.snack { background: rgba(16,185,129,0.12); color: var(--a); }
-
-  .meal-name {
-    flex: 1;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text);
-  }
-
-  .benefit-dots {
-    display: flex;
-    gap: 4px;
-    align-items: center;
-  }
-
-  .benefit-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-  }
-  .benefit-dot.anti { background: #22c55e; }
-  .benefit-dot.fiber { background: #06b6d4; }
-  .benefit-dot.cancer { background: #a855f7; }
-
-  .meal-drawer { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1); }
-  .meal-card.open .meal-drawer { max-height: 400px; }
-  .meal-card.open .expand-btn svg { transform: rotate(180deg); }
-
-  .meal-drawer-inner {
-    border-top: 1px solid var(--border);
-    padding: 12px 14px 14px;
-  }
-
-  .ingredient-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    margin-bottom: 10px;
-  }
-
-  .ingredient-tag {
-    font-size: 11px;
-    padding: 3px 9px;
-    border-radius: 4px;
-    background: var(--surface2);
-    border: 1px solid var(--border2);
-    color: var(--label);
-    font-family: 'DM Mono', monospace;
-  }
-
-  .meal-prep-note {
-    font-size: 11px;
-    color: var(--muted);
-    line-height: 1.7;
-    margin-bottom: 8px;
-  }
-
-  .benefit-legend {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-
-  .benefit-item {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 10px;
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-  }
-
-  /* PREP MODE */
-  .prep-intro {
-    background: linear-gradient(135deg, rgba(249,115,22,0.08), rgba(245,158,11,0.05));
-    border: 1px solid rgba(249,115,22,0.2);
-    border-radius: 8px;
-    padding: 14px 16px;
-    margin-bottom: 20px;
-  }
-  .prep-intro-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 14px;
-    letter-spacing: 0.12em;
-    color: var(--diet);
-    margin-bottom: 4px;
-  }
-  .prep-intro-text { font-size: 12px; color: var(--label); line-height: 1.7; }
-
-  .grocery-category { margin-bottom: 14px; }
-  .grocery-cat-title {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--diet);
-    margin-bottom: 7px;
-  }
-  .grocery-items {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-  }
-  .grocery-item {
-    font-size: 11px;
-    padding: 3px 10px;
-    border-radius: 4px;
-    background: var(--surface2);
-    border: 1px solid var(--border2);
-    color: var(--label);
-    font-family: 'DM Mono', monospace;
-  }
-
-  .prep-step {
-    display: flex;
-    gap: 12px;
-    padding: 11px 14px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    margin-bottom: 6px;
-  }
-  .prep-step-num {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 20px;
-    color: var(--diet);
-    line-height: 1;
-    flex-shrink: 0;
-    width: 24px;
-  }
-  .prep-step-content { flex: 1; }
-  .prep-step-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
-  .prep-step-desc { font-size: 11px; color: var(--muted); line-height: 1.6; }
-
-  .benefit-legend-bar {
-    display: flex;
-    gap: 14px;
-    flex-wrap: wrap;
-    padding: 10px 14px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    margin-bottom: 16px;
-  }
+- { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+body {
+background: var(–bg);
+color: var(–text);
+font-family: ‘DM Sans’, sans-serif;
+font-weight: 300;
+min-height: 100vh;
+padding-bottom: 80px;
+overflow-x: hidden;
+}
+
+body::before {
+content: ‘’;
+position: fixed;
+inset: 0;
+background-image:
+linear-gradient(rgba(139,92,246,0.025) 1px, transparent 1px),
+linear-gradient(90deg, rgba(139,92,246,0.025) 1px, transparent 1px);
+background-size: 36px 36px;
+pointer-events: none;
+z-index: 0;
+}
+
+/* ── STICKY HEADER ── */
+.sticky-header {
+position: sticky;
+top: 0;
+z-index: 100;
+background: rgba(9,9,14,0.94);
+backdrop-filter: blur(18px);
+-webkit-backdrop-filter: blur(18px);
+border-bottom: 1px solid var(–border);
+}
+
+.header-top {
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 12px 18px 10px;
+}
+
+.logo {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 19px;
+letter-spacing: 0.12em;
+color: #fff;
+}
+
+.logo .mode-nt { color: var(–d); transition: color 0.3s; }
+.logo .mode-gut { color: var(–gut1); display: none; }
+
+.streak-badge {
+display: flex;
+align-items: center;
+gap: 5px;
+background: var(–surface2);
+border: 1px solid var(–border2);
+border-radius: 20px;
+padding: 4px 11px;
+font-family: ‘DM Mono’, monospace;
+font-size: 11px;
+color: var(–label);
+transition: all 0.2s;
+}
+.streak-badge.active-nt { border-color: var(–g); color: var(–g); }
+.streak-badge.active-gut { border-color: var(–check-gut); color: var(–check-gut); }
+
+/* TAB SWITCHER */
+.tab-switcher {
+display: flex;
+margin: 0 18px 10px;
+background: var(–surface2);
+border: 1px solid var(–border2);
+border-radius: 8px;
+padding: 3px;
+gap: 3px;
+}
+
+.tab-btn {
+flex: 1;
+padding: 8px 12px;
+border-radius: 6px;
+font-family: ‘DM Mono’, monospace;
+font-size: 12px;
+letter-spacing: 0.08em;
+text-align: center;
+cursor: pointer;
+border: none;
+background: transparent;
+color: var(–muted);
+transition: all 0.25s;
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 7px;
+}
+
+.tab-btn.active-nt {
+background: var(–d-dim);
+color: var(–d);
+border: 1px solid rgba(139,92,246,0.25);
+}
+
+.tab-btn.active-gut {
+background: var(–gut1-dim);
+color: var(–gut1);
+border: 1px solid rgba(34,197,94,0.25);
+}
+
+/* PROGRESS */
+.progress-row {
+display: flex;
+align-items: center;
+gap: 10px;
+padding: 0 18px 12px;
+}
+
+.progress-bar-bg {
+flex: 1;
+height: 3px;
+background: var(–border2);
+border-radius: 2px;
+overflow: hidden;
+}
+
+.progress-bar-fill {
+height: 100%;
+border-radius: 2px;
+transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+width: 0%;
+}
+
+.fill-nt { background: linear-gradient(90deg, var(–d), var(–s)); }
+.fill-gut { background: linear-gradient(90deg, var(–gut1), var(–gut3)); }
+
+.progress-label {
+font-family: ‘DM Mono’, monospace;
+font-size: 10px;
+color: var(–label);
+min-width: 40px;
+text-align: right;
+}
+
+/* PHASE PILLS */
+.phase-pills {
+display: flex;
+gap: 6px;
+padding: 0 18px;
+margin-bottom: 10px;
+overflow-x: auto;
+scrollbar-width: none;
+}
+.phase-pills::-webkit-scrollbar { display: none; }
+
+.phase-pill {
+flex-shrink: 0;
+padding: 4px 12px;
+border-radius: 20px;
+font-family: ‘DM Mono’, monospace;
+font-size: 10px;
+letter-spacing: 0.08em;
+border: 1px solid var(–border2);
+color: var(–muted);
+cursor: pointer;
+transition: all 0.2s;
+background: transparent;
+}
+
+.phase-pill.done-nt { border-color: var(–check); color: var(–check); background: rgba(34,197,94,0.08); }
+.phase-pill.done-gut { border-color: var(–check-gut); color: var(–check-gut); background: rgba(74,222,128,0.08); }
+.phase-pill.nt-active { border-color: var(–d); color: var(–d); background: var(–d-dim); }
+.phase-pill.gut-active { border-color: var(–gut1); color: var(–gut1); background: var(–gut1-dim); }
+
+/* PANELS */
+.panel { display: none; position: relative; z-index: 1; }
+.panel.active { display: block; }
+
+.wrap {
+max-width: 700px;
+margin: 0 auto;
+padding: 20px 16px;
+}
+
+/* DATE BAR */
+.date-bar {
+display: flex;
+align-items: baseline;
+gap: 10px;
+margin-bottom: 24px;
+animation: fadeUp 0.4s ease both;
+}
+
+.date-day {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 38px;
+line-height: 1;
+color: #fff;
+}
+
+.date-info {
+font-size: 11px;
+color: var(–muted);
+font-family: ‘DM Mono’, monospace;
+}
+
+.reset-note {
+margin-left: auto;
+font-size: 10px;
+color: var(–muted);
+font-family: ‘DM Mono’, monospace;
+}
+
+/* COMPLETE BANNER */
+.complete-banner {
+display: none;
+border-radius: 10px;
+padding: 16px 20px;
+text-align: center;
+margin-bottom: 20px;
+animation: fadeUp 0.4s ease both;
+}
+
+.complete-banner.nt-banner {
+background: linear-gradient(135deg, rgba(139,92,246,0.1), rgba(6,182,212,0.08));
+border: 1px solid rgba(139,92,246,0.3);
+}
+
+.complete-banner.gut-banner {
+background: linear-gradient(135deg, rgba(34,197,94,0.1), rgba(20,184,166,0.08));
+border: 1px solid rgba(34,197,94,0.3);
+}
+
+.complete-banner.show { display: block; }
+
+.complete-title {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 20px;
+letter-spacing: 0.1em;
+margin-bottom: 3px;
+}
+
+.nt-banner .complete-title { color: var(–d); }
+.gut-banner .complete-title { color: var(–check-gut); }
+
+.complete-sub { font-size: 11px; color: var(–label); }
+
+/* SECTION */
+.section {
+margin-bottom: 28px;
+animation: fadeUp 0.45s ease both;
+}
+
+.section:nth-child(3) { animation-delay: 0.07s; }
+.section:nth-child(4) { animation-delay: 0.12s; }
+.section:nth-child(5) { animation-delay: 0.17s; }
+.section:nth-child(6) { animation-delay: 0.22s; }
+
+.section-head {
+display: flex;
+align-items: center;
+gap: 8px;
+margin-bottom: 9px;
+padding: 0 2px;
+}
+
+.section-time {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 17px;
+letter-spacing: 0.05em;
+color: #fff;
+}
+
+.section-tag {
+font-family: ‘DM Mono’, monospace;
+font-size: 9px;
+letter-spacing: 0.12em;
+text-transform: uppercase;
+color: var(–muted);
+background: var(–surface2);
+border: 1px solid var(–border);
+padding: 3px 7px;
+border-radius: 3px;
+}
+
+.section-count {
+margin-left: auto;
+font-family: ‘DM Mono’, monospace;
+font-size: 10px;
+color: var(–muted);
+transition: color 0.2s;
+}
+
+.section-count.all-done { color: var(–check); }
+
+/* SUPPLEMENT ITEM */
+.supp-item {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 8px;
+margin-bottom: 6px;
+overflow: hidden;
+transition: border-color 0.2s, background 0.2s;
+}
+
+.supp-item.checked-nt {
+border-color: rgba(139,92,246,0.2);
+background: rgba(139,92,246,0.03);
+}
+
+.supp-item.checked-gut {
+border-color: rgba(34,197,94,0.22);
+background: rgba(34,197,94,0.03);
+}
+
+.supp-item.checked-nt .supp-name,
+.supp-item.checked-gut .supp-name {
+text-decoration: line-through;
+color: var(–muted);
+}
+
+.supp-row {
+display: flex;
+align-items: center;
+gap: 11px;
+padding: 12px 13px;
+cursor: pointer;
+user-select: none;
+}
+
+.check-circle {
+width: 21px;
+height: 21px;
+border-radius: 50%;
+border: 1.5px solid var(–border2);
+flex-shrink: 0;
+display: flex;
+align-items: center;
+justify-content: center;
+transition: all 0.2s;
+}
+
+.checked-nt .check-circle { background: var(–d); border-color: var(–d); }
+.checked-gut .check-circle { background: var(–check-gut); border-color: var(–check-gut); }
+
+.check-circle svg { opacity: 0; transform: scale(0.5); transition: all 0.2s; }
+.checked-nt .check-circle svg,
+.checked-gut .check-circle svg { opacity: 1; transform: scale(1); }
+
+.supp-main { flex: 1; min-width: 0; }
+
+.supp-name {
+font-size: 13px;
+font-weight: 500;
+color: var(–text);
+transition: color 0.2s;
+}
+
+.supp-meta {
+display: flex;
+align-items: center;
+gap: 8px;
+margin-top: 2px;
+}
+
+.supp-dose {
+font-family: ‘DM Mono’, monospace;
+font-size: 10px;
+color: var(–label);
+}
+
+.nt-dots { display: flex; gap: 3px; }
+.nt-dot { width: 6px; height: 6px; border-radius: 50%; }
+.nt-dot.d { background: var(–d); }
+.nt-dot.s { background: var(–s); }
+.nt-dot.a { background: var(–a); }
+.nt-dot.g { background: var(–g); }
+.nt-dot.g1 { background: var(–gut1); }
+.nt-dot.g2 { background: var(–gut2); }
+.nt-dot.g3 { background: var(–gut3); }
+.nt-dot.g4 { background: var(–gut4); }
+
+.expand-btn {
+width: 26px;
+height: 26px;
+display: flex;
+align-items: center;
+justify-content: center;
+border-radius: 5px;
+color: var(–muted);
+transition: all 0.2s;
+flex-shrink: 0;
+}
+.expand-btn:hover { background: var(–border); }
+.expand-btn svg { transition: transform 0.25s; }
+.supp-item.open .expand-btn svg { transform: rotate(180deg); }
+
+/* DRAWER */
+.drawer { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1); }
+.supp-item.open .drawer { max-height: 320px; }
+
+.drawer-inner {
+padding: 12px 14px 14px 44px;
+border-top: 1px solid var(–border);
+}
+
+.drawer-why {
+font-size: 12px;
+color: var(–label);
+line-height: 1.75;
+margin-bottom: 10px;
+}
+
+.drawer-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 9px; }
+
+.drawer-tag {
+font-size: 10px;
+font-family: ‘DM Mono’, monospace;
+padding: 2px 8px;
+border-radius: 3px;
+letter-spacing: 0.04em;
+}
+
+.drawer-tag.d { background: var(–d-dim); color: var(–d); }
+.drawer-tag.s { background: var(–s-dim); color: var(–s); }
+.drawer-tag.a { background: var(–a-dim); color: var(–a); }
+.drawer-tag.g { background: var(–g-dim); color: var(–g); }
+.drawer-tag.g1 { background: var(–gut1-dim); color: var(–gut1); }
+.drawer-tag.g2 { background: var(–gut2-dim); color: var(–gut2); }
+.drawer-tag.g3 { background: var(–gut3-dim); color: var(–gut3); }
+.drawer-tag.g4 { background: var(–gut4-dim); color: var(–gut4); }
+
+.drawer-brand { font-size: 10px; color: var(–muted); font-family: ‘DM Mono’, monospace; }
+.drawer-brand span { color: var(–s); }
+
+.warn-item { border-color: rgba(239,68,68,0.15) !important; }
+
+/* LIFESTYLE GRID */
+.lifestyle-list {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 7px;
+}
+
+.life-item {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 8px;
+padding: 11px 12px;
+display: flex;
+align-items: flex-start;
+gap: 9px;
+cursor: pointer;
+transition: all 0.2s;
+}
+
+.life-item.checked-nt { border-color: rgba(139,92,246,0.2); background: rgba(139,92,246,0.03); }
+.life-item.checked-gut { border-color: rgba(34,197,94,0.22); background: rgba(34,197,94,0.03); }
+.life-item.checked-nt .life-title,
+.life-item.checked-gut .life-title { text-decoration: line-through; color: var(–muted); }
+
+.life-check {
+width: 16px;
+height: 16px;
+border-radius: 4px;
+border: 1.5px solid var(–border2);
+flex-shrink: 0;
+margin-top: 1px;
+display: flex;
+align-items: center;
+justify-content: center;
+transition: all 0.2s;
+}
+
+.life-item.checked-nt .life-check { background: var(–d); border-color: var(–d); }
+.life-item.checked-gut .life-check { background: var(–check-gut); border-color: var(–check-gut); }
+.life-check svg { opacity: 0; transform: scale(0.5); transition: all 0.2s; }
+.life-item.checked-nt .life-check svg,
+.life-item.checked-gut .life-check svg { opacity: 1; transform: scale(1); }
+
+.life-content { flex: 1; }
+.life-title { font-size: 12px; font-weight: 500; color: var(–text); transition: color 0.2s; margin-bottom: 2px; }
+.life-desc { font-size: 10px; color: var(–muted); line-height: 1.5; }
+
+/* GUT ACCENT CARD */
+.gut-intro {
+background: linear-gradient(135deg, rgba(34,197,94,0.07), rgba(20,184,166,0.05));
+border: 1px solid rgba(34,197,94,0.15);
+border-radius: 8px;
+padding: 14px 16px;
+margin-bottom: 24px;
+animation: fadeUp 0.4s ease both;
+}
+
+.gut-intro-title {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 13px;
+letter-spacing: 0.15em;
+color: var(–gut1);
+margin-bottom: 5px;
+}
+
+.gut-intro-text {
+font-size: 12px;
+color: var(–label);
+line-height: 1.7;
+}
+
+/* RESET */
+.reset-btn {
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 7px;
+width: 100%;
+padding: 13px;
+background: transparent;
+border: 1px solid var(–border2);
+border-radius: 8px;
+color: var(–muted);
+font-family: ‘DM Mono’, monospace;
+font-size: 10px;
+letter-spacing: 0.1em;
+text-transform: uppercase;
+cursor: pointer;
+margin-top: 28px;
+transition: all 0.2s;
+}
+.reset-btn:hover { border-color: var(–warn); color: var(–warn); }
+
+.export-btn {
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 7px;
+width: 100%;
+padding: 13px;
+background: transparent;
+border: 1px solid var(–border2);
+border-radius: 8px;
+color: var(–label);
+font-family: ‘DM Mono’, monospace;
+font-size: 10px;
+letter-spacing: 0.1em;
+text-transform: uppercase;
+cursor: pointer;
+margin-top: 8px;
+transition: all 0.2s;
+}
+.export-btn:hover { border-color: var(–s); color: var(–s); }
+
+@keyframes fadeUp {
+from { opacity: 0; transform: translateY(12px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 480px) {
+.lifestyle-list { grid-template-columns: 1fr; }
+.drawer-inner { padding-left: 14px; }
+}
+
+/* ── DIET TAB ── */
+.mode-diet { color: var(–diet); display: none; }
+:root { –diet: #f97316; –diet-dim: rgba(249,115,22,0.12); }
+
+.tab-btn.active-diet { background: var(–diet-dim); color: var(–diet); border: 1px solid rgba(249,115,22,0.25); }
+
+/* AVOID BANNER */
+.avoid-banner {
+background: rgba(239,68,68,0.06);
+border: 1px solid rgba(239,68,68,0.18);
+border-radius: 8px;
+padding: 14px 16px;
+margin-bottom: 20px;
+animation: fadeUp 0.4s ease both;
+}
+.avoid-title {
+font-family: ‘DM Mono’, monospace;
+font-size: 10px;
+letter-spacing: 0.15em;
+color: var(–warn);
+margin-bottom: 10px;
+}
+.avoid-grid {
+display: flex;
+flex-wrap: wrap;
+gap: 6px;
+}
+.avoid-pill {
+font-size: 11px;
+padding: 4px 10px;
+border-radius: 4px;
+background: rgba(239,68,68,0.08);
+border: 1px solid rgba(239,68,68,0.2);
+color: #f87171;
+font-family: ‘DM Mono’, monospace;
+}
+
+/* WEEK NAV */
+.week-nav {
+margin-bottom: 16px;
+animation: fadeUp 0.4s ease both;
+animation-delay: 0.05s;
+}
+.week-nav-top {
+display: flex;
+align-items: center;
+justify-content: space-between;
+margin-bottom: 10px;
+}
+.week-label {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 17px;
+letter-spacing: 0.05em;
+color: #fff;
+}
+.prep-btn {
+font-family: ‘DM Mono’, monospace;
+font-size: 10px;
+letter-spacing: 0.08em;
+padding: 5px 12px;
+border-radius: 6px;
+border: 1px solid var(–border2);
+background: transparent;
+color: var(–label);
+cursor: pointer;
+transition: all 0.2s;
+}
+.prep-btn.active { border-color: var(–diet); color: var(–diet); background: var(–diet-dim); }
+.day-tabs {
+display: flex;
+gap: 5px;
+overflow-x: auto;
+scrollbar-width: none;
+padding-bottom: 2px;
+}
+.day-tabs::-webkit-scrollbar { display: none; }
+.day-tab {
+flex-shrink: 0;
+padding: 6px 12px;
+border-radius: 6px;
+font-family: ‘DM Mono’, monospace;
+font-size: 10px;
+letter-spacing: 0.08em;
+border: 1px solid var(–border2);
+color: var(–muted);
+cursor: pointer;
+transition: all 0.2s;
+background: transparent;
+}
+.day-tab.active { border-color: var(–diet); color: var(–diet); background: var(–diet-dim); }
+
+/* MEAL CARDS */
+.meal-card {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 8px;
+margin-bottom: 8px;
+overflow: hidden;
+transition: border-color 0.2s;
+animation: fadeUp 0.35s ease both;
+}
+.meal-card:nth-child(2) { animation-delay: 0.05s; }
+.meal-card:nth-child(3) { animation-delay: 0.1s; }
+.meal-card:nth-child(4) { animation-delay: 0.15s; }
+
+.meal-header {
+display: flex;
+align-items: center;
+gap: 10px;
+padding: 13px 14px;
+cursor: pointer;
+user-select: none;
+}
+
+.meal-time-badge {
+font-family: ‘DM Mono’, monospace;
+font-size: 9px;
+letter-spacing: 0.1em;
+padding: 3px 8px;
+border-radius: 3px;
+text-transform: uppercase;
+flex-shrink: 0;
+}
+.meal-time-badge.breakfast { background: rgba(245,158,11,0.12); color: var(–g); }
+.meal-time-badge.lunch { background: rgba(6,182,212,0.12); color: var(–s); }
+.meal-time-badge.dinner { background: rgba(139,92,246,0.12); color: var(–d); }
+.meal-time-badge.snack { background: rgba(16,185,129,0.12); color: var(–a); }
+
+.meal-name {
+flex: 1;
+font-size: 13px;
+font-weight: 500;
+color: var(–text);
+}
+
+.benefit-dots {
+display: flex;
+gap: 4px;
+align-items: center;
+}
+
+.benefit-dot {
+width: 7px;
+height: 7px;
+border-radius: 50%;
+}
+.benefit-dot.anti { background: #22c55e; }
+.benefit-dot.fiber { background: #06b6d4; }
+.benefit-dot.cancer { background: #a855f7; }
+
+.meal-drawer { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1); }
+.meal-card.open .meal-drawer { max-height: 400px; }
+.meal-card.open .expand-btn svg { transform: rotate(180deg); }
+
+.meal-drawer-inner {
+border-top: 1px solid var(–border);
+padding: 12px 14px 14px;
+}
+
+.ingredient-list {
+display: flex;
+flex-wrap: wrap;
+gap: 5px;
+margin-bottom: 10px;
+}
+
+.ingredient-tag {
+font-size: 11px;
+padding: 3px 9px;
+border-radius: 4px;
+background: var(–surface2);
+border: 1px solid var(–border2);
+color: var(–label);
+font-family: ‘DM Mono’, monospace;
+}
+
+.meal-prep-note {
+font-size: 11px;
+color: var(–muted);
+line-height: 1.7;
+margin-bottom: 8px;
+}
+
+.benefit-legend {
+display: flex;
+gap: 12px;
+flex-wrap: wrap;
+}
+
+.benefit-item {
+display: flex;
+align-items: center;
+gap: 5px;
+font-size: 10px;
+color: var(–muted);
+font-family: ‘DM Mono’, monospace;
+}
+
+/* PREP MODE */
+.prep-intro {
+background: linear-gradient(135deg, rgba(249,115,22,0.08), rgba(245,158,11,0.05));
+border: 1px solid rgba(249,115,22,0.2);
+border-radius: 8px;
+padding: 14px 16px;
+margin-bottom: 20px;
+}
+.prep-intro-title {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 14px;
+letter-spacing: 0.12em;
+color: var(–diet);
+margin-bottom: 4px;
+}
+.prep-intro-text { font-size: 12px; color: var(–label); line-height: 1.7; }
+
+.grocery-category { margin-bottom: 14px; }
+.grocery-cat-title {
+font-family: ‘DM Mono’, monospace;
+font-size: 10px;
+letter-spacing: 0.15em;
+text-transform: uppercase;
+color: var(–diet);
+margin-bottom: 7px;
+}
+.grocery-items {
+display: flex;
+flex-wrap: wrap;
+gap: 5px;
+}
+.grocery-item {
+font-size: 11px;
+padding: 3px 10px;
+border-radius: 4px;
+background: var(–surface2);
+border: 1px solid var(–border2);
+color: var(–label);
+font-family: ‘DM Mono’, monospace;
+}
+
+.prep-step {
+display: flex;
+gap: 12px;
+padding: 11px 14px;
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 7px;
+margin-bottom: 6px;
+}
+.prep-step-num {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 20px;
+color: var(–diet);
+line-height: 1;
+flex-shrink: 0;
+width: 24px;
+}
+.prep-step-content { flex: 1; }
+.prep-step-title { font-size: 13px; font-weight: 500; color: var(–text); margin-bottom: 2px; }
+.prep-step-desc { font-size: 11px; color: var(–muted); line-height: 1.6; }
+
+.benefit-legend-bar {
+display: flex;
+gap: 14px;
+flex-wrap: wrap;
+padding: 10px 14px;
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 7px;
+margin-bottom: 16px;
+}
+
+/* EQUIPMENT */
+.equip-sub {
+font-family: ‘DM Mono’, monospace;
+font-size: 10px;
+letter-spacing: 0.15em;
+text-transform: uppercase;
+margin: 14px 0 8px;
+}
+.equip-sub.have { color: var(–check); }
+.equip-sub.need { color: var(–diet); }
+
+.equip-row {
+display: flex;
+align-items: flex-start;
+gap: 10px;
+padding: 10px 13px;
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 7px;
+margin-bottom: 5px;
+}
+.equip-row.need-item { border-color: rgba(249,115,22,0.2); }
+
+.equip-check {
+font-size: 14px;
+flex-shrink: 0;
+margin-top: 1px;
+}
+.equip-main { flex: 1; }
+.equip-name { font-size: 13px; font-weight: 500; color: var(–text); margin-bottom: 2px; }
+.equip-use { font-size: 11px; color: var(–muted); line-height: 1.5; }
+.equip-buy { font-size: 10px; color: var(–s); font-family: ‘DM Mono’, monospace; margin-top: 3px; }
+.urgency-badge {
+font-size: 10px;
+font-family: ‘DM Mono’, monospace;
+white-space: nowrap;
+flex-shrink: 0;
+}
 </style>
+
 </head>
 <body>
 
 <!-- STICKY HEADER -->
+
 <div class="sticky-header">
   <div class="header-top">
     <div class="logo">
@@ -889,6 +931,7 @@
   </div>
 
   <!-- TAB SWITCHER -->
+
   <div class="tab-switcher">
     <button class="tab-btn active-nt" id="tabNT" onclick="switchTab('nt')">
       🧠 &nbsp;Neuro
@@ -902,6 +945,7 @@
   </div>
 
   <!-- PROGRESS -->
+
   <div class="progress-row">
     <div class="progress-bar-bg">
       <div class="progress-bar-fill fill-nt" id="progressFill"></div>
@@ -910,12 +954,14 @@
   </div>
 
   <!-- PHASE PILLS -->
+
   <div class="phase-pills" id="phasePills"></div>
 </div>
 
 <!-- ══════════════════════════════════════
      NEURO PANEL
 ══════════════════════════════════════ -->
+
 <div class="panel active" id="panel-nt">
   <div class="wrap">
     <div class="date-bar">
@@ -924,73 +970,77 @@
       <div class="reset-note">resets midnight</div>
     </div>
 
-    <div class="complete-banner nt-banner" id="completeBannerNT">
-      <div class="complete-title">Neuro Protocol Complete 🧠</div>
-      <div class="complete-sub">All neurotransmitter supplements taken. Well done.</div>
-    </div>
+```
+<div class="complete-banner nt-banner" id="completeBannerNT">
+  <div class="complete-title">Neuro Protocol Complete 🧠</div>
+  <div class="complete-sub">All neurotransmitter supplements taken. Well done.</div>
+</div>
 
-    <div class="section" id="nt-section-morning">
-      <div class="section-head">
-        <div class="section-time">Morning</div>
-        <div class="section-tag">7–9 AM · With Breakfast</div>
-        <div class="section-count" id="nt-count-morning">0/6</div>
-      </div>
-      <div id="nt-list-morning"></div>
-    </div>
+<div class="section" id="nt-section-morning">
+  <div class="section-head">
+    <div class="section-time">Morning</div>
+    <div class="section-tag">7–9 AM · With Breakfast</div>
+    <div class="section-count" id="nt-count-morning">0/6</div>
+  </div>
+  <div id="nt-list-morning"></div>
+</div>
 
-    <div class="section" id="nt-section-midday">
-      <div class="section-head">
-        <div class="section-time">Midday</div>
-        <div class="section-tag">12–2 PM · With Lunch</div>
-        <div class="section-count" id="nt-count-midday">0/3</div>
-      </div>
-      <div id="nt-list-midday"></div>
-    </div>
+<div class="section" id="nt-section-midday">
+  <div class="section-head">
+    <div class="section-time">Midday</div>
+    <div class="section-tag">12–2 PM · With Lunch</div>
+    <div class="section-count" id="nt-count-midday">0/3</div>
+  </div>
+  <div id="nt-list-midday"></div>
+</div>
 
-    <div class="section" id="nt-section-evening">
-      <div class="section-head">
-        <div class="section-time">Evening</div>
-        <div class="section-tag">6–8 PM · With Dinner</div>
-        <div class="section-count" id="nt-count-evening">0/3</div>
-      </div>
-      <div id="nt-list-evening"></div>
-    </div>
+<div class="section" id="nt-section-evening">
+  <div class="section-head">
+    <div class="section-time">Evening</div>
+    <div class="section-tag">6–8 PM · With Dinner</div>
+    <div class="section-count" id="nt-count-evening">0/3</div>
+  </div>
+  <div id="nt-list-evening"></div>
+</div>
 
-    <div class="section" id="nt-section-bedtime">
-      <div class="section-head">
-        <div class="section-time">Bedtime</div>
-        <div class="section-tag">9–11 PM · Before Sleep</div>
-        <div class="section-count" id="nt-count-bedtime">0/3</div>
-      </div>
-      <div id="nt-list-bedtime"></div>
-    </div>
+<div class="section" id="nt-section-bedtime">
+  <div class="section-head">
+    <div class="section-time">Bedtime</div>
+    <div class="section-tag">9–11 PM · Before Sleep</div>
+    <div class="section-count" id="nt-count-bedtime">0/3</div>
+  </div>
+  <div id="nt-list-bedtime"></div>
+</div>
 
-    <div class="section" id="nt-section-weekly">
-      <div class="section-head">
-        <div class="section-time">Weekly</div>
-        <div class="section-tag">3–4× Per Week Only</div>
-        <div class="section-count" id="nt-count-weekly">0/2</div>
-      </div>
-      <div id="nt-list-weekly"></div>
-    </div>
+<div class="section" id="nt-section-weekly">
+  <div class="section-head">
+    <div class="section-time">Weekly</div>
+    <div class="section-tag">3–4× Per Week Only</div>
+    <div class="section-count" id="nt-count-weekly">0/2</div>
+  </div>
+  <div id="nt-list-weekly"></div>
+</div>
 
-    <div class="section" id="nt-section-lifestyle">
-      <div class="section-head">
-        <div class="section-time">Lifestyle</div>
-        <div class="section-tag">Daily Non-Negotiables</div>
-        <div class="section-count" id="nt-count-lifestyle">0/6</div>
-      </div>
-      <div class="lifestyle-list" id="nt-list-lifestyle"></div>
-    </div>
+<div class="section" id="nt-section-lifestyle">
+  <div class="section-head">
+    <div class="section-time">Lifestyle</div>
+    <div class="section-tag">Daily Non-Negotiables</div>
+    <div class="section-count" id="nt-count-lifestyle">0/6</div>
+  </div>
+  <div class="lifestyle-list" id="nt-list-lifestyle"></div>
+</div>
 
-    <button class="reset-btn" onclick="resetPanel('nt')">↺ &nbsp;Reset Neuro Protocol</button>
-    <button class="export-btn" onclick="exportData('nt')">↓ &nbsp;Export Neuro Data Backup</button>
+<button class="reset-btn" onclick="resetPanel('nt')">↺ &nbsp;Reset Neuro Protocol</button>
+<button class="export-btn" onclick="exportData('nt')">↓ &nbsp;Export Neuro Data Backup</button>
+```
+
   </div>
 </div>
 
 <!-- ══════════════════════════════════════
      GUT PANEL
 ══════════════════════════════════════ -->
+
 <div class="panel" id="panel-gut">
   <div class="wrap">
     <div class="date-bar">
@@ -999,103 +1049,125 @@
       <div class="reset-note">resets midnight</div>
     </div>
 
-    <div class="gut-intro">
-      <div class="gut-intro-title">🏥 Pre-Colonoscopy Gut Lining Repair Protocol</div>
-      <div class="gut-intro-text">Targeting intestinal permeability repair, microbiome diversity, and mucosal lining regeneration. Consistent daily adherence compounds significantly over weeks — start at least 6–12 months before procedure for best results.</div>
-    </div>
+```
+<div class="gut-intro">
+  <div class="gut-intro-title">🏥 Pre-Colonoscopy Gut Lining Repair Protocol</div>
+  <div class="gut-intro-text">Targeting intestinal permeability repair, microbiome diversity, and mucosal lining regeneration. Consistent daily adherence compounds significantly over weeks — start at least 6–12 months before procedure for best results.</div>
+</div>
 
-    <div class="complete-banner gut-banner" id="completeBannerGut">
-      <div class="complete-title">Gut Protocol Complete 🌿</div>
-      <div class="complete-sub">Your gut lining is getting the support it needs. Keep stacking days.</div>
-    </div>
+<div class="complete-banner gut-banner" id="completeBannerGut">
+  <div class="complete-title">Gut Protocol Complete 🌿</div>
+  <div class="complete-sub">Your gut lining is getting the support it needs. Keep stacking days.</div>
+</div>
 
-    <div class="section" id="gut-section-morning">
-      <div class="section-head">
-        <div class="section-time">Morning</div>
-        <div class="section-tag">On Empty Stomach · Before Coffee</div>
-        <div class="section-count" id="gut-count-morning">0/3</div>
-      </div>
-      <div id="gut-list-morning"></div>
-    </div>
+<div class="section" id="gut-section-morning">
+  <div class="section-head">
+    <div class="section-time">Morning</div>
+    <div class="section-tag">On Empty Stomach · Before Coffee</div>
+    <div class="section-count" id="gut-count-morning">0/3</div>
+  </div>
+  <div id="gut-list-morning"></div>
+</div>
 
-    <div class="section" id="gut-section-withfood">
-      <div class="section-head">
-        <div class="section-time">With Breakfast</div>
-        <div class="section-tag">30 Min After Morning Supps</div>
-        <div class="section-count" id="gut-count-withfood">0/2</div>
-      </div>
-      <div id="gut-list-withfood"></div>
-    </div>
+<div class="section" id="gut-section-withfood">
+  <div class="section-head">
+    <div class="section-time">With Breakfast</div>
+    <div class="section-tag">30 Min After Morning Supps</div>
+    <div class="section-count" id="gut-count-withfood">0/2</div>
+  </div>
+  <div id="gut-list-withfood"></div>
+</div>
 
-    <div class="section" id="gut-section-evening">
-      <div class="section-head">
-        <div class="section-time">Evening</div>
-        <div class="section-tag">Wind-Down Ritual · 7–9 PM</div>
-        <div class="section-count" id="gut-count-evening">0/2</div>
-      </div>
-      <div id="gut-list-evening"></div>
-    </div>
+<div class="section" id="gut-section-evening">
+  <div class="section-head">
+    <div class="section-time">Evening</div>
+    <div class="section-tag">Wind-Down Ritual · 7–9 PM</div>
+    <div class="section-count" id="gut-count-evening">0/2</div>
+  </div>
+  <div id="gut-list-evening"></div>
+</div>
 
-    <div class="section" id="gut-section-lifestyle">
-      <div class="section-head">
-        <div class="section-time">Daily Habits</div>
-        <div class="section-tag">Gut Healing Non-Negotiables</div>
-        <div class="section-count" id="gut-count-lifestyle">0/6</div>
-      </div>
-      <div class="lifestyle-list" id="gut-list-lifestyle"></div>
-    </div>
+<div class="section" id="gut-section-lifestyle">
+  <div class="section-head">
+    <div class="section-time">Daily Habits</div>
+    <div class="section-tag">Gut Healing Non-Negotiables</div>
+    <div class="section-count" id="gut-count-lifestyle">0/6</div>
+  </div>
+  <div class="lifestyle-list" id="gut-list-lifestyle"></div>
+</div>
 
-    <button class="reset-btn" onclick="resetPanel('gut')">↺ &nbsp;Reset Gut Protocol</button>
-    <button class="export-btn" onclick="exportData('gut')">↓ &nbsp;Export Gut Data Backup</button>
+<button class="reset-btn" onclick="resetPanel('gut')">↺ &nbsp;Reset Gut Protocol</button>
+<button class="export-btn" onclick="exportData('gut')">↓ &nbsp;Export Gut Data Backup</button>
+```
+
   </div>
 </div>
 
 <!-- ══════════════════════════════════════
      DIET PANEL
 ══════════════════════════════════════ -->
+
 <div class="panel" id="panel-diet">
   <div class="wrap">
 
-    <div class="date-bar" style="margin-bottom:16px;">
-      <div class="date-day" id="dateDayDiet">Wednesday</div>
-      <div class="date-info" id="dateInfoDiet">MAR 18, 2026</div>
-    </div>
+```
+<div class="date-bar" style="margin-bottom:16px;">
+  <div class="date-day" id="dateDayDiet">Wednesday</div>
+  <div class="date-info" id="dateInfoDiet">MAR 18, 2026</div>
+</div>
 
-    <!-- AVOID BANNER -->
-    <div class="avoid-banner">
-      <div class="avoid-title">⚠ High-Risk Foods — Minimize or Eliminate</div>
-      <div class="avoid-grid" id="avoidGrid"></div>
-    </div>
+<!-- AVOID BANNER -->
+<div class="avoid-banner">
+  <div class="avoid-title">⚠ High-Risk Foods — Minimize or Eliminate</div>
+  <div class="avoid-grid" id="avoidGrid"></div>
+</div>
 
-    <!-- WEEK NAV -->
-    <div class="week-nav">
-      <div class="week-nav-top">
-        <div class="week-label">Weekly Meal Plan</div>
-        <button class="prep-btn" id="prepBtn" onclick="togglePrepMode()">📦 Meal Prep Mode</button>
-      </div>
-      <div class="day-tabs" id="dayTabs"></div>
-    </div>
+<!-- WEEK NAV -->
+<div class="week-nav">
+  <div class="week-nav-top">
+    <div class="week-label">Weekly Meal Plan</div>
+    <button class="prep-btn" id="prepBtn" onclick="togglePrepMode()">📦 Meal Prep Mode</button>
+  </div>
+  <div class="day-tabs" id="dayTabs"></div>
+</div>
 
-    <!-- MEAL PREP MODE -->
-    <div id="prepPanel" style="display:none;">
-      <div class="prep-intro">
-        <div class="prep-intro-title">📦 Sunday Meal Prep Guide</div>
-        <div class="prep-intro-text">Everything below is what you batch-cook on Sunday to set your entire week. Estimated total prep time: 2–2.5 hours.</div>
-      </div>
-      <div class="section">
-        <div class="section-head"><div class="section-time">Master Grocery List</div></div>
-        <div id="groceryList"></div>
-      </div>
-      <div class="section">
-        <div class="section-head"><div class="section-time">Prep Steps</div></div>
-        <div id="prepSteps"></div>
-      </div>
-    </div>
+<!-- MEAL PREP MODE -->
+<div id="prepPanel" style="display:none;">
+  <div class="prep-intro">
+    <div class="prep-intro-title" id="prepIntroTitle">📦 Meal Prep Guide</div>
+    <div class="prep-intro-text" id="prepIntroText">Pick your prep start day below — the grocery list and steps will update to cover from that day forward through the week.</div>
+  </div>
 
-    <!-- DAILY MEALS -->
-    <div id="dailyPanel">
-      <div id="mealsContainer"></div>
-    </div>
+  <!-- PREP DAY PICKER -->
+  <div style="margin-bottom:18px;">
+    <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--diet);margin-bottom:8px;">Prepping from which day?</div>
+    <div class="day-tabs" id="prepDayPicker"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-head"><div class="section-time">Grocery List</div><div class="section-count" id="prepDayRange" style="margin-left:auto;color:var(--diet);font-family:'DM Mono',monospace;font-size:10px;"></div></div>
+    <div id="groceryList"></div>
+  </div>
+  <div class="section">
+    <div class="section-head"><div class="section-time">Prep Steps</div></div>
+    <div id="prepSteps"></div>
+  </div>
+</div>
+
+<!-- DAILY MEALS -->
+<div id="dailyPanel">
+  <div id="mealsContainer"></div>
+</div>
+
+<!-- EQUIPMENT SECTION -->
+<div class="section" style="margin-top:32px;" id="equipSection">
+  <div class="section-head">
+    <div class="section-time">Kitchen Equipment</div>
+    <div class="section-tag">Your Setup</div>
+  </div>
+  <div id="equipContent"></div>
+</div>
+```
 
   </div>
 </div>
@@ -1637,68 +1709,287 @@ const WEEK_MEALS = [
   },
 ];
 
-const GROCERY_LIST = {
-  'Proteins': ['Wild salmon (2 lbs)','Chicken thighs (1.5 lbs)','Chicken breast (1 lb)','Grass-fed sirloin (6oz)','Grass-fed lamb chops (2)','Shrimp (6oz)','Cod fillet (6oz)','Smoked wild salmon (3oz)','Ground turkey (6oz)','Eggs (1 dozen)'],
-  'Vegetables': ['Broccoli (2 heads)','Brussels sprouts','Cauliflower (1 head)','Kale (1 bunch)','Spinach (large bag)','Asparagus','Arugula','Romaine','Zucchini (2)','Sweet potatoes (3)','Bell peppers (4)','Carrots','Celery','Beets','Parsnips','Cherry tomatoes','Cucumber','Snap peas'],
-  'Fruits & Berries': ['Blueberries (large container)','Mixed berries','Raspberries','Banana','Frozen mango','Apple','Avocados (3)','Lemon (4)'],
-  'Legumes & Grains': ['Green lentils (1 bag)','Black beans (1 can)','Chickpeas (1 can)','Brown rice','Quinoa','Wild rice','Farro','Rolled oats','Sourdough bread'],
-  'Pantry': ['Olive oil (extra virgin)','Bone broth (32oz)','Almond butter','Tahini','Hummus','Raw walnuts','Pumpkin seeds','Brazil nuts','Ground flaxseed','Chia seeds','Collagen peptides','85%+ dark chocolate','Edamame (frozen)','Crushed tomatoes','Almond flour'],
-  'Herbs & Spices': ['Turmeric','Cumin','Smoked paprika','Cinnamon','Oregano','Rosemary','Dill','Fresh parsley','Fresh cilantro','Fresh ginger','Garlic (2 heads)'],
-};
-
-const PREP_STEPS = [
-  { title: 'Cook the Grains', desc: 'Cook a large batch of quinoa in bone broth, and a batch of brown rice. Store separately in containers. These are your bases for Mon–Thu lunches and dinners.' },
-  { title: 'Make the Lentil Soup', desc: 'Full pot of lentil & kale soup. This covers your lunch Mon–Wed so you have zero midweek cooking for lunch. Let cool, portion into 3 containers.' },
-  { title: 'Roast the Vegetables', desc: 'Sheet pan 1: broccoli + Brussels sprouts. Sheet pan 2: sweet potato cubes + bell peppers + carrots. Season with olive oil, garlic, salt. Roast at 400°F 20–25 min. These become sides and bowl components all week.' },
-  { title: 'Bake the Chicken', desc: 'Season chicken thighs with paprika, garlic, herbs. Roast at 425°F 30–35 min. Slice and store. This is your protein for Tue dinner and Wed lunch.' },
-  { title: 'Make the Frittata', desc: 'Double batch frittata — covers Sunday and Monday breakfast. Slice, store in fridge. Reheats well in 90 seconds in a pan.' },
-  { title: 'Prep the Overnight Oats', desc: 'Make Tuesday overnight oats jar Sunday night — combine oats, almond milk, flaxseed, chia. Refrigerate. Ready to go with berries in the morning.' },
-  { title: 'Portion Snacks', desc: 'Bag up walnuts into 1oz portions. Wash all berries and store in containers. Prep veggie sticks (carrots, celery, cucumber) in water-filled containers to keep crisp all week.' },
-];
-
 // ─────────────────────────────────────────
 // DIET STATE
 // ─────────────────────────────────────────
 let currentDay = 0;
 let prepMode = false;
 
+// Per-day prep metadata — full batch prep sessions for every possible start day
+const DAY_PREP = [
+  { // Sunday → covers Sun–Wed (4 days)
+    duration: '2–2.5 hrs',
+    covers: 'Sun–Wed',
+    groceries: {
+      'Proteins': ['Wild salmon (1.5 lbs)','Grass-fed sirloin (6oz)','Eggs (1 dozen)','Chicken thighs (1.5 lbs)'],
+      'Vegetables': ['Broccoli (2 heads)','Brussels sprouts (1 bag)','Spinach (large bag)','Bell peppers (3)','Asparagus (1 bunch)','Sweet potatoes (3)','Carrots (bag)','Cherry tomatoes','Kale (1 bunch)'],
+      'Fruits': ['Blueberries (large container)','Mixed berries','Avocados (3)','Lemons (3)','Apple'],
+      'Grains': ['Green lentils (1 bag)','Quinoa','Brown rice','Rolled oats','Sourdough (1 loaf)'],
+      'Pantry': ['Olive oil','Bone broth (32oz)','Raw walnuts','Almond butter','Garlic (1 head)','Onion','Celery','Tahini','Turmeric','Smoked paprika','Cumin','Dill'],
+    },
+    steps: [
+      { title: 'Start Crockpot Lentil Soup', desc: 'Add lentils, diced carrots, celery, onion, garlic, turmeric, cumin, and bone broth to crockpot. Set on LOW 6–8 hrs or HIGH 3–4 hrs. Add kale in the last 30 min. Covers Mon, Tue, Wed lunches — 3 full meals, zero midweek cooking.' },
+      { title: 'Roast All Vegetables (2 sheet pans)', desc: 'Sheet pan 1: broccoli florets + Brussels sprouts. Sheet pan 2: cubed sweet potato + carrots + bell pepper. Toss with olive oil and garlic. Roast at 400°F 22–25 min. These are your sides and bowl bases Mon–Wed. Use your large skillet as a makeshift pan if needed.' },
+      { title: 'Bake the Frittata (9x13 baking dish)', desc: 'Whisk 8 eggs with turmeric, salt, pepper. Sauté garlic, spinach, bell pepper in large skillet. Add flaked salmon. Pour egg mixture over. Transfer to 9x13 baking dish, bake 375°F 15 min until set. Slice into 6 portions — covers Sun + Mon breakfast.' },
+      { title: 'Bake Chicken Thighs', desc: 'Season chicken thighs with smoked paprika, garlic, herbs, olive oil. Use your sheet pan. Roast at 425°F 30–35 min alongside whatever vegetables still need cooking. Slice and store — covers Tue dinner + Wed lunch bowl.' },
+      { title: 'Cook Quinoa + Rice', desc: 'Saucepan 1: cook quinoa in bone broth (2:1 ratio), 15 min. Saucepan 2: brown rice in water, 35–40 min. Both store 5 days. Cover grain bases all week.' },
+      { title: 'Prep Overnight Oats (for Tue)', desc: 'In a jar: 1 cup rolled oats, 1 cup almond milk, 1 tbsp ground flaxseed, 1 tbsp chia. Stir, lid on, refrigerate. Ready Tuesday morning — just add berries.' },
+      { title: 'Portion Snacks', desc: 'Bag 1oz raw walnuts into 4 small bags (Sun–Wed). Wash all berries and store in a container. Done — snacks require zero thought all week.' },
+    ]
+  },
+  { // Monday → covers Mon–Thu (4 days)
+    duration: '1.5–2 hrs',
+    covers: 'Mon–Thu',
+    groceries: {
+      'Proteins': ['Chicken thighs (1.5 lbs)','Wild salmon fillet (6oz)','Shrimp (6oz)','Eggs (6)'],
+      'Vegetables': ['Broccoli (1 head)','Asparagus','Sweet potatoes (2)','Spinach (bag)','Snap peas','Zucchini (1)','Bell peppers (2)','Carrots'],
+      'Grains': ['Quinoa','Brown rice','Rolled oats'],
+      'Pantry': ['Bone broth (32oz)','Olive oil','Lemon (2)','Garlic','Dill','Smoked paprika','Almond butter','Tahini','Soy sauce (low-sodium)','Sesame oil','Ginger'],
+      'Fruits': ['Apple','Mixed berries','Avocado'],
+      'Dairy-Free': ['Coconut yogurt (unsweetened)'],
+    },
+    steps: [
+      { title: 'Cook Quinoa + Rice', desc: 'Start both grains first — they take the longest. Quinoa in bone broth (15 min), brown rice in water (35–40 min). These are your base for Mon–Thu meals. Cook double portions.' },
+      { title: 'Bake Chicken Thighs', desc: 'Season with smoked paprika, garlic, olive oil, herbs. Sheet pan, 425°F, 30–35 min. Slice into strips and store. Covers Tue dinner + Wed lunch bowl — 2 meals without cooking.' },
+      { title: 'Roast Sweet Potatoes + Broccoli', desc: 'Cube sweet potatoes, cut broccoli into florets. Sheet pan with olive oil and garlic. 400°F, 22 min. Covers sides for Mon–Wed dinners and bowl toppings.' },
+      { title: 'Chop Stir-Fry Vegetables', desc: 'Dice broccoli, snap peas, carrots, bell pepper. Store in a container in the fridge. When you make shrimp stir-fry Wed night, this takes 8 min total instead of 25.' },
+      { title: 'Make Tahini Dressing', desc: 'Blend or whisk: 3 tbsp tahini, 2 tbsp lemon juice, 1 clove garlic, 2 tbsp olive oil, water to thin. Store in a jar. Covers bowl dressings and salads Tue–Thu.' },
+      { title: 'Prep Overnight Oats', desc: 'Tonight: combine oats, almond milk, flaxseed, chia in jar. Refrigerate. Ready tomorrow with zero morning effort.' },
+      { title: 'Portion Snacks', desc: 'Bag walnuts. Wash berries. Portion pumpkin seeds + dark chocolate squares. Covers Mon–Thu.' },
+    ]
+  },
+  { // Tuesday → covers Tue–Fri (4 days)
+    duration: '1–1.5 hrs',
+    covers: 'Tue–Fri',
+    groceries: {
+      'Proteins': ['Shrimp (6oz)','Ground turkey (6oz)','Smoked salmon (3oz)','Eggs (4)'],
+      'Vegetables': ['Zucchini (2)','Snap peas','Cauliflower (1 head)','Spinach','Arugula','Cherry tomatoes','Cucumber','Romaine'],
+      'Legumes': ['Black beans (1 can)','Chickpeas (1 can)'],
+      'Pantry': ['Crushed tomatoes','Almond flour','Kalamata olives','Olive oil','Italian herbs','Tahini','Lemon (2)','Garlic','Soy sauce','Sesame oil','Ginger','Nutritional yeast','Dijon mustard'],
+      'Fruits': ['Avocado (2)','Raspberries','Pumpkin seeds','Dark chocolate (85%+)'],
+    },
+    steps: [
+      { title: 'Make Turkey Meatballs (9x13 baking dish)', desc: 'Combine 6oz ground turkey, 1 egg, 2 tbsp almond flour, minced garlic, Italian herbs, salt. Roll into balls. Bake at 400°F 18–20 min in your 9x13 dish. Make a double batch — covers Tue dinner + Thu lunch.' },
+      { title: 'Roast Cauliflower', desc: 'Chop into florets, toss with olive oil, garlic, salt. Sheet pan, 425°F, 25 min until caramelized. Sulforaphane content peaks when roasted. Covers Wed dinner side + Thu bowl topping.' },
+      { title: 'Make Chickpea Salad Base', desc: 'Drain and rinse chickpeas. Combine with halved cherry tomatoes, sliced cucumber, kalamata olives, red onion, parsley, olive oil, lemon, oregano. Refrigerate. Ready to serve Thu lunch — no cooking required.' },
+      { title: 'Prep Zucchini', desc: 'No spiralizer? Use a vegetable peeler to make wide zucchini ribbons, or slice thin with knife. Store in paper towel-lined container. Lasts 2 days in fridge.' },
+      { title: 'Make Tahini Dressing', desc: 'Whisk tahini, lemon, garlic, olive oil, water to thin. Store in jar. Covers bowl dressings Wed–Fri.' },
+      { title: 'Make Caesar Dressing', desc: 'Blend: anchovy paste (or skip), garlic, lemon juice, Dijon, olive oil, nutritional yeast, salt. Refrigerate. Covers Fri lunch salad — takes 3 min to blend.' },
+      { title: 'Portion Snacks', desc: 'Bag pumpkin seeds + dark chocolate squares. Portion Brazil nuts (3–4 per day). Wash raspberries. Covers Tue–Fri.' },
+    ]
+  },
+  { // Wednesday → covers Wed–Sat (4 days)
+    duration: '1.5–2 hrs',
+    covers: 'Wed–Sat',
+    groceries: {
+      'Proteins': ['Cod fillet (6oz)','Ground turkey (6oz)','Grass-fed lamb chops (2)','Chicken breast (1 lb)','Eggs (6)'],
+      'Vegetables': ['Cauliflower (1 head)','Zucchini (2)','Beets (2–3)','Parsnips','Romaine','Spinach','Cherry tomatoes','Bell peppers (2)','Onion','Sweet potato'],
+      'Grains': ['Wild rice','Sourdough (1 slice)'],
+      'Pantry': ['Olive oil','Capers','Lemon (3)','Avocado','Garlic','Fresh parsley','Cilantro','Red wine vinegar','Nutritional yeast','Dijon mustard','Chili flakes','Almond flour','Italian herbs','Crushed tomatoes'],
+      'Fruits': ['Raspberries','Brazil nuts','Edamame (frozen)'],
+    },
+    steps: [
+      { title: 'Start Wild Rice', desc: 'Wild rice takes 40–45 min in saucepan. Start this first. Make extra — covers Wed + Thu dinner base. Cook in bone broth if you have it for added gut benefit.' },
+      { title: 'Roast Root Vegetables (sheet pan)', desc: 'Dice beets, parsnips, sweet potato. Toss with olive oil, salt, pepper. 425°F, 28–30 min. Covers Sat dinner sides and Thu bowl toppings. Note: beets stain — use parchment paper on your sheet pan.' },
+      { title: 'Roast Cauliflower (second sheet pan)', desc: 'Florets with olive oil and garlic. 425°F, 22–25 min. Covers Wed + Thu dinner.' },
+      { title: 'Make Turkey Meatballs (9x13 baking dish)', desc: 'Ground turkey, egg, almond flour, garlic, Italian herbs. Bake at 400°F 18 min while vegetables roast. Covers Thu dinner + Fri as backup protein.' },
+      { title: 'Make Chimichurri', desc: 'Blend or chop finely: fresh parsley, cilantro, garlic, red wine vinegar, olive oil, chili flakes, salt. Store in jar. Keeps 5 days in fridge — goes on lamb Sat, eggs any morning, fish, anything.' },
+      { title: 'Make Caesar Dressing', desc: 'Blend anchovy paste, garlic, lemon, Dijon, olive oil, nutritional yeast. Refrigerate. Covers Sat lunch salad.' },
+      { title: 'Portion Snacks', desc: 'Bag pumpkin seeds + dark chocolate. Portion 3–4 Brazil nuts per day into small bags. Wash raspberries. Covers Wed–Sat.' },
+    ]
+  },
+  { // Thursday → covers Thu–Sat (3 days)
+    duration: '1–1.5 hrs',
+    covers: 'Thu–Sat',
+    groceries: {
+      'Proteins': ['Grass-fed lamb chops (2)','Chicken breast (1 lb)','Smoked salmon (3oz)','Eggs (4)'],
+      'Vegetables': ['Beets (2)','Parsnips','Romaine (2 heads)','Spinach','Bell peppers (2)','Onion','Sweet potato','Zucchini'],
+      'Pantry': ['Fresh parsley','Cilantro','Red wine vinegar','Olive oil','Nutritional yeast','Dijon mustard','Garlic','Chili flakes','Lemon (2)','Kalamata olives','Capers'],
+      'Legumes': ['Chickpeas (1 can)'],
+      'Fruits': ['Avocado (2)','Raspberries','Brazil nuts','Edamame (frozen)'],
+      'Drinks': ['Green tea'],
+    },
+    steps: [
+      { title: 'Roast Root Vegetables (sheet pan)', desc: 'Dice beets, parsnips, sweet potato. Olive oil, salt, 425°F, 28–30 min. Line pan with parchment — beets will stain. Covers Thu + Fri + Sat dinner sides.' },
+      { title: 'Make Chimichurri', desc: 'Finely chop or blend parsley, cilantro, garlic, red wine vinegar, olive oil, chili flakes. Jar it. Covers lamb on Sat and works as a condiment on eggs and fish through the weekend.' },
+      { title: 'Make Caesar Dressing', desc: 'Blend anchovy paste, garlic, lemon, Dijon, olive oil, nutritional yeast. Covers Fri + Sat lunch salads.' },
+      { title: 'Make Chickpea Salad', desc: 'Drain chickpeas, combine with olives, cucumber, tomatoes, onion, herbs, olive oil, lemon. Done in 5 min. No cooking. Ready for Fri lunch.' },
+      { title: 'Dice Breakfast Veg (for Sat hash)', desc: 'Dice bell peppers, onion, sweet potato now. Store in container. Saturday morning breakfast hash goes from 35 min to 15 min of actual cooking.' },
+      { title: 'Portion Snacks', desc: 'Brazil nuts (3–4/day), raspberries washed, edamame portioned. Covers Thu–Sat.' },
+    ]
+  },
+  { // Friday → covers Fri–Sat (2 days, light session)
+    duration: '45–60 min',
+    covers: 'Fri–Sat',
+    groceries: {
+      'Proteins': ['Grass-fed lamb chops (2)','Chicken breast (1 lb)','Eggs (4)'],
+      'Vegetables': ['Romaine (1 head)','Bell peppers (2)','Onion','Sweet potato','Spinach','Beets (2)'],
+      'Pantry': ['Fresh parsley','Cilantro','Garlic','Red wine vinegar','Olive oil','Chili flakes','Nutritional yeast','Dijon mustard','Lemon','Smoked paprika','Cumin'],
+      'Fruits': ['Avocado','Raspberries','Brazil nuts','Edamame'],
+    },
+    steps: [
+      { title: 'Make Chimichurri', desc: 'Blend parsley, cilantro, garlic, red wine vinegar, olive oil, chili flakes. Stores 5 days. Goes on Saturday lamb chops.' },
+      { title: 'Make Caesar Dressing', desc: 'Blend anchovy paste, garlic, lemon, Dijon, olive oil, nutritional yeast. Covers Sat lunch.' },
+      { title: 'Roast Beets + Parsnips (sheet pan)', desc: 'Dice and roast at 425°F 28 min. Covers Sat dinner root veg side.' },
+      { title: 'Dice Saturday Breakfast Veg', desc: 'Dice bell peppers, onion, sweet potato. Container in fridge. Cuts Sat morning hash cook time in half.' },
+      { title: 'Portion Weekend Snacks', desc: 'Brazil nuts, raspberries, edamame. That\'s your Fri + Sat snacks handled.' },
+    ]
+  },
+  { // Saturday → end of week, minimal (just plan ahead)
+    duration: '20–30 min',
+    covers: 'Sat + Sunday shop',
+    groceries: {
+      'Proteins': ['Eggs (4)'],
+      'Vegetables': ['Bell peppers','Onion','Sweet potato','Spinach'],
+      'Pantry': ['Olive oil','Smoked paprika','Cumin','Garlic'],
+      'Fruits': ['Brazil nuts (3–4)','Raspberries'],
+    },
+    steps: [
+      { title: 'Dice Breakfast Hash Veg (if not done Fri)', desc: 'Bell peppers, onion, sweet potato diced and in a container. Saturday hash is your one weekend cooking moment worth the 10 min of prep.' },
+      { title: 'Inventory Your Fridge', desc: 'Check what carried over from the week. Note what you actually ate vs. skipped. Adjust next week\'s plan accordingly — this is how the protocol gets dialed in to your real habits.' },
+      { title: 'Build Sunday Shopping List', desc: 'Go through next week\'s meal plan. Cross off what you still have. Write the rest. Shop Sunday morning so you\'re ready to batch cook Sunday afternoon.' },
+      { title: 'Reflect on the Week', desc: 'How did your energy feel? Digestion? Sleep? These are your biomarkers. Note anything unusual — this data is more valuable than any lab test for tuning your protocol.' },
+    ]
+  },
+];
+
+const EQUIPMENT = {
+  have: [
+    { item: 'Large skillet (12")', use: 'Sautéing aromatics, searing steak + lamb, stir-fry' },
+    { item: 'Small skillet (8")', use: 'Scrambled eggs, single portions' },
+    { item: 'Large saucepan', use: 'Quinoa, rice, soups, bone broth' },
+    { item: 'Small saucepan', use: 'Wild rice, sauces, reheating' },
+    { item: 'Dutch oven / stockpot', use: 'Backup for large soups if not using crockpot' },
+    { item: 'Sheet pans / baking trays', use: 'Roasting all vegetables, baking chicken + fish' },
+    { item: 'Blender / NutriBullet', use: 'Smoothie bowls, dressings, chimichurri' },
+    { item: 'Measuring cups + spoons', use: 'Grains, dressings, supplement doses' },
+    { item: 'Cutting board + chef\'s knife', use: 'All prep work' },
+    { item: 'Crockpot', use: 'Lentil soup (set-and-forget), bone broth' },
+  ],
+  need: [
+    { item: '9x13 Baking Dish', urgency: '🔴 Required', use: 'Frittata, baked salmon, turkey meatballs, baked cod — used almost every day', buy: 'Pyrex 9x13 — ~$20 on Amazon' },
+    { item: 'Fine Mesh Strainer', urgency: '🟡 Recommended', use: 'Rinsing lentils, quinoa, rice before cooking removes starch and improves texture', buy: '~$10 on Amazon — OXO brand' },
+    { item: 'Parchment Paper', urgency: '🟡 Recommended', use: 'Lines sheet pans for roasting beets (which stain) and prevents sticking on all roasted dishes', buy: '~$8 any grocery store' },
+    { item: 'Spiralizer (optional)', urgency: '🟢 Optional', use: 'Zucchini noodles Thu dinner. Substitute: use vegetable peeler for wide ribbons, or slice thin with knife', buy: '~$15–20 or skip entirely' },
+    { item: 'Glass meal prep containers (4–6)', urgency: '🟡 Recommended', use: 'Storing batch-cooked soups, grains, roasted veg, overnight oats. Airtight glass keeps food fresh longer than plastic', buy: 'Pyrex set ~$30 Amazon' },
+  ]
+};
+
 function buildDiet() {
   // Avoid pills
   document.getElementById('avoidGrid').innerHTML =
     AVOID_FOODS.map(f => `<span class="avoid-pill">${f}</span>`).join('');
 
-  // Day tabs
+  // Day tabs (meal view)
   document.getElementById('dayTabs').innerHTML =
     WEEK_MEALS.map((d, i) =>
       `<button class="day-tab${i===0?' active':''}" onclick="selectDay(${i})">${d.day}</button>`
     ).join('');
 
-  // Grocery list
-  const groceryHTML = Object.entries(GROCERY_LIST).map(([cat, items]) => `
-    <div class="grocery-category">
-      <div class="grocery-cat-title">${cat}</div>
-      <div class="grocery-items">${items.map(i => `<span class="grocery-item">${i}</span>`).join('')}</div>
-    </div>`).join('');
-  document.getElementById('groceryList').innerHTML = groceryHTML;
+  // Prep day picker
+  document.getElementById('prepDayPicker').innerHTML =
+    WEEK_MEALS.map((d, i) =>
+      `<button class="day-tab${i===0?' active':''}" id="prepPick-${i}" onclick="selectPrepDay(${i})">${d.day}</button>`
+    ).join('');
 
-  // Prep steps
+  renderDay(0);
+  renderPrepContent(0);
+  renderEquipment();
+}
+
+function renderEquipment() {
+  const haveHTML = EQUIPMENT.have.map(e => `
+    <div class="equip-row">
+      <div class="equip-check">✅</div>
+      <div class="equip-main">
+        <div class="equip-name">${e.item}</div>
+        <div class="equip-use">${e.use}</div>
+      </div>
+    </div>`).join('');
+
+  const needHTML = EQUIPMENT.need.map(e => `
+    <div class="equip-row need-item">
+      <div class="equip-check">🛒</div>
+      <div class="equip-main">
+        <div class="equip-name">${e.item}</div>
+        <div class="equip-use">${e.use}</div>
+        <div class="equip-buy">${e.buy}</div>
+      </div>
+      <div class="urgency-badge">${e.urgency}</div>
+    </div>`).join('');
+
+  document.getElementById('equipContent').innerHTML = `
+    <div class="equip-sub have">✓ You Already Have</div>
+    ${haveHTML}
+    <div class="equip-sub need" style="margin-top:18px;">🛒 You Need to Buy</div>
+    ${needHTML}`;
+}
+
+let currentPrepDay = 0;
+
+function selectPrepDay(idx) {
+  currentPrepDay = idx;
+  document.querySelectorAll('#prepDayPicker .day-tab').forEach((t, i) =>
+    t.classList.toggle('active', i === idx));
+  renderPrepContent(idx);
+}
+
+function renderPrepContent(fromIdx) {
+  const daysRemaining = WEEK_MEALS.slice(fromIdx);
+  const fromLabel = WEEK_MEALS[fromIdx].label;
+  const toLabel = WEEK_MEALS[WEEK_MEALS.length - 1].label;
+  const rangeText = fromIdx === WEEK_MEALS.length - 1
+    ? fromLabel
+    : `${fromLabel} → ${toLabel}`;
+  const duration = DAY_PREP[fromIdx].duration;
+  const covers = DAY_PREP[fromIdx].covers;
+
+  document.getElementById('prepIntroTitle').textContent = `📦 Meal Prep — Starting ${fromLabel}`;
+  document.getElementById('prepIntroText').textContent =
+    fromIdx === 0
+      ? `Full week prep. Estimated time: ${duration}. Batch cook everything below to cover ${covers}.`
+      : `Estimated time: ${duration}. Covers ${covers} — ${daysRemaining.length} day${daysRemaining.length > 1 ? 's' : ''} of meals handled in one session.`;
+  document.getElementById('prepDayRange').textContent = covers;
+
+  // Merge grocery lists for selected range
+  const merged = {};
+  daysRemaining.forEach((_, relIdx) => {
+    const dayPrep = DAY_PREP[fromIdx + relIdx];
+    if (!dayPrep) return;
+    Object.entries(dayPrep.groceries).forEach(([cat, items]) => {
+      if (!merged[cat]) merged[cat] = new Set();
+      items.forEach(item => merged[cat].add(item));
+    });
+  });
+
+  document.getElementById('groceryList').innerHTML =
+    Object.entries(merged).map(([cat, itemSet]) => `
+      <div class="grocery-category">
+        <div class="grocery-cat-title">${cat}</div>
+        <div class="grocery-items">${[...itemSet].map(i => `<span class="grocery-item">${i}</span>`).join('')}</div>
+      </div>`).join('');
+
+  // Merge prep steps for selected range
+  const allSteps = [];
+  daysRemaining.forEach((day, relIdx) => {
+    const dayPrep = DAY_PREP[fromIdx + relIdx];
+    if (!dayPrep) return;
+    dayPrep.steps.forEach(s => allSteps.push({ ...s, day: day.label }));
+  });
+
   document.getElementById('prepSteps').innerHTML =
-    PREP_STEPS.map((s, i) => `
+    allSteps.map((s, i) => `
       <div class="prep-step">
-        <div class="prep-step-num">${i+1}</div>
+        <div class="prep-step-num">${i + 1}</div>
         <div class="prep-step-content">
-          <div class="prep-step-title">${s.title}</div>
+          <div class="prep-step-title">${s.title} <span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;">${s.day}</span></div>
           <div class="prep-step-desc">${s.desc}</div>
         </div>
       </div>`).join('');
-
-  renderDay(0);
 }
 
 function renderDay(idx) {
   const day = WEEK_MEALS[idx];
-  const benefitLabel = { anti: '🟢 Anti-inflammatory', fiber: '🔵 High Fiber', cancer: '🟣 Cancer-Protective' };
-
   const html = `
     <div class="benefit-legend-bar">
       <span class="benefit-item"><span class="benefit-dot anti"></span>Anti-inflammatory</span>
@@ -1726,19 +2017,17 @@ function renderDay(idx) {
         </div>
       </div>
     </div>`).join('')}`;
-
   document.getElementById('mealsContainer').innerHTML = html;
 }
 
 function selectDay(idx) {
   currentDay = idx;
-  document.querySelectorAll('.day-tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+  document.querySelectorAll('#dayTabs .day-tab').forEach((t, i) => t.classList.toggle('active', i === idx));
   renderDay(idx);
 }
 
 function toggleMeal(dayIdx, mealIdx) {
-  const card = document.getElementById(`meal-${dayIdx}-${mealIdx}`);
-  card.classList.toggle('open');
+  document.getElementById(`meal-${dayIdx}-${mealIdx}`).classList.toggle('open');
 }
 
 function togglePrepMode() {
@@ -1746,6 +2035,8 @@ function togglePrepMode() {
   document.getElementById('prepPanel').style.display = prepMode ? 'block' : 'none';
   document.getElementById('dailyPanel').style.display = prepMode ? 'none' : 'block';
   document.getElementById('prepBtn').classList.toggle('active', prepMode);
+  // Default prep picker to current day tab when opening
+  if (prepMode) selectPrepDay(currentDay);
 }
 
 // ─────────────────────────────────────────
@@ -1761,5 +2052,6 @@ renderStreak('nt');
 updateProgress('nt');
 renderPhasePills('nt');
 </script>
+
 </body>
 </html>
