@@ -1152,140 +1152,139 @@ const WEEK_MEALS = [
 let currentDay = 0;
 let prepMode = false;
 
-// Per-day prep metadata — full batch prep sessions for every possible start day
+// Per-day prep metadata — groceries are the CONSOLIDATED list for that day onward
+// Items shared across days are listed ONCE with the total quantity needed
 const DAY_PREP = [
   { // Sunday → covers Sun–Wed (4 days)
-    duration: '2–2.5 hrs',
-    covers: 'Sun–Wed',
+    duration: '2–2.5 hrs', covers: 'Sun–Wed',
     groceries: {
-      'Proteins': ['Wild salmon (1.5 lbs)','Grass-fed sirloin (6oz)','Eggs (1 dozen)','Chicken thighs (1.5 lbs)'],
-      'Vegetables': ['Broccoli (2 heads)','Brussels sprouts (1 bag)','Spinach (large bag)','Bell peppers (3)','Asparagus (1 bunch)','Sweet potatoes (3)','Carrots (bag)','Cherry tomatoes','Kale (1 bunch)'],
-      'Fruits': ['Blueberries (large container)','Mixed berries','Avocados (3)','Lemons (3)','Apple'],
-      'Grains': ['Green lentils (1 bag)','Quinoa','Brown rice','Rolled oats','Sourdough (1 loaf)'],
-      'Pantry': ['Olive oil','Bone broth (32oz)','Raw walnuts','Almond butter','Garlic (1 head)','Onion','Celery','Tahini','Turmeric','Smoked paprika','Cumin','Dill'],
+      'Proteins': ['Wild salmon (1.5 lbs)', 'Grass-fed sirloin (6oz)', 'Eggs (1 dozen)', 'Chicken thighs (1.5 lbs)'],
+      'Vegetables': ['Broccoli (2 heads)', 'Brussels sprouts (1 bag)', 'Spinach (large bag)', 'Bell peppers (3)', 'Asparagus (1 bunch)', 'Sweet potatoes (3)', 'Carrots (bag)', 'Cherry tomatoes', 'Kale (1 bunch)', 'Celery', 'Onion (2)'],
+      'Fruits': ['Blueberries (large container)', 'Mixed berries', 'Avocados (3)', 'Lemons (3)', 'Apple'],
+      'Grains': ['Green lentils (1 bag)', 'Quinoa', 'Brown rice', 'Rolled oats', 'Sourdough (1 loaf)'],
+      'Pantry': ['Olive oil', 'Bone broth (32oz)', 'Raw walnuts', 'Almond butter', 'Garlic (1 head)', 'Turmeric', 'Smoked paprika', 'Cumin', 'Dill', 'Tahini'],
+      'Snacks': ['Pumpkin seeds', '85%+ dark chocolate'],
     },
     steps: [
-      { title: 'Start Crockpot Lentil Soup', desc: 'Add lentils, diced carrots, celery, onion, garlic, turmeric, cumin, and bone broth to crockpot. Set on LOW 6–8 hrs or HIGH 3–4 hrs. Add kale in the last 30 min. Covers Mon, Tue, Wed lunches — 3 full meals, zero midweek cooking.' },
-      { title: 'Roast All Vegetables (2 sheet pans)', desc: 'Sheet pan 1: broccoli florets + Brussels sprouts. Sheet pan 2: cubed sweet potato + carrots + bell pepper. Toss with olive oil and garlic. Roast at 400°F 22–25 min. These are your sides and bowl bases Mon–Wed. Use your large skillet as a makeshift pan if needed.' },
-      { title: 'Bake the Frittata (9x13 baking dish)', desc: 'Whisk 8 eggs with turmeric, salt, pepper. Sauté garlic, spinach, bell pepper in large skillet. Add flaked salmon. Pour egg mixture over. Transfer to 9x13 baking dish, bake 375°F 15 min until set. Slice into 6 portions — covers Sun + Mon breakfast.' },
-      { title: 'Bake Chicken Thighs', desc: 'Season chicken thighs with smoked paprika, garlic, herbs, olive oil. Use your sheet pan. Roast at 425°F 30–35 min alongside whatever vegetables still need cooking. Slice and store — covers Tue dinner + Wed lunch bowl.' },
-      { title: 'Cook Quinoa + Rice', desc: 'Saucepan 1: cook quinoa in bone broth (2:1 ratio), 15 min. Saucepan 2: brown rice in water, 35–40 min. Both store 5 days. Cover grain bases all week.' },
-      { title: 'Prep Overnight Oats (for Tue)', desc: 'In a jar: 1 cup rolled oats, 1 cup almond milk, 1 tbsp ground flaxseed, 1 tbsp chia. Stir, lid on, refrigerate. Ready Tuesday morning — just add berries.' },
-      { title: 'Portion Snacks', desc: 'Bag 1oz raw walnuts into 4 small bags (Sun–Wed). Wash all berries and store in a container. Done — snacks require zero thought all week.' },
+      { title: 'Start Crockpot Lentil Soup', desc: 'Add lentils, diced carrots, celery, onion, garlic, turmeric, cumin, and bone broth to crockpot. LOW 6–8 hrs or HIGH 3–4 hrs. Add kale last 30 min. Covers Mon, Tue, Wed lunches — 3 meals, zero midweek cooking.' },
+      { title: 'Roast All Vegetables (2 sheet pans)', desc: 'Sheet pan 1: broccoli + Brussels sprouts. Sheet pan 2: cubed sweet potato + carrots + bell pepper. Olive oil and garlic, 400°F 22–25 min. Sides and bowl bases Mon–Wed.' },
+      { title: 'Bake the Frittata (9x13 baking dish)', desc: 'Whisk 8 eggs with turmeric. Sauté garlic, spinach, bell pepper, flaked salmon. Pour into 9x13 dish, 375°F 15 min. Slice into 6 — covers Sun + Mon breakfast.' },
+      { title: 'Bake Chicken Thighs', desc: 'Smoked paprika, garlic, herbs, olive oil. Sheet pan, 425°F 30–35 min. Slice and store — Tue dinner + Wed lunch bowl.' },
+      { title: 'Cook Quinoa + Rice', desc: 'Quinoa in bone broth (15 min). Brown rice in water (35–40 min). Covers grain bases all week.' },
+      { title: 'Prep Overnight Oats (for Tue)', desc: 'Jar: oats, almond milk, flaxseed, chia. Refrigerate tonight. Add berries Tuesday morning.' },
+      { title: 'Portion Snacks', desc: 'Bag 1oz raw walnuts x4. Wash all berries. Done — snacks require zero thought Mon–Wed.' },
     ]
   },
   { // Monday → covers Mon–Thu (4 days)
-    duration: '1.5–2 hrs',
-    covers: 'Mon–Thu',
+    duration: '1.5–2 hrs', covers: 'Mon–Thu',
     groceries: {
-      'Proteins': ['Chicken thighs (1.5 lbs)','Wild salmon fillet (6oz)','Shrimp (6oz)','Eggs (6)'],
-      'Vegetables': ['Broccoli (1 head)','Asparagus','Sweet potatoes (2)','Spinach (bag)','Snap peas','Zucchini (1)','Bell peppers (2)','Carrots'],
-      'Grains': ['Quinoa','Brown rice','Rolled oats'],
-      'Pantry': ['Bone broth (32oz)','Olive oil','Lemon (2)','Garlic','Dill','Smoked paprika','Almond butter','Tahini','Soy sauce (low-sodium)','Sesame oil','Ginger'],
-      'Fruits': ['Apple','Mixed berries','Avocado'],
+      'Proteins': ['Chicken thighs (1.5 lbs)', 'Wild salmon fillet (6oz)', 'Shrimp (6oz)', 'Eggs (6)'],
+      'Vegetables': ['Broccoli (1 head)', 'Asparagus', 'Sweet potatoes (2)', 'Spinach (bag)', 'Snap peas', 'Zucchini', 'Bell peppers (2)', 'Carrots'],
+      'Grains': ['Quinoa', 'Brown rice', 'Rolled oats'],
+      'Pantry': ['Bone broth (32oz)', 'Olive oil', 'Lemons (2)', 'Garlic', 'Dill', 'Smoked paprika', 'Tahini', 'Soy sauce (low-sodium)', 'Sesame oil', 'Ginger'],
+      'Fruits': ['Apple', 'Mixed berries', 'Avocados (2)'],
       'Dairy-Free': ['Coconut yogurt (unsweetened)'],
+      'Snacks': ['Almond butter', 'Pumpkin seeds', '85%+ dark chocolate'],
     },
     steps: [
-      { title: 'Cook Quinoa + Rice', desc: 'Start both grains first — they take the longest. Quinoa in bone broth (15 min), brown rice in water (35–40 min). These are your base for Mon–Thu meals. Cook double portions.' },
-      { title: 'Bake Chicken Thighs', desc: 'Season with smoked paprika, garlic, olive oil, herbs. Sheet pan, 425°F, 30–35 min. Slice into strips and store. Covers Tue dinner + Wed lunch bowl — 2 meals without cooking.' },
-      { title: 'Roast Sweet Potatoes + Broccoli', desc: 'Cube sweet potatoes, cut broccoli into florets. Sheet pan with olive oil and garlic. 400°F, 22 min. Covers sides for Mon–Wed dinners and bowl toppings.' },
-      { title: 'Chop Stir-Fry Vegetables', desc: 'Dice broccoli, snap peas, carrots, bell pepper. Store in a container in the fridge. When you make shrimp stir-fry Wed night, this takes 8 min total instead of 25.' },
-      { title: 'Make Tahini Dressing', desc: 'Blend or whisk: 3 tbsp tahini, 2 tbsp lemon juice, 1 clove garlic, 2 tbsp olive oil, water to thin. Store in a jar. Covers bowl dressings and salads Tue–Thu.' },
-      { title: 'Prep Overnight Oats', desc: 'Tonight: combine oats, almond milk, flaxseed, chia in jar. Refrigerate. Ready tomorrow with zero morning effort.' },
-      { title: 'Portion Snacks', desc: 'Bag walnuts. Wash berries. Portion pumpkin seeds + dark chocolate squares. Covers Mon–Thu.' },
+      { title: 'Cook Quinoa + Rice', desc: 'Start both grains first. Quinoa in bone broth (15 min), brown rice in water (35–40 min). Double portions — bases for Mon–Thu.' },
+      { title: 'Bake Chicken Thighs', desc: 'Smoked paprika, garlic, olive oil, herbs. Sheet pan, 425°F 30–35 min. Slice and store — Tue dinner + Wed lunch.' },
+      { title: 'Roast Sweet Potatoes + Broccoli', desc: 'Cube sweet potatoes, cut broccoli. Sheet pan, olive oil + garlic, 400°F 22 min. Covers Mon–Wed sides.' },
+      { title: 'Chop Stir-Fry Vegetables', desc: 'Dice broccoli, snap peas, carrots, bell pepper. Store in container. Wed shrimp stir-fry takes 8 min instead of 25.' },
+      { title: 'Make Tahini Dressing', desc: 'Whisk: 3 tbsp tahini, 2 tbsp lemon, 1 garlic clove, 2 tbsp olive oil, water to thin. Jar it. Covers bowls and salads Tue–Thu.' },
+      { title: 'Prep Overnight Oats', desc: 'Tonight: oats, almond milk, flaxseed, chia in jar. Refrigerate. Ready tomorrow.' },
+      { title: 'Portion Snacks', desc: 'Bag walnuts. Wash berries. Portion pumpkin seeds + dark chocolate. Covers Mon–Thu.' },
     ]
   },
   { // Tuesday → covers Tue–Fri (4 days)
-    duration: '1–1.5 hrs',
-    covers: 'Tue–Fri',
+    duration: '1–1.5 hrs', covers: 'Tue–Fri',
     groceries: {
-      'Proteins': ['Shrimp (6oz)','Ground turkey (6oz)','Smoked salmon (3oz)','Eggs (4)'],
-      'Vegetables': ['Zucchini (2)','Snap peas','Cauliflower (1 head)','Spinach','Arugula','Cherry tomatoes','Cucumber','Romaine'],
-      'Legumes': ['Black beans (1 can)','Chickpeas (1 can)'],
-      'Pantry': ['Crushed tomatoes','Almond flour','Kalamata olives','Olive oil','Italian herbs','Tahini','Lemon (2)','Garlic','Soy sauce','Sesame oil','Ginger','Nutritional yeast','Dijon mustard'],
-      'Fruits': ['Avocado (2)','Raspberries','Pumpkin seeds','Dark chocolate (85%+)'],
+      'Proteins': ['Shrimp (6oz)', 'Ground turkey (6oz)', 'Smoked salmon (3oz)', 'Eggs (4)'],
+      'Vegetables': ['Zucchini (2)', 'Snap peas', 'Cauliflower (1 head)', 'Spinach (bag)', 'Arugula', 'Cherry tomatoes', 'Cucumber', 'Romaine (1 head)'],
+      'Legumes': ['Black beans (1 can)', 'Chickpeas (1 can)'],
+      'Pantry': ['Crushed tomatoes', 'Almond flour', 'Kalamata olives', 'Olive oil', 'Italian herbs', 'Tahini', 'Lemons (2)', 'Garlic', 'Soy sauce (low-sodium)', 'Sesame oil', 'Ginger', 'Nutritional yeast', 'Dijon mustard', 'Anchovy paste'],
+      'Fruits': ['Avocados (2)', 'Raspberries', 'Brazil nuts', 'Edamame (frozen)', 'Pumpkin seeds', '85%+ dark chocolate'],
+      'Dairy-Free': ['Coconut yogurt (unsweetened)'],
     },
     steps: [
-      { title: 'Make Turkey Meatballs (9x13 baking dish)', desc: 'Combine 6oz ground turkey, 1 egg, 2 tbsp almond flour, minced garlic, Italian herbs, salt. Roll into balls. Bake at 400°F 18–20 min in your 9x13 dish. Make a double batch — covers Tue dinner + Thu lunch.' },
-      { title: 'Roast Cauliflower', desc: 'Chop into florets, toss with olive oil, garlic, salt. Sheet pan, 425°F, 25 min until caramelized. Sulforaphane content peaks when roasted. Covers Wed dinner side + Thu bowl topping.' },
-      { title: 'Make Chickpea Salad Base', desc: 'Drain and rinse chickpeas. Combine with halved cherry tomatoes, sliced cucumber, kalamata olives, red onion, parsley, olive oil, lemon, oregano. Refrigerate. Ready to serve Thu lunch — no cooking required.' },
-      { title: 'Prep Zucchini', desc: 'No spiralizer? Use a vegetable peeler to make wide zucchini ribbons, or slice thin with knife. Store in paper towel-lined container. Lasts 2 days in fridge.' },
-      { title: 'Make Tahini Dressing', desc: 'Whisk tahini, lemon, garlic, olive oil, water to thin. Store in jar. Covers bowl dressings Wed–Fri.' },
-      { title: 'Make Caesar Dressing', desc: 'Blend: anchovy paste (or skip), garlic, lemon juice, Dijon, olive oil, nutritional yeast, salt. Refrigerate. Covers Fri lunch salad — takes 3 min to blend.' },
-      { title: 'Portion Snacks', desc: 'Bag pumpkin seeds + dark chocolate squares. Portion Brazil nuts (3–4 per day). Wash raspberries. Covers Tue–Fri.' },
+      { title: 'Make Turkey Meatballs (9x13 baking dish)', desc: 'Ground turkey, egg, almond flour, garlic, Italian herbs. Bake 400°F 18–20 min. Double batch — Tue dinner + Thu lunch.' },
+      { title: 'Roast Cauliflower', desc: 'Florets, olive oil, garlic. Sheet pan, 425°F 25 min. Wed dinner side + Thu bowl topping.' },
+      { title: 'Make Chickpea Salad Base', desc: 'Chickpeas, cherry tomatoes, cucumber, olives, red onion, parsley, olive oil, lemon. Ready for Thu lunch — no cooking.' },
+      { title: 'Prep Zucchini', desc: 'No spiralizer? Use vegetable peeler for wide ribbons or slice thin. Paper towel-lined container. Lasts 2 days.' },
+      { title: 'Make Tahini Dressing', desc: 'Tahini, lemon, garlic, olive oil, water. Jar it. Covers bowls Wed–Fri.' },
+      { title: 'Make Caesar Dressing', desc: 'Blend: anchovy paste, garlic, lemon, Dijon, olive oil, nutritional yeast. Covers Fri lunch.' },
+      { title: 'Portion Snacks', desc: 'Bag pumpkin seeds + dark chocolate. Brazil nuts (3–4/day). Wash raspberries. Covers Tue–Fri.' },
     ]
   },
   { // Wednesday → covers Wed–Sat (4 days)
-    duration: '1.5–2 hrs',
-    covers: 'Wed–Sat',
+    duration: '1.5–2 hrs', covers: 'Wed–Sat',
     groceries: {
-      'Proteins': ['Cod fillet (6oz)','Ground turkey (6oz)','Grass-fed lamb chops (2)','Chicken breast (1 lb)','Eggs (6)'],
-      'Vegetables': ['Cauliflower (1 head)','Zucchini (2)','Beets (2–3)','Parsnips','Romaine','Spinach','Cherry tomatoes','Bell peppers (2)','Onion','Sweet potato'],
-      'Grains': ['Wild rice','Sourdough (1 slice)'],
-      'Pantry': ['Olive oil','Capers','Lemon (3)','Avocado','Garlic','Fresh parsley','Cilantro','Red wine vinegar','Nutritional yeast','Dijon mustard','Chili flakes','Almond flour','Italian herbs','Crushed tomatoes'],
-      'Fruits': ['Raspberries','Brazil nuts','Edamame (frozen)'],
+      'Proteins': ['Cod fillet (6oz)', 'Ground turkey (6oz)', 'Grass-fed lamb chops (2)', 'Chicken breast (1 lb)', 'Eggs (6)'],
+      'Vegetables': ['Cauliflower (1 head)', 'Zucchini (2)', 'Beets (2)', 'Parsnips', 'Romaine (2 heads)', 'Spinach (bag)', 'Cherry tomatoes', 'Bell peppers (2)', 'Onion', 'Sweet potato (2)'],
+      'Grains': ['Wild rice'],
+      'Pantry': ['Olive oil', 'Capers', 'Lemons (3)', 'Avocados (2)', 'Garlic', 'Fresh parsley', 'Cilantro', 'Red wine vinegar', 'Nutritional yeast', 'Dijon mustard', 'Chili flakes', 'Almond flour', 'Italian herbs', 'Crushed tomatoes', 'Anchovy paste'],
+      'Fruits': ['Raspberries', 'Brazil nuts', 'Edamame (frozen)'],
     },
     steps: [
-      { title: 'Start Wild Rice', desc: 'Wild rice takes 40–45 min in saucepan. Start this first. Make extra — covers Wed + Thu dinner base. Cook in bone broth if you have it for added gut benefit.' },
-      { title: 'Roast Root Vegetables (sheet pan)', desc: 'Dice beets, parsnips, sweet potato. Toss with olive oil, salt, pepper. 425°F, 28–30 min. Covers Sat dinner sides and Thu bowl toppings. Note: beets stain — use parchment paper on your sheet pan.' },
-      { title: 'Roast Cauliflower (second sheet pan)', desc: 'Florets with olive oil and garlic. 425°F, 22–25 min. Covers Wed + Thu dinner.' },
-      { title: 'Make Turkey Meatballs (9x13 baking dish)', desc: 'Ground turkey, egg, almond flour, garlic, Italian herbs. Bake at 400°F 18 min while vegetables roast. Covers Thu dinner + Fri as backup protein.' },
-      { title: 'Make Chimichurri', desc: 'Blend or chop finely: fresh parsley, cilantro, garlic, red wine vinegar, olive oil, chili flakes, salt. Store in jar. Keeps 5 days in fridge — goes on lamb Sat, eggs any morning, fish, anything.' },
-      { title: 'Make Caesar Dressing', desc: 'Blend anchovy paste, garlic, lemon, Dijon, olive oil, nutritional yeast. Refrigerate. Covers Sat lunch salad.' },
-      { title: 'Portion Snacks', desc: 'Bag pumpkin seeds + dark chocolate. Portion 3–4 Brazil nuts per day into small bags. Wash raspberries. Covers Wed–Sat.' },
+      { title: 'Start Wild Rice', desc: 'Wild rice takes 40–45 min. Start first. Cook extra — covers Wed + Thu dinner base. Use bone broth if available.' },
+      { title: 'Roast Root Vegetables (sheet pan)', desc: 'Beets, parsnips, sweet potato. Olive oil, 425°F 28–30 min. Use parchment paper — beets stain. Covers Sat dinner sides + Thu bowl.' },
+      { title: 'Roast Cauliflower (second sheet pan)', desc: 'Florets, olive oil, garlic. 425°F 22–25 min. Wed + Thu dinner.' },
+      { title: 'Make Turkey Meatballs (9x13 baking dish)', desc: 'Ground turkey, egg, almond flour, garlic, Italian herbs. 400°F 18 min while veg roasts. Thu dinner + Fri backup protein.' },
+      { title: 'Make Chimichurri', desc: 'Blend parsley, cilantro, garlic, red wine vinegar, olive oil, chili flakes. Jar it. Keeps 5 days — goes on lamb Sat, eggs, fish.' },
+      { title: 'Make Caesar Dressing', desc: 'Blend anchovy paste, garlic, lemon, Dijon, olive oil, nutritional yeast. Covers Sat lunch.' },
+      { title: 'Portion Snacks', desc: 'Brazil nuts (3–4/day). Wash raspberries. Edamame portioned. Covers Wed–Sat.' },
     ]
   },
   { // Thursday → covers Thu–Sat (3 days)
-    duration: '1–1.5 hrs',
-    covers: 'Thu–Sat',
+    duration: '1–1.5 hrs', covers: 'Thu–Sat',
     groceries: {
-      'Proteins': ['Grass-fed lamb chops (2)','Chicken breast (1 lb)','Smoked salmon (3oz)','Eggs (4)'],
-      'Vegetables': ['Beets (2)','Parsnips','Romaine (2 heads)','Spinach','Bell peppers (2)','Onion','Sweet potato','Zucchini'],
-      'Pantry': ['Fresh parsley','Cilantro','Red wine vinegar','Olive oil','Nutritional yeast','Dijon mustard','Garlic','Chili flakes','Lemon (2)','Kalamata olives','Capers'],
+      'Proteins': ['Cod fillet (6oz)', 'Grass-fed lamb chops (2)', 'Chicken breast (1 lb)', 'Smoked salmon (3oz)', 'Eggs (6)'],
+      'Vegetables': ['Cauliflower (1 head)', 'Beets (2)', 'Parsnips', 'Romaine (2 heads)', 'Spinach (bag)', 'Cherry tomatoes', 'Cucumber', 'Bell peppers (2)', 'Onion', 'Sweet potato (2)'],
       'Legumes': ['Chickpeas (1 can)'],
-      'Fruits': ['Avocado (2)','Raspberries','Brazil nuts','Edamame (frozen)'],
+      'Pantry': ['Olive oil', 'Capers', 'Lemons (3)', 'Garlic', 'Fresh parsley', 'Cilantro', 'Red wine vinegar', 'Nutritional yeast', 'Dijon mustard', 'Chili flakes', 'Kalamata olives', 'Wild rice', 'Anchovy paste'],
+      'Fruits': ['Avocados (2)', 'Raspberries', 'Brazil nuts', 'Edamame (frozen)'],
       'Drinks': ['Green tea'],
     },
     steps: [
-      { title: 'Roast Root Vegetables (sheet pan)', desc: 'Dice beets, parsnips, sweet potato. Olive oil, salt, 425°F, 28–30 min. Line pan with parchment — beets will stain. Covers Thu + Fri + Sat dinner sides.' },
-      { title: 'Make Chimichurri', desc: 'Finely chop or blend parsley, cilantro, garlic, red wine vinegar, olive oil, chili flakes. Jar it. Covers lamb on Sat and works as a condiment on eggs and fish through the weekend.' },
-      { title: 'Make Caesar Dressing', desc: 'Blend anchovy paste, garlic, lemon, Dijon, olive oil, nutritional yeast. Covers Fri + Sat lunch salads.' },
-      { title: 'Make Chickpea Salad', desc: 'Drain chickpeas, combine with olives, cucumber, tomatoes, onion, herbs, olive oil, lemon. Done in 5 min. No cooking. Ready for Fri lunch.' },
-      { title: 'Dice Breakfast Veg (for Sat hash)', desc: 'Dice bell peppers, onion, sweet potato now. Store in container. Saturday morning breakfast hash goes from 35 min to 15 min of actual cooking.' },
+      { title: 'Cook Wild Rice', desc: 'Start first — 40–45 min. Make extra, covers Thu + Fri dinner base.' },
+      { title: 'Roast Root Vegetables (sheet pan)', desc: 'Beets, parsnips, sweet potato. Olive oil, parchment paper, 425°F 28–30 min. Covers Thu + Fri + Sat dinner sides.' },
+      { title: 'Roast Cauliflower', desc: 'Florets, olive oil, garlic. 425°F 22–25 min. Thu + Fri dinner sides.' },
+      { title: 'Make Chimichurri', desc: 'Parsley, cilantro, garlic, red wine vinegar, olive oil, chili flakes. Jar it. Goes on lamb Sat + everything else.' },
+      { title: 'Make Caesar Dressing', desc: 'Anchovy paste, garlic, lemon, Dijon, olive oil, nutritional yeast. Covers Fri + Sat lunch.' },
+      { title: 'Make Chickpea Salad', desc: 'Chickpeas, olives, cucumber, tomatoes, onion, herbs, olive oil, lemon. 5 min, no cooking. Fri lunch ready.' },
+      { title: 'Dice Breakfast Veg (for Sat hash)', desc: 'Bell peppers, onion, sweet potato. Container in fridge. Cuts Sat morning cook time in half.' },
       { title: 'Portion Snacks', desc: 'Brazil nuts (3–4/day), raspberries washed, edamame portioned. Covers Thu–Sat.' },
     ]
   },
-  { // Friday → covers Fri–Sat (2 days, light session)
-    duration: '45–60 min',
-    covers: 'Fri–Sat',
+  { // Friday → covers Fri–Sat (2 days)
+    duration: '45–60 min', covers: 'Fri–Sat',
     groceries: {
-      'Proteins': ['Grass-fed lamb chops (2)','Chicken breast (1 lb)','Eggs (4)'],
-      'Vegetables': ['Romaine (1 head)','Bell peppers (2)','Onion','Sweet potato','Spinach','Beets (2)'],
-      'Pantry': ['Fresh parsley','Cilantro','Garlic','Red wine vinegar','Olive oil','Chili flakes','Nutritional yeast','Dijon mustard','Lemon','Smoked paprika','Cumin'],
-      'Fruits': ['Avocado','Raspberries','Brazil nuts','Edamame'],
+      'Proteins': ['Grass-fed lamb chops (2)', 'Chicken breast (1 lb)', 'Eggs (4)'],
+      'Vegetables': ['Romaine (1 head)', 'Bell peppers (2)', 'Onion', 'Sweet potato', 'Beets (2)', 'Parsnips', 'Spinach (bag)'],
+      'Pantry': ['Fresh parsley', 'Cilantro', 'Garlic', 'Red wine vinegar', 'Olive oil', 'Chili flakes', 'Nutritional yeast', 'Dijon mustard', 'Lemons (2)', 'Smoked paprika', 'Cumin', 'Anchovy paste'],
+      'Fruits': ['Avocado', 'Raspberries', 'Brazil nuts', 'Edamame (frozen)'],
     },
     steps: [
-      { title: 'Make Chimichurri', desc: 'Blend parsley, cilantro, garlic, red wine vinegar, olive oil, chili flakes. Stores 5 days. Goes on Saturday lamb chops.' },
-      { title: 'Make Caesar Dressing', desc: 'Blend anchovy paste, garlic, lemon, Dijon, olive oil, nutritional yeast. Covers Sat lunch.' },
-      { title: 'Roast Beets + Parsnips (sheet pan)', desc: 'Dice and roast at 425°F 28 min. Covers Sat dinner root veg side.' },
-      { title: 'Dice Saturday Breakfast Veg', desc: 'Dice bell peppers, onion, sweet potato. Container in fridge. Cuts Sat morning hash cook time in half.' },
-      { title: 'Portion Weekend Snacks', desc: 'Brazil nuts, raspberries, edamame. That\'s your Fri + Sat snacks handled.' },
+      { title: 'Make Chimichurri', desc: 'Parsley, cilantro, garlic, red wine vinegar, olive oil, chili flakes. Stores 5 days. Goes on Saturday lamb chops.' },
+      { title: 'Make Caesar Dressing', desc: 'Anchovy paste, garlic, lemon, Dijon, olive oil, nutritional yeast. Covers Sat lunch.' },
+      { title: 'Roast Beets + Parsnips (sheet pan)', desc: 'Dice, parchment paper, 425°F 28 min. Sat dinner root veg side.' },
+      { title: 'Dice Saturday Breakfast Veg', desc: 'Bell peppers, onion, sweet potato. Container in fridge. Cuts Sat hash cook time in half.' },
+      { title: 'Portion Weekend Snacks', desc: 'Brazil nuts, raspberries, edamame. Fri + Sat snacks handled.' },
     ]
   },
-  { // Saturday → end of week, minimal (just plan ahead)
-    duration: '20–30 min',
-    covers: 'Sat + Sunday shop',
+  { // Saturday → end of week, plan ahead
+    duration: '20–30 min', covers: 'Sat + Sunday shop',
     groceries: {
       'Proteins': ['Eggs (4)'],
-      'Vegetables': ['Bell peppers','Onion','Sweet potato','Spinach'],
-      'Pantry': ['Olive oil','Smoked paprika','Cumin','Garlic'],
-      'Fruits': ['Brazil nuts (3–4)','Raspberries'],
+      'Vegetables': ['Bell peppers', 'Onion', 'Sweet potato', 'Spinach'],
+      'Pantry': ['Olive oil', 'Smoked paprika', 'Cumin', 'Garlic'],
+      'Fruits': ['Brazil nuts (3–4)', 'Raspberries'],
     },
     steps: [
-      { title: 'Dice Breakfast Hash Veg (if not done Fri)', desc: 'Bell peppers, onion, sweet potato diced and in a container. Saturday hash is your one weekend cooking moment worth the 10 min of prep.' },
-      { title: 'Inventory Your Fridge', desc: 'Check what carried over from the week. Note what you actually ate vs. skipped. Adjust next week\'s plan accordingly — this is how the protocol gets dialed in to your real habits.' },
-      { title: 'Build Sunday Shopping List', desc: 'Go through next week\'s meal plan. Cross off what you still have. Write the rest. Shop Sunday morning so you\'re ready to batch cook Sunday afternoon.' },
-      { title: 'Reflect on the Week', desc: 'How did your energy feel? Digestion? Sleep? These are your biomarkers. Note anything unusual — this data is more valuable than any lab test for tuning your protocol.' },
+      { title: 'Dice Breakfast Hash Veg (if not done Fri)', desc: 'Bell peppers, onion, sweet potato diced and in a container. Ten minutes now saves you thirty Saturday morning.' },
+      { title: 'Inventory Your Fridge', desc: 'Check what carried over. Note what you ate vs. skipped. Adjust next week accordingly — this is how the protocol gets dialed in.' },
+      { title: 'Build Sunday Shopping List', desc: 'Go through next week meals. Cross off what you still have. Shop Sunday morning, batch cook Sunday afternoon.' },
+      { title: 'Reflect on the Week', desc: 'How was energy? Digestion? Sleep? Note anything unusual. This data is more valuable than any lab test for tuning your protocol.' },
     ]
   },
 ];
@@ -1388,22 +1387,36 @@ function renderPrepContent(fromIdx) {
       : `Estimated time: ${duration}. Covers ${covers} — ${daysRemaining.length} day${daysRemaining.length > 1 ? 's' : ''} of meals handled in one session.`;
   document.getElementById('prepDayRange').textContent = covers;
 
-  // Merge grocery lists for selected range
+  // Merge grocery lists for selected range with smart deduplication
   const merged = {};
   daysRemaining.forEach((_, relIdx) => {
     const dayPrep = DAY_PREP[fromIdx + relIdx];
     if (!dayPrep) return;
     Object.entries(dayPrep.groceries).forEach(([cat, items]) => {
-      if (!merged[cat]) merged[cat] = new Set();
-      items.forEach(item => merged[cat].add(item));
+      if (!merged[cat]) merged[cat] = {};
+      items.forEach(item => {
+        // Extract base name (strip quantity in parens) for dedup key
+        const base = item.replace(/\s*\([^)]*\)/g, '').trim().toLowerCase();
+        if (!merged[cat][base]) {
+          merged[cat][base] = item;
+        } else {
+          // Keep the item with the larger quantity or more specific description
+          const existing = merged[cat][base];
+          const existQty = (existing.match(/\d+/) || [0])[0];
+          const newQty = (item.match(/\d+/) || [0])[0];
+          if (parseInt(newQty) > parseInt(existQty)) merged[cat][base] = item;
+          // Prefer items with parens (more specific) over bare names
+          if (!existing.includes('(') && item.includes('(')) merged[cat][base] = item;
+        }
+      });
     });
   });
 
   document.getElementById('groceryList').innerHTML =
-    Object.entries(merged).map(([cat, itemSet]) => `
+    Object.entries(merged).map(([cat, itemMap]) => `
       <div class="grocery-category">
         <div class="grocery-cat-title">${cat}</div>
-        <div class="grocery-items">${[...itemSet].map(i => `<span class="grocery-item">${i}</span>`).join('')}</div>
+        <div class="grocery-items">${Object.values(itemMap).map(i => `<span class="grocery-item">${i}</span>`).join('')}</div>
       </div>`).join('');
 
   // Merge prep steps for selected range
