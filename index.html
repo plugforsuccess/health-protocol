@@ -208,7 +208,19 @@
 .grocery-category { margin-bottom:14px; }
 .grocery-cat-title { font-family:‘DM Mono’,monospace; font-size:10px; letter-spacing:0.15em; text-transform:uppercase; color:var(–diet); margin-bottom:7px; }
 .grocery-items { display:flex; flex-wrap:wrap; gap:5px; }
-.grocery-item { font-size:11px; padding:3px 10px; border-radius:4px; background:var(–surface2); border:1px solid var(–border2); color:var(–label); font-family:‘DM Mono’,monospace; }
+.grocery-item { font-size:11px; padding:3px 10px; border-radius:4px; background:var(–surface2); border:1px solid var(–border2); color:var(–label); font-family:‘DM Mono’,monospace; cursor:pointer; transition:all 0.2s; display:inline-flex; align-items:center; gap:5px; user-select:none; }
+.grocery-item:hover { border-color:var(–diet); color:var(–diet); }
+.grocery-item.have-it { background:rgba(34,197,94,0.06); border-color:rgba(34,197,94,0.2); color:var(–muted); text-decoration:line-through; opacity:0.5; }
+.grocery-item .have-dot { width:6px; height:6px; border-radius:50%; background:var(–check); flex-shrink:0; display:none; }
+.grocery-item.have-it .have-dot { display:inline-block; }
+.pantry-legend { display:flex; align-items:center; gap:8px; font-size:10px; color:var(–muted); font-family:‘DM Mono’,monospace; margin-bottom:10px; padding:8px 12px; background:var(–surface); border:1px solid var(–border); border-radius:6px; }
+.pantry-legend-dot { width:6px; height:6px; border-radius:50%; background:var(–check); }
+.pantry-clear-btn { margin-left:auto; font-size:10px; font-family:‘DM Mono’,monospace; color:var(–muted); cursor:pointer; padding:2px 8px; border:1px solid var(–border2); border-radius:4px; background:transparent; transition:all 0.2s; }
+.pantry-clear-btn:hover { border-color:var(–warn); color:var(–warn); }
+body.light .grocery-item { background:var(–surface2); border-color:var(–border); color:var(–label); }
+body.light .grocery-item:hover { border-color:var(–diet); color:var(–diet); }
+body.light .grocery-item.have-it { background:rgba(21,128,61,0.06); border-color:rgba(21,128,61,0.2); color:var(–muted); }
+body.light .pantry-legend { background:var(–surface); border-color:var(–border); }
 .prep-step { display:flex; gap:12px; padding:11px 14px; background:var(–surface); border:1px solid var(–border); border-radius:7px; margin-bottom:6px; }
 .prep-step-num { font-family:‘Bebas Neue’,sans-serif; font-size:20px; color:var(–diet); line-height:1; flex-shrink:0; width:24px; }
 .prep-step-content { flex:1; }
@@ -582,6 +594,11 @@ body.light .theme-toggle::after { background:#6d28d9; transform:translateX(16px)
 
   <div class="section">
     <div class="section-head"><div class="section-time">Grocery List</div><div class="section-count" id="prepDayRange" style="margin-left:auto;color:var(--diet);font-family:'DM Mono',monospace;font-size:10px;"></div></div>
+    <div class="pantry-legend">
+      <span class="pantry-legend-dot"></span>
+      <span>Tap any item to mark as <strong>already have it</strong> — it stays crossed off across sessions</span>
+      <button class="pantry-clear-btn" onclick="clearPantry()">Clear all</button>
+    </div>
     <div id="groceryList"></div>
   </div>
   <div class="section">
@@ -1416,15 +1433,27 @@ function renderPrepContent(fromIdx) {
     Object.entries(merged).map(([cat, itemMap]) => `
       <div class="grocery-category">
         <div class="grocery-cat-title">${cat}</div>
-        <div class="grocery-items">${Object.values(itemMap).map(i => `<span class="grocery-item">${i}</span>`).join('')}</div>
+        <div class="grocery-items">${Object.values(itemMap).map(i => {
+          const key = pantryKey(i);
+          const have = pantryState[key];
+          return `<span class="grocery-item${have ? ' have-it' : ''}" onclick="togglePantryItem('${key.replace(/'/g,"\\'")}', this)"><span class="have-dot"></span>${i}</span>`;
+        }).join('')}</div>
       </div>`).join('');
 
-  // Merge prep steps for selected range
+  // Merge prep steps for selected range — deduplicate by title, keep earliest occurrence
   const allSteps = [];
+  const seenTitles = new Set();
   daysRemaining.forEach((day, relIdx) => {
     const dayPrep = DAY_PREP[fromIdx + relIdx];
     if (!dayPrep) return;
-    dayPrep.steps.forEach(s => allSteps.push({ ...s, day: day.label }));
+    dayPrep.steps.forEach(s => {
+      // Normalize title for dedup comparison
+      const titleKey = s.title.toLowerCase().replace(/\s*\([^)]*\)/g, '').trim();
+      if (!seenTitles.has(titleKey)) {
+        seenTitles.add(titleKey);
+        allSteps.push({ ...s, day: day.label });
+      }
+    });
   });
 
   document.getElementById('prepSteps').innerHTML =
@@ -1510,10 +1539,45 @@ function initTheme() {
 }
 
 // ─────────────────────────────────────────
+// PANTRY STATE
+// ─────────────────────────────────────────
+const PANTRY_KEY = 'pantry_have_items';
+
+let pantryState = {};
+
+function loadPantry() {
+  try { pantryState = JSON.parse(localStorage.getItem(PANTRY_KEY)) || {}; } catch { pantryState = {}; }
+}
+
+function savePantry() {
+  try { localStorage.setItem(PANTRY_KEY, JSON.stringify(pantryState)); } catch {}
+}
+
+function pantryKey(item) {
+  // Normalize item name to a consistent key — strip quantities and lowercase
+  return item.replace(/\s*\([^)]*\)/g, '').trim().toLowerCase().replace(/\s+/g, '_');
+}
+
+function togglePantryItem(key, el) {
+  pantryState[key] = !pantryState[key];
+  savePantry();
+  el.classList.toggle('have-it', !!pantryState[key]);
+}
+
+function clearPantry() {
+  if (!confirm('Clear all "have it" marks?')) return;
+  pantryState = {};
+  savePantry();
+  // Re-render current grocery list
+  renderPrepContent(currentPrepDay);
+}
+
+// ─────────────────────────────────────────
 // INIT
 // ─────────────────────────────────────────
 midnightCheck();
 loadStates();
+loadPantry();
 initTheme();
 renderDate();
 buildNT();
