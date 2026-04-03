@@ -34,13 +34,13 @@
 .mode-nt { color:var(–d); }
 .mode-gut { color:var(–gut1); display:none; }
 .mode-diet { color:var(–diet); display:none; }
-.streak-badge { display:flex; align-items:center; gap:5px; background:var(–surface2); border:1px solid var(–border2); border-radius:20px; padding:4px 11px; font-family:‘DM Mono’,monospace; font-size:11px; color:var(–label); transition:all 0.2s; }
+.streak-badge { display:flex; align-items:center; gap:5px; background:var(–surface2); border:1px solid var(–border2); border-radius:20px; padding:4px 11px; font-family:DM Mono,monospace; font-size:11px; color:var(–label); transition:all 0.2s; }
 .streak-badge.active-nt { border-color:var(–g); color:var(–g); }
 .streak-badge.active-gut { border-color:var(–check-gut); color:var(–check-gut); }
 
 /* TAB SWITCHER */
 .tab-switcher { display:flex; margin:0 18px 10px; background:var(–surface2); border:1px solid var(–border2); border-radius:8px; padding:3px; gap:3px; }
-.tab-btn { flex:1; padding:8px 12px; border-radius:6px; font-family:‘DM Mono’,monospace; font-size:12px; letter-spacing:0.08em; text-align:center; cursor:pointer; border:none; background:transparent; color:var(–muted); transition:all 0.25s; display:flex; align-items:center; justify-content:center; gap:7px; }
+.tab-btn { flex:1; padding:8px 12px; border-radius:6px; font-family:DM Mono,monospace; font-size:12px; letter-spacing:0.08em; text-align:center; cursor:pointer; border:none; background:transparent; color:var(–muted); transition:all 0.25s; display:flex; align-items:center; justify-content:center; gap:7px; }
 .tab-btn.active-nt { background:var(–d-dim); color:var(–d); border:1px solid rgba(139,92,246,0.25); }
 .tab-btn.active-gut { background:var(–gut1-dim); color:var(–gut1); border:1px solid rgba(34,197,94,0.25); }
 .tab-btn.active-diet { background:var(–diet-dim); color:var(–diet); border:1px solid rgba(249,115,22,0.25); }
@@ -51,12 +51,12 @@
 .progress-bar-fill { height:100%; border-radius:2px; transition:width 0.5s cubic-bezier(0.4,0,0.2,1); width:0%; }
 .fill-nt { background:linear-gradient(90deg,var(–d),var(–s)); }
 .fill-gut { background:linear-gradient(90deg,var(–gut1),var(–gut3)); }
-.progress-label { font-family:‘DM Mono’,monospace; font-size:10px; color:var(–label); min-width:40px; text-align:right; }
+.progress-label { font-family:DM Mono,monospace; font-size:10px; color:var(–label); min-width:40px; text-align:right; }
 
 /* PHASE PILLS */
 .phase-pills { display:flex; gap:6px; padding:0 18px; margin-bottom:10px; overflow-x:auto; scrollbar-width:none; }
 .phase-pills::-webkit-scrollbar { display:none; }
-.phase-pill { flex-shrink:0; padding:4px 12px; border-radius:20px; font-family:‘DM Mono’,monospace; font-size:10px; letter-spacing:0.08em; border:1px solid var(–border2); color:var(–muted); cursor:pointer; transition:all 0.2s; background:transparent; }
+.phase-pill { flex-shrink:0; padding:4px 12px; border-radius:20px; font-family:DM Mono,monospace; font-size:10px; letter-spacing:0.08em; border:1px solid var(–border2); color:var(–muted); cursor:pointer; transition:all 0.2s; background:transparent; }
 .phase-pill.done-nt { border-color:var(–check); color:var(–check); background:rgba(34,197,94,0.08); }
 .phase-pill.done-gut { border-color:var(–check-gut); color:var(–check-gut); background:rgba(74,222,128,0.08); }
 
@@ -68,8 +68,8 @@
 /* DATE BAR */
 .date-bar { display:flex; align-items:baseline; gap:10px; margin-bottom:24px; animation:fadeUp 0.4s ease both; }
 .date-day { font-family:‘Bebas Neue’,sans-serif; font-size:38px; line-height:1; color:var(–text); }
-.date-info { font-size:11px; color:var(–muted); font-family:‘DM Mono’,monospace; }
-.reset-note { margin-left:auto; font-size:10px; color:var(–muted); font-family:‘DM Mono’,monospace; }
+.date-info { font-size:11px; color:var(–muted); font-family:DM Mono,monospace; }
+.reset-note { margin-left:auto; font-size:10px; color:var(–muted); font-family:DM Mono,monospace; }
 
 /* COMPLETE BANNER */
 .complete-banner { display:none; border-radius:10px; padding:16px 20px; text-align:center; margin-bottom:20px; animation:fadeUp 0.4s ease both; }
@@ -89,8 +89,8 @@
 .section:nth-child(6) { animation-delay:0.22s; }
 .section-head { display:flex; align-items:center; gap:8px; margin-bottom:9px; padding:0 2px; }
 .section-time { font-family:‘Bebas Neue’,sans-serif; font-size:17px; letter-spacing:0.05em; color:var(–text); }
-.section-tag { font-family:‘DM Mono’,monospace; font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:var(–muted); background:var(–surface2); border:1px solid var(–border); padding:3px 7px; border-radius:3px; }
-.section-count { margin-left:auto; font-family:‘DM Mono’,monospace; font-size:10px; color:var(–muted); transition:color 0.2s; }
+.section-tag { font-family:DM Mono,monospace; font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:var(–muted); background:var(–surface2); border:1px solid var(–border); padding:3px 7px; border-radius:3px; }
+.section-count { margin-left:auto; font-family:DM Mono,monospace; font-size:10px; color:var(–muted); transition:color 0.2s; }
 .section-count.all-done { color:var(–check); }
 
 /* SUPPLEMENT ITEM */
@@ -111,7 +111,7 @@
 .supp-main { flex:1; min-width:0; }
 .supp-name { font-size:13px; font-weight:500; color:var(–text); transition:color 0.2s; }
 .supp-meta { display:flex; align-items:center; gap:8px; margin-top:2px; }
-.supp-dose { font-family:‘DM Mono’,monospace; font-size:10px; color:var(–label); }
+.supp-dose { font-family:DM Mono,monospace; font-size:10px; color:var(–label); }
 .nt-dots { display:flex; gap:3px; }
 .nt-dot { width:6px; height:6px; border-radius:50%; }
 .nt-dot.d { background:var(–d); } .nt-dot.s { background:var(–s); } .nt-dot.a { background:var(–a); } .nt-dot.g { background:var(–g); }
@@ -128,12 +128,12 @@
 .drawer-inner { padding:12px 14px 14px 44px; border-top:1px solid var(–border); }
 .drawer-why { font-size:12px; color:var(–label); line-height:1.75; margin-bottom:10px; }
 .drawer-tags { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:9px; }
-.drawer-tag { font-size:10px; font-family:‘DM Mono’,monospace; padding:2px 8px; border-radius:3px; letter-spacing:0.04em; }
+.drawer-tag { font-size:10px; font-family:DM Mono,monospace; padding:2px 8px; border-radius:3px; letter-spacing:0.04em; }
 .drawer-tag.d { background:var(–d-dim); color:var(–d); } .drawer-tag.s { background:var(–s-dim); color:var(–s); }
 .drawer-tag.a { background:var(–a-dim); color:var(–a); } .drawer-tag.g { background:var(–g-dim); color:var(–g); }
 .drawer-tag.g1 { background:var(–gut1-dim); color:var(–gut1); } .drawer-tag.g2 { background:var(–gut2-dim); color:var(–gut2); }
 .drawer-tag.g3 { background:var(–gut3-dim); color:var(–gut3); } .drawer-tag.g4 { background:var(–gut4-dim); color:var(–gut4); }
-.drawer-brand { font-size:10px; color:var(–muted); font-family:‘DM Mono’,monospace; }
+.drawer-brand { font-size:10px; color:var(–muted); font-family:DM Mono,monospace; }
 .drawer-brand span { color:var(–s); }
 
 /* LIFESTYLE */
@@ -152,9 +152,9 @@
 .life-desc { font-size:10px; color:var(–muted); line-height:1.5; }
 
 /* RESET + EXPORT */
-.reset-btn { display:flex; align-items:center; justify-content:center; gap:7px; width:100%; padding:13px; background:transparent; border:1px solid var(–border2); border-radius:8px; color:var(–muted); font-family:‘DM Mono’,monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; margin-top:28px; transition:all 0.2s; }
+.reset-btn { display:flex; align-items:center; justify-content:center; gap:7px; width:100%; padding:13px; background:transparent; border:1px solid var(–border2); border-radius:8px; color:var(–muted); font-family:DM Mono,monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; margin-top:28px; transition:all 0.2s; }
 .reset-btn:hover { border-color:var(–warn); color:var(–warn); }
-.export-btn { display:flex; align-items:center; justify-content:center; gap:7px; width:100%; padding:13px; background:transparent; border:1px solid var(–border2); border-radius:8px; color:var(–label); font-family:‘DM Mono’,monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; margin-top:8px; transition:all 0.2s; }
+.export-btn { display:flex; align-items:center; justify-content:center; gap:7px; width:100%; padding:13px; background:transparent; border:1px solid var(–border2); border-radius:8px; color:var(–label); font-family:DM Mono,monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; margin-top:8px; transition:all 0.2s; }
 .export-btn:hover { border-color:var(–s); color:var(–s); }
 
 /* GUT INTRO */
@@ -164,26 +164,26 @@
 
 /* DIET — AVOID BANNER */
 .avoid-banner { background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.18); border-radius:8px; padding:14px 16px; margin-bottom:20px; animation:fadeUp 0.4s ease both; }
-.avoid-title { font-family:‘DM Mono’,monospace; font-size:10px; letter-spacing:0.15em; color:var(–warn); margin-bottom:10px; }
+.avoid-title { font-family:DM Mono,monospace; font-size:10px; letter-spacing:0.15em; color:var(–warn); margin-bottom:10px; }
 .avoid-grid { display:flex; flex-wrap:wrap; gap:6px; }
-.avoid-pill { font-size:11px; padding:4px 10px; border-radius:4px; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); color:#f87171; font-family:‘DM Mono’,monospace; }
+.avoid-pill { font-size:11px; padding:4px 10px; border-radius:4px; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); color:#f87171; font-family:DM Mono,monospace; }
 
 /* DIET — WEEK NAV */
 .week-nav { margin-bottom:16px; animation:fadeUp 0.4s ease both; animation-delay:0.05s; }
 .week-nav-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
 .week-label { font-family:‘Bebas Neue’,sans-serif; font-size:17px; letter-spacing:0.05em; color:var(–text); }
-.prep-btn { font-family:‘DM Mono’,monospace; font-size:10px; letter-spacing:0.08em; padding:5px 12px; border-radius:6px; border:1px solid var(–border2); background:transparent; color:var(–label); cursor:pointer; transition:all 0.2s; }
+.prep-btn { font-family:DM Mono,monospace; font-size:10px; letter-spacing:0.08em; padding:5px 12px; border-radius:6px; border:1px solid var(–border2); background:transparent; color:var(–label); cursor:pointer; transition:all 0.2s; }
 .prep-btn.active { border-color:var(–diet); color:var(–diet); background:var(–diet-dim); }
 .day-tabs { display:flex; gap:5px; overflow-x:auto; scrollbar-width:none; padding-bottom:2px; }
 .day-tabs::-webkit-scrollbar { display:none; }
-.day-tab { flex-shrink:0; padding:6px 12px; border-radius:6px; font-family:‘DM Mono’,monospace; font-size:10px; letter-spacing:0.08em; border:1px solid var(–border2); color:var(–muted); cursor:pointer; transition:all 0.2s; background:transparent; }
+.day-tab { flex-shrink:0; padding:6px 12px; border-radius:6px; font-family:DM Mono,monospace; font-size:10px; letter-spacing:0.08em; border:1px solid var(–border2); color:var(–muted); cursor:pointer; transition:all 0.2s; background:transparent; }
 .day-tab.active { border-color:var(–diet); color:var(–diet); background:var(–diet-dim); }
 
 /* DIET — MEAL CARDS */
 .meal-card { background:var(–surface); border:1px solid var(–border); border-radius:8px; margin-bottom:8px; overflow:hidden; transition:border-color 0.2s; animation:fadeUp 0.35s ease both; }
 .meal-card:nth-child(2) { animation-delay:0.05s; } .meal-card:nth-child(3) { animation-delay:0.1s; } .meal-card:nth-child(4) { animation-delay:0.15s; }
 .meal-header { display:flex; align-items:center; gap:10px; padding:13px 14px; cursor:pointer; user-select:none; }
-.meal-time-badge { font-family:‘DM Mono’,monospace; font-size:9px; letter-spacing:0.1em; padding:3px 8px; border-radius:3px; text-transform:uppercase; flex-shrink:0; }
+.meal-time-badge { font-family:DM Mono,monospace; font-size:9px; letter-spacing:0.1em; padding:3px 8px; border-radius:3px; text-transform:uppercase; flex-shrink:0; }
 .meal-time-badge.breakfast { background:rgba(245,158,11,0.12); color:var(–g); }
 .meal-time-badge.lunch { background:rgba(6,182,212,0.12); color:var(–s); }
 .meal-time-badge.dinner { background:rgba(139,92,246,0.12); color:var(–d); }
@@ -196,7 +196,7 @@
 .meal-card.open .meal-drawer { max-height:400px; }
 .meal-drawer-inner { border-top:1px solid var(–border); padding:12px 14px 14px; }
 .ingredient-list { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px; }
-.ingredient-tag { font-size:11px; padding:3px 9px; border-radius:4px; background:var(–surface2); border:1px solid var(–border2); color:var(–label); font-family:‘DM Mono’,monospace; }
+.ingredient-tag { font-size:11px; padding:3px 9px; border-radius:4px; background:var(–surface2); border:1px solid var(–border2); color:var(–label); font-family:DM Mono,monospace; }
 .meal-prep-note { font-size:11px; color:var(–muted); line-height:1.7; }
 
 /* RECIPE MODAL */
@@ -210,7 +210,7 @@
 .modal-handle { width:40px; height:4px; background:var(–border2); border-radius:2px; margin:12px auto 0; flex-shrink:0; }
 .modal-header { padding:16px 18px 12px; border-bottom:1px solid var(–border); flex-shrink:0; }
 .modal-title-row { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
-.modal-time-badge { font-family:‘DM Mono’,monospace; font-size:9px; letter-spacing:0.1em; padding:3px 8px; border-radius:3px; text-transform:uppercase; flex-shrink:0; }
+.modal-time-badge { font-family:DM Mono,monospace; font-size:9px; letter-spacing:0.1em; padding:3px 8px; border-radius:3px; text-transform:uppercase; flex-shrink:0; }
 .modal-time-badge.breakfast { background:rgba(245,158,11,0.12); color:var(–g); }
 .modal-time-badge.lunch { background:rgba(6,182,212,0.12); color:var(–s); }
 .modal-time-badge.dinner { background:rgba(139,92,246,0.12); color:var(–d); }
@@ -219,12 +219,12 @@
 .modal-close { width:30px; height:30px; border-radius:50%; background:var(–surface2); border:1px solid var(–border2); color:var(–muted); font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.2s; }
 .modal-close:hover { background:var(–border); color:var(–text); }
 .modal-meta { display:flex; gap:12px; flex-wrap:wrap; }
-.modal-meta-item { font-family:‘DM Mono’,monospace; font-size:10px; color:var(–muted); display:flex; align-items:center; gap:4px; }
+.modal-meta-item { font-family:DM Mono,monospace; font-size:10px; color:var(–muted); display:flex; align-items:center; gap:4px; }
 .modal-body { overflow-y:auto; flex:1; padding:0 18px 32px; -webkit-overflow-scrolling:touch; }
 .modal-section { margin-top:20px; }
-.modal-section-title { font-family:‘DM Mono’,monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:var(–diet); margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid var(–border); }
+.modal-section-title { font-family:DM Mono,monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:var(–diet); margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid var(–border); }
 .modal-ingredients { display:flex; flex-wrap:wrap; gap:5px; }
-.modal-ingredient { font-size:11px; padding:4px 10px; border-radius:4px; background:var(–surface2); border:1px solid var(–border2); color:var(–label); font-family:‘DM Mono’,monospace; }
+.modal-ingredient { font-size:11px; padding:4px 10px; border-radius:4px; background:var(–surface2); border:1px solid var(–border2); color:var(–label); font-family:DM Mono,monospace; }
 .modal-steps { display:flex; flex-direction:column; gap:10px; }
 .modal-step { display:flex; gap:12px; padding:12px 14px; background:var(–surface2); border-radius:8px; border-left:3px solid var(–diet); }
 .modal-step-num { font-family:‘Bebas Neue’,sans-serif; font-size:22px; color:var(–diet); line-height:1; flex-shrink:0; width:22px; }
@@ -232,10 +232,10 @@
 .modal-step-title { font-size:13px; font-weight:500; color:var(–text); margin-bottom:4px; }
 .modal-step-desc { font-size:12px; color:var(–label); line-height:1.75; }
 .modal-tip-box { background:rgba(6,182,212,0.06); border:1px solid rgba(6,182,212,0.2); border-radius:8px; padding:12px 14px; margin-top:6px; }
-.modal-tip-title { font-family:‘DM Mono’,monospace; font-size:9px; letter-spacing:0.15em; text-transform:uppercase; color:var(–s); margin-bottom:4px; }
+.modal-tip-title { font-family:DM Mono,monospace; font-size:9px; letter-spacing:0.15em; text-transform:uppercase; color:var(–s); margin-bottom:4px; }
 .modal-tip-text { font-size:12px; color:var(–label); line-height:1.7; }
 .modal-why-box { background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.2); border-radius:8px; padding:12px 14px; }
-.modal-why-title { font-family:‘DM Mono’,monospace; font-size:9px; letter-spacing:0.15em; text-transform:uppercase; color:var(–a); margin-bottom:4px; }
+.modal-why-title { font-family:DM Mono,monospace; font-size:9px; letter-spacing:0.15em; text-transform:uppercase; color:var(–a); margin-bottom:4px; }
 .modal-why-text { font-size:12px; color:var(–label); line-height:1.7; }
 .modal-benefit-dots { display:flex; gap:6px; align-items:center; margin-top:2px; }
 body.light .modal-sheet { background:#fff; }
@@ -245,23 +245,23 @@ body.light .modal-step-title { color:var(–text); }
 body.light .modal-step-desc { color:var(–label); }
 
 .benefit-legend-bar { display:flex; gap:14px; flex-wrap:wrap; padding:10px 14px; background:var(–surface); border:1px solid var(–border); border-radius:7px; margin-bottom:16px; }
-.benefit-item { display:flex; align-items:center; gap:5px; font-size:10px; color:var(–muted); font-family:‘DM Mono’,monospace; }
+.benefit-item { display:flex; align-items:center; gap:5px; font-size:10px; color:var(–muted); font-family:DM Mono,monospace; }
 
 /* DIET — PREP MODE */
 .prep-intro { background:linear-gradient(135deg,rgba(249,115,22,0.08),rgba(245,158,11,0.05)); border:1px solid rgba(249,115,22,0.2); border-radius:8px; padding:14px 16px; margin-bottom:20px; }
 .prep-intro-title { font-family:‘Bebas Neue’,sans-serif; font-size:14px; letter-spacing:0.12em; color:var(–diet); margin-bottom:4px; }
 .prep-intro-text { font-size:12px; color:var(–label); line-height:1.7; }
 .grocery-category { margin-bottom:14px; }
-.grocery-cat-title { font-family:‘DM Mono’,monospace; font-size:10px; letter-spacing:0.15em; text-transform:uppercase; color:var(–diet); margin-bottom:7px; }
+.grocery-cat-title { font-family:DM Mono,monospace; font-size:10px; letter-spacing:0.15em; text-transform:uppercase; color:var(–diet); margin-bottom:7px; }
 .grocery-items { display:flex; flex-wrap:wrap; gap:5px; }
-.grocery-item { font-size:11px; padding:3px 10px; border-radius:4px; background:var(–surface2); border:1px solid var(–border2); color:var(–label); font-family:‘DM Mono’,monospace; cursor:pointer; transition:all 0.2s; display:inline-flex; align-items:center; gap:5px; user-select:none; }
+.grocery-item { font-size:11px; padding:3px 10px; border-radius:4px; background:var(–surface2); border:1px solid var(–border2); color:var(–label); font-family:DM Mono,monospace; cursor:pointer; transition:all 0.2s; display:inline-flex; align-items:center; gap:5px; user-select:none; }
 .grocery-item:hover { border-color:var(–diet); color:var(–diet); }
 .grocery-item.have-it { background:rgba(34,197,94,0.06); border-color:rgba(34,197,94,0.2); color:var(–muted); text-decoration:line-through; opacity:0.5; }
 .grocery-item .have-dot { width:6px; height:6px; border-radius:50%; background:var(–check); flex-shrink:0; display:none; }
 .grocery-item.have-it .have-dot { display:inline-block; }
-.pantry-legend { display:flex; align-items:center; gap:8px; font-size:10px; color:var(–muted); font-family:‘DM Mono’,monospace; margin-bottom:10px; padding:8px 12px; background:var(–surface); border:1px solid var(–border); border-radius:6px; }
+.pantry-legend { display:flex; align-items:center; gap:8px; font-size:10px; color:var(–muted); font-family:DM Mono,monospace; margin-bottom:10px; padding:8px 12px; background:var(–surface); border:1px solid var(–border); border-radius:6px; }
 .pantry-legend-dot { width:6px; height:6px; border-radius:50%; background:var(–check); }
-.pantry-clear-btn { margin-left:auto; font-size:10px; font-family:‘DM Mono’,monospace; color:var(–muted); cursor:pointer; padding:2px 8px; border:1px solid var(–border2); border-radius:4px; background:transparent; transition:all 0.2s; }
+.pantry-clear-btn { margin-left:auto; font-size:10px; font-family:DM Mono,monospace; color:var(–muted); cursor:pointer; padding:2px 8px; border:1px solid var(–border2); border-radius:4px; background:transparent; transition:all 0.2s; }
 .pantry-clear-btn:hover { border-color:var(–warn); color:var(–warn); }
 body.light .grocery-item { background:var(–surface2); border-color:var(–border); color:var(–label); }
 body.light .grocery-item:hover { border-color:var(–diet); color:var(–diet); }
@@ -274,7 +274,7 @@ body.light .pantry-legend { background:var(–surface); border-color:var(–bord
 .prep-step-desc { font-size:11px; color:var(–muted); line-height:1.6; }
 
 /* EQUIPMENT */
-.equip-sub { font-family:‘DM Mono’,monospace; font-size:10px; letter-spacing:0.15em; text-transform:uppercase; margin:14px 0 8px; }
+.equip-sub { font-family:DM Mono,monospace; font-size:10px; letter-spacing:0.15em; text-transform:uppercase; margin:14px 0 8px; }
 .equip-sub.have { color:var(–check); } .equip-sub.need { color:var(–diet); }
 .equip-row { display:flex; align-items:flex-start; gap:10px; padding:10px 13px; background:var(–surface); border:1px solid var(–border); border-radius:7px; margin-bottom:5px; }
 .equip-row.need-item { border-color:rgba(249,115,22,0.2); }
@@ -282,8 +282,8 @@ body.light .pantry-legend { background:var(–surface); border-color:var(–bord
 .equip-main { flex:1; }
 .equip-name { font-size:13px; font-weight:500; color:var(–text); margin-bottom:2px; }
 .equip-use { font-size:11px; color:var(–muted); line-height:1.5; }
-.equip-buy { font-size:10px; color:var(–s); font-family:‘DM Mono’,monospace; margin-top:3px; }
-.urgency-badge { font-size:10px; font-family:‘DM Mono’,monospace; white-space:nowrap; flex-shrink:0; }
+.equip-buy { font-size:10px; color:var(–s); font-family:DM Mono,monospace; margin-top:3px; }
+.urgency-badge { font-size:10px; font-family:DM Mono,monospace; white-space:nowrap; flex-shrink:0; }
 
 @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
 @media (max-width:480px) { .lifestyle-list { grid-template-columns:1fr; } .drawer-inner { padding-left:14px; } }
@@ -298,9 +298,9 @@ body.light .pantry-legend { background:var(–surface); border-color:var(–bord
 .day-cell { background:var(–surface); border:1px solid var(–border); border-radius:8px; padding:8px 4px; text-align:center; cursor:pointer; transition:all 0.2s; }
 .day-cell.active-day { border-color:var(–w); background:var(–w-dim); }
 .day-cell.today { border-color:var(–g); }
-.day-cell-label { font-family:‘DM Mono’,monospace; font-size:9px; letter-spacing:0.08em; color:var(–muted); margin-bottom:4px; }
+.day-cell-label { font-family:DM Mono,monospace; font-size:9px; letter-spacing:0.08em; color:var(–muted); margin-bottom:4px; }
 .day-cell-type { font-size:16px; margin-bottom:2px; }
-.day-cell-name { font-size:8px; font-family:‘DM Mono’,monospace; color:var(–muted); line-height:1.2; }
+.day-cell-name { font-size:8px; font-family:DM Mono,monospace; color:var(–muted); line-height:1.2; }
 .day-cell.strength .day-cell-name { color:var(–w); }
 .day-cell.mobility .day-cell-name { color:var(–a); }
 .day-cell.conditioning .day-cell-name { color:var(–s); }
@@ -317,17 +317,17 @@ body.light .pantry-legend { background:var(–surface); border-color:var(–bord
 .wmodal-handle { width:40px; height:4px; background:var(–border2); border-radius:2px; margin:12px auto 0; flex-shrink:0; }
 .wmodal-header { padding:14px 18px 12px; border-bottom:1px solid var(–border); flex-shrink:0; }
 .wmodal-title-row { display:flex; align-items:center; gap:10px; margin-bottom:4px; }
-.wmodal-type-badge { font-family:‘DM Mono’,monospace; font-size:9px; letter-spacing:0.1em; padding:3px 8px; border-radius:3px; text-transform:uppercase; flex-shrink:0; }
+.wmodal-type-badge { font-family:DM Mono,monospace; font-size:9px; letter-spacing:0.1em; padding:3px 8px; border-radius:3px; text-transform:uppercase; flex-shrink:0; }
 .wmodal-type-badge.strength { background:var(–w-dim); color:var(–w); }
 .wmodal-type-badge.mobility { background:var(–a-dim); color:var(–a); }
 .wmodal-type-badge.conditioning { background:var(–s-dim); color:var(–s); }
 .wmodal-type-badge.rest { background:var(–surface2); color:var(–muted); }
 .wmodal-title { font-family:‘Bebas Neue’,sans-serif; font-size:22px; color:var(–text); flex:1; line-height:1.1; }
 .wmodal-close { width:30px; height:30px; border-radius:50%; background:var(–surface2); border:1px solid var(–border2); color:var(–muted); font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-.wmodal-meta { font-family:‘DM Mono’,monospace; font-size:10px; color:var(–muted); }
+.wmodal-meta { font-family:DM Mono,monospace; font-size:10px; color:var(–muted); }
 .wmodal-body { overflow-y:auto; flex:1; padding:0 16px 32px; -webkit-overflow-scrolling:touch; }
 .wmodal-section { margin-top:18px; }
-.wmodal-section-title { font-family:‘DM Mono’,monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:var(–w); margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid var(–border); }
+.wmodal-section-title { font-family:DM Mono,monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:var(–w); margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid var(–border); }
 .wmodal-section-title.green { color:var(–a); border-bottom-color:var(–border); }
 .wmodal-section-title.blue { color:var(–s); }
 
@@ -335,42 +335,42 @@ body.light .pantry-legend { background:var(–surface); border-color:var(–bord
 .exercise-card { background:var(–surface); border:1px solid var(–border); border-radius:8px; margin-bottom:8px; overflow:hidden; }
 .exercise-header { padding:12px 14px 8px; }
 .exercise-name { font-size:14px; font-weight:500; color:var(–text); margin-bottom:3px; }
-.exercise-meta { font-family:‘DM Mono’,monospace; font-size:10px; color:var(–muted); margin-bottom:6px; }
+.exercise-meta { font-family:DM Mono,monospace; font-size:10px; color:var(–muted); margin-bottom:6px; }
 .exercise-note { font-size:11px; color:var(–label); line-height:1.6; padding:0 14px 10px; font-style:italic; }
 .exercise-injury-note { font-size:11px; color:var(–w); padding:0 14px 8px; }
 
 /* SET LOGGER */
 .set-logger { padding:0 14px 12px; }
 .set-row { display:grid; grid-template-columns:32px 1fr 1fr 40px; gap:6px; align-items:center; margin-bottom:5px; }
-.set-num { font-family:‘DM Mono’,monospace; font-size:11px; color:var(–muted); text-align:center; }
-.set-input { background:var(–surface2); border:1px solid var(–border2); border-radius:6px; padding:6px 8px; font-size:13px; color:var(–text); width:100%; text-align:center; font-family:‘DM Mono’,monospace; }
+.set-num { font-family:DM Mono,monospace; font-size:11px; color:var(–muted); text-align:center; }
+.set-input { background:var(–surface2); border:1px solid var(–border2); border-radius:6px; padding:6px 8px; font-size:13px; color:var(–text); width:100%; text-align:center; font-family:DM Mono,monospace; }
 .set-input:focus { outline:none; border-color:var(–w); }
 .set-input::placeholder { color:var(–muted); font-size:11px; }
 .set-check { width:32px; height:32px; border-radius:6px; border:1.5px solid var(–border2); background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:14px; transition:all 0.2s; }
 .set-check.done { background:var(–check); border-color:var(–check); }
 .set-check.failed { background:rgba(239,68,68,0.15); border-color:var(–w); }
 .set-labels { display:grid; grid-template-columns:32px 1fr 1fr 40px; gap:6px; margin-bottom:4px; padding:0; }
-.set-label { font-family:‘DM Mono’,monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(–muted); text-align:center; }
+.set-label { font-family:DM Mono,monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(–muted); text-align:center; }
 
 /* PR BADGE */
-.pr-badge { display:inline-block; font-family:‘DM Mono’,monospace; font-size:9px; background:rgba(245,158,11,0.15); color:var(–g); border:1px solid rgba(245,158,11,0.3); border-radius:3px; padding:1px 6px; margin-left:6px; }
+.pr-badge { display:inline-block; font-family:DM Mono,monospace; font-size:9px; background:rgba(245,158,11,0.15); color:var(–g); border:1px solid rgba(245,158,11,0.3); border-radius:3px; padding:1px 6px; margin-left:6px; }
 
 /* PROGRESS CHARTS */
 .progress-section { margin-top:20px; }
 .chart-container { background:var(–surface); border:1px solid var(–border); border-radius:8px; padding:14px; margin-bottom:10px; }
-.chart-title { font-family:‘DM Mono’,monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(–muted); margin-bottom:10px; }
+.chart-title { font-family:DM Mono,monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(–muted); margin-bottom:10px; }
 .chart-canvas { width:100%; height:120px; position:relative; }
 .chart-bars { display:flex; align-items:flex-end; gap:4px; height:100px; }
 .chart-bar-wrap { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; }
 .chart-bar { width:100%; border-radius:3px 3px 0 0; background:var(–w); min-height:4px; transition:height 0.4s ease; }
-.chart-bar-label { font-family:‘DM Mono’,monospace; font-size:8px; color:var(–muted); text-align:center; }
-.chart-bar-val { font-family:‘DM Mono’,monospace; font-size:8px; color:var(–w); text-align:center; }
+.chart-bar-label { font-family:DM Mono,monospace; font-size:8px; color:var(–muted); text-align:center; }
+.chart-bar-val { font-family:DM Mono,monospace; font-size:8px; color:var(–w); text-align:center; }
 
 /* WORKOUT STATS */
 .workout-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:16px; }
 .stat-card { background:var(–surface); border:1px solid var(–border); border-radius:8px; padding:10px; text-align:center; }
 .stat-num { font-family:‘Bebas Neue’,sans-serif; font-size:24px; color:var(–w); line-height:1; }
-.stat-label { font-family:‘DM Mono’,monospace; font-size:9px; color:var(–muted); letter-spacing:0.08em; margin-top:2px; }
+.stat-label { font-family:DM Mono,monospace; font-size:9px; color:var(–muted); letter-spacing:0.08em; margin-top:2px; }
 
 /* MOBILITY ITEMS */
 .mobility-item { display:flex; align-items:center; gap:12px; padding:10px 14px; background:var(–surface); border:1px solid var(–border); border-radius:7px; margin-bottom:6px; cursor:pointer; transition:all 0.2s; }
@@ -742,12 +742,12 @@ body.light .theme-toggle::after { background:#6d28d9; transform:translateX(16px)
 
   <!-- PREP DAY PICKER -->
   <div style="margin-bottom:18px;">
-    <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--diet);margin-bottom:8px;">Prepping from which day?</div>
+    <div style="font-family:DM Mono,monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--diet);margin-bottom:8px;">Prepping from which day?</div>
     <div class="day-tabs" id="prepDayPicker"></div>
   </div>
 
   <div class="section">
-    <div class="section-head"><div class="section-time">Grocery List</div><div class="section-count" id="prepDayRange" style="margin-left:auto;color:var(--diet);font-family:'DM Mono',monospace;font-size:10px;"></div></div>
+    <div class="section-head"><div class="section-time">Grocery List</div><div class="section-count" id="prepDayRange" style="margin-left:auto;color:var(--diet);font-family:DM Mono,monospace;font-size:10px;"></div></div>
     <div class="pantry-legend">
       <span class="pantry-legend-dot"></span>
       <span>Tap any item to mark as <strong>already have it</strong> — it stays crossed off across sessions</span>
@@ -1691,7 +1691,7 @@ allSteps.push({ …s, day: day.label });
 });
 
 document.getElementById(‘prepSteps’).innerHTML =
-allSteps.map((s, i) => ` <div class="prep-step"> <div class="prep-step-num">${i + 1}</div> <div class="prep-step-content"> <div class="prep-step-title">${s.title} <span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;">${s.day}</span></div> <div class="prep-step-desc">${s.desc}</div> </div> </div>`).join(’’);
+allSteps.map((s, i) => ` <div class="prep-step"> <div class="prep-step-num">${i + 1}</div> <div class="prep-step-content"> <div class="prep-step-title">${s.title} <span style="font-size:10px;color:var(--muted);font-family:DM Mono,monospace;">${s.day}</span></div> <div class="prep-step-desc">${s.desc}</div> </div> </div>`).join(’’);
 }
 
 function renderDay(idx) {
@@ -2009,7 +2009,7 @@ cooldown: [
 { name: ‘Pigeon Pose’, detail: ‘90 sec each side — deep hip flexor and glute release’ },
 { name: ‘Standing Quad Stretch’, detail: ‘45 sec each side’ },
 { name: ‘Supine Hamstring Stretch’, detail: ‘60 sec each side — on your back, leg straight up’ },
-{ name: ‘Child’s Pose’, detail: ‘60 sec — spinal decompression’ },
+{ name: ‘Child's Pose’, detail: ‘60 sec — spinal decompression’ },
 ]
 },
 {
@@ -2048,12 +2048,12 @@ mobility: [
 { name: ‘90/90 Hip Stretch’, detail: ‘90 sec each side — front leg at 90°, back leg at 90°. Best hip flexor and external rotator stretch for golf rotation.’, sets: ‘2 rounds’ },
 { name: ‘Couch Stretch’, detail: ‘90 sec each side — rear foot on couch or wall, forward knee on floor. Most aggressive hip flexor release.’, sets: ‘2 rounds’ },
 { name: ‘Thoracic Spine Rotation’, detail: ‘10 each side on all fours — thread needle. Opens thoracic spine for golf backswing and tennis serve.’, sets: ‘3 rounds’ },
-{ name: ‘World’s Greatest Stretch’, detail: ‘5 each side slow — combines hip flexor, thoracic, hamstring. One movement for full chain.’, sets: ‘2 rounds’ },
+{ name: ‘World's Greatest Stretch’, detail: ‘5 each side slow — combines hip flexor, thoracic, hamstring. One movement for full chain.’, sets: ‘2 rounds’ },
 { name: ‘Sleeper Stretch’, detail: ‘90 sec right shoulder only — lie on right side, right arm at 90°, use left hand to gently press forearm toward floor.’, sets: ‘3 rounds’ },
 { name: ‘Band Shoulder Distraction’, detail: ‘60 sec each arm — loop band around rack, step back, arm straight, let band pull and distract the joint.’, sets: ‘2 rounds’ },
 { name: ‘Deep Squat Hold’, detail: ‘60 sec — heels flat if possible, elbows press knees out. Ankle and hip mobility for basketball.’, sets: ‘3 rounds’ },
 { name: ‘Supine Hip Flexor Release’, detail: ‘60 sec each side — lie on back, pull one knee to chest, let other leg fully relax flat.’, sets: ‘2 rounds’ },
-{ name: ‘Child’s Pose with Reach’, detail: ‘60 sec each side — reach arm as far as possible, breathe into stretch.’, sets: ‘2 rounds’ },
+{ name: ‘Child's Pose with Reach’, detail: ‘60 sec each side — reach arm as far as possible, breathe into stretch.’, sets: ‘2 rounds’ },
 { name: ‘Foam Roll — IT Band + Quads’, detail: ‘60 sec each — slow roll, pause on tight spots. Critical for knee health in court sports.’, sets: ‘1 round’ },
 ],
 cooldown: []
@@ -2128,7 +2128,7 @@ warmup: [], exercises: [],
 rest_tips: [
 ‘Today is your shopping and meal prep planning day — physical rest, mental prep’,
 ‘Optional: 20 min easy walk or gentle yoga — nothing that creates muscle soreness’,
-‘Review next week’s workout plan — mental rehearsal improves performance’,
+‘Review next week's workout plan — mental rehearsal improves performance’,
 ‘Foam roll for 10 min — no intensity, just maintenance rolling’,
 ‘Hydration focus — 3L+ water today, your joints and tendons depend on it’,
 ],
@@ -2244,103 +2244,72 @@ const day = WORKOUT_WEEK[idx];
 const key = getWorkoutDayKey(idx);
 const log = workoutLogs[key] || {};
 
-document.getElementById(‘wModalBadge’).className = `wmodal-type-badge ${day.type}`;
+document.getElementById(‘wModalBadge’).className = ’wmodal-type-badge ’ + day.type;
 document.getElementById(‘wModalBadge’).textContent = day.type;
 document.getElementById(‘wModalTitle’).textContent = day.title;
-document.getElementById(‘wModalMeta’).textContent = `⏱ ${day.duration}  ·  🎯 ${day.focus}`;
+document.getElementById(‘wModalMeta’).textContent = ’⏱ ’ + day.duration + ’  ·  🎯 ’ + day.focus;
 
 let body = ‘’;
 
-// REST DAY
 if (day.type === ‘rest’) {
-body = `<div class="wmodal-section"> <div class="wmodal-section-title">Rest Day Tips</div> ${day.rest_tips.map(t => `<div class="mobility-item" style="cursor:default;">
-<div style="font-size:20px">💤</div>
-<div class="mobility-content"><div class="mobility-name" style="text-decoration:none!important;">${t}</div></div>
-</div>`).join('')} </div>`;
+body = ‘<div class="wmodal-section"><div class="wmodal-section-title">Rest Day Tips</div>’;
+day.rest_tips.forEach(function(t) {
+body += ‘<div class="mobility-item" style="cursor:default;"><div style="font-size:20px">💤</div><div class="mobility-content"><div class="mobility-name" style="text-decoration:none!important;">’ + t + ‘</div></div></div>’;
+});
+body += ‘</div>’;
 }
-// MOBILITY DAY
 else if (day.type === ‘mobility’) {
-body = `<div class="wmodal-section"> <div class="wmodal-section-title green">Mobility Flow</div> <div style="font-size:11px;color:var(--muted);margin-bottom:12px;font-family:'DM Mono',monospace;">Tap each stretch when complete. Work slowly — hold times matter more than reps.</div> ${day.mobility.map((m, mi) => { const checked = log[`mob_${mi}`]; return `<div class="mobility-item${checked ? ' done-mob' : ''}" id="mob-${idx}-${mi}" onclick="toggleMobility(${idx}, ${mi})">
-<div class="mobility-check">${checked ? ‘✓’ : ‘’}</div>
-<div class="mobility-content">
-<div class="mobility-name">${m.name} <span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;">${m.sets}</span></div>
-<div class="mobility-detail">${m.detail}</div>
-</div>
-</div>`; }).join('')} </div>`;
+body = ‘<div class="wmodal-section"><div class="wmodal-section-title green">Mobility Flow</div>’;
+body += ‘<div style="font-size:11px;color:var(--muted);margin-bottom:12px;font-family:DM Mono,monospace;">Tap each stretch when complete. Work slowly — hold times matter more than reps.</div>’;
+day.mobility.forEach(function(m, mi) {
+var checked = log[‘mob_’ + mi];
+body += ‘<div class="mobility-item' + (checked ? ' done-mob' : '') + '" id="mob-' + idx + '-' + mi + '" onclick="toggleMobility(' + idx + ', ' + mi + ')"><div class="mobility-check">’ + (checked ? ‘✓’ : ‘’) + ‘</div><div class="mobility-content"><div class="mobility-name">’ + m.name + ’ <span style="font-size:10px;color:var(--muted);font-family:DM Mono,monospace;">’ + m.sets + ‘</span></div><div class="mobility-detail">’ + m.detail + ‘</div></div></div>’;
+});
+body += ‘</div>’;
 }
-// STRENGTH / CONDITIONING DAY
 else {
-// Warmup
 if (day.warmup && day.warmup.length > 0) {
-body += `<div class="wmodal-section"> <div class="wmodal-section-title green">Warm-Up</div> ${day.warmup.map(w => `<div class="mobility-item" style="cursor:default;">
-<div style="font-size:16px">🔥</div>
-<div class="mobility-content">
-<div class="mobility-name">${w.name} ${w.sets ? `<span style="font-size:10px;color:var(--muted);">× ${w.sets}</span>` : ‘’}</div>
-<div class="mobility-detail">${w.detail}</div>
-</div>
-</div>`).join('')} </div>`;
+body += ‘<div class="wmodal-section"><div class="wmodal-section-title green">Warm-Up</div>’;
+day.warmup.forEach(function(w) {
+body += ‘<div class="mobility-item" style="cursor:default;"><div style="font-size:16px">🔥</div><div class="mobility-content"><div class="mobility-name">’ + w.name + (w.sets ? ’ <span style="font-size:10px;color:var(--muted);">× ’ + w.sets + ‘</span>’ : ‘’) + ‘</div><div class="mobility-detail">’ + w.detail + ‘</div></div></div>’;
+});
+body += ‘</div>’;
 }
 
 ```
-// Exercises
-body += `<div class="wmodal-section">
-  <div class="wmodal-section-title">Main Workout</div>
-  ${day.exercises.map((ex, ei) => {
-    const exLog = log[`ex_${ei}`] || {};
-    const prevBest = getPrevBest(day.title, ei);
-    return `<div class="exercise-card">
-      <div class="exercise-header">
-        <div class="exercise-name">${ex.name}${prevBest ? `<span class="pr-badge">PR: ${prevBest}lb</span>` : ''}</div>
-        <div class="exercise-meta">${ex.sets} sets × ${ex.reps} &nbsp;·&nbsp; Suggested: ${ex.rec_weight}</div>
-      </div>
-      ${ex.injury ? `<div class="exercise-injury-note">${ex.injury}</div>` : ''}
-      <div class="exercise-note">${ex.note}</div>
-      <div class="set-logger">
-        <div class="set-labels">
-          <div class="set-label">SET</div>
-          <div class="set-label">WEIGHT (lb)</div>
-          <div class="set-label">REPS</div>
-          <div class="set-label"></div>
-        </div>
-        ${Array.from({length: ex.sets}, (_, si) => {
-          const setLog = exLog[`set_${si}`] || {};
-          return `<div class="set-row">
-            <div class="set-num">${si+1}</div>
-            <input class="set-input" type="number" placeholder="lbs" value="${setLog.weight||''}"
-              onchange="logSet(${idx}, ${ei}, ${si}, 'weight', this.value)" inputmode="numeric">
-            <input class="set-input" type="number" placeholder="reps" value="${setLog.reps||''}"
-              onchange="logSet(${idx}, ${ei}, ${si}, 'reps', this.value)" inputmode="numeric">
-            <button class="set-check${setLog.status==='done'?' done':setLog.status==='failed'?' failed':''}"
-              onclick="cycleSetStatus(${idx}, ${ei}, ${si}, this)">
-              ${setLog.status==='done'?'✓':setLog.status==='failed'?'✗':''}
-            </button>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>`;
-  }).join('')}
-</div>`;
+body += '<div class="wmodal-section"><div class="wmodal-section-title">Main Workout</div>';
+day.exercises.forEach(function(ex, ei) {
+  var exLog = log['ex_' + ei] || {};
+  var prevBest = getPrevBest(day.title, ei);
+  body += '<div class="exercise-card"><div class="exercise-header">';
+  body += '<div class="exercise-name">' + ex.name + (prevBest ? '<span class="pr-badge">PR: ' + prevBest + 'lb</span>' : '') + '</div>';
+  body += '<div class="exercise-meta">' + ex.sets + ' sets × ' + ex.reps + ' &nbsp;·&nbsp; Suggested: ' + ex.rec_weight + '</div></div>';
+  if (ex.injury) body += '<div class="exercise-injury-note">' + ex.injury + '</div>';
+  body += '<div class="exercise-note">' + ex.note + '</div>';
+  body += '<div class="set-logger"><div class="set-labels"><div class="set-label">SET</div><div class="set-label">WEIGHT (lb)</div><div class="set-label">REPS</div><div class="set-label"></div></div>';
+  for (var si = 0; si < ex.sets; si++) {
+    var setLog = exLog['set_' + si] || {};
+    var status = setLog.status || '';
+    body += '<div class="set-row">';
+    body += '<div class="set-num">' + (si+1) + '</div>';
+    body += '<input class="set-input" type="number" placeholder="lbs" value="' + (setLog.weight||'') + '" onchange="logSet(' + idx + ',' + ei + ',' + si + ',\'weight\',this.value)" inputmode="numeric">';
+    body += '<input class="set-input" type="number" placeholder="reps" value="' + (setLog.reps||'') + '" onchange="logSet(' + idx + ',' + ei + ',' + si + ',\'reps\',this.value)" inputmode="numeric">';
+    body += '<button class="set-check' + (status==='done'?' done':status==='failed'?' failed':'') + '" onclick="cycleSetStatus(' + idx + ',' + ei + ',' + si + ',this)">' + (status==='done'?'✓':status==='failed'?'✗':'') + '</button>';
+    body += '</div>';
+  }
+  body += '</div></div>';
+});
+body += '</div>';
 
-// Cooldown
 if (day.cooldown && day.cooldown.length > 0) {
-  body += `<div class="wmodal-section">
-    <div class="wmodal-section-title green">Cool Down</div>
-    ${day.cooldown.map(c => `<div class="mobility-item" style="cursor:default;">
-      <div style="font-size:16px">🧊</div>
-      <div class="mobility-content">
-        <div class="mobility-name">${c.name}</div>
-        <div class="mobility-detail">${c.detail}</div>
-      </div>
-    </div>`).join('')}
-  </div>`;
+  body += '<div class="wmodal-section"><div class="wmodal-section-title green">Cool Down</div>';
+  day.cooldown.forEach(function(c) {
+    body += '<div class="mobility-item" style="cursor:default;"><div style="font-size:16px">🧊</div><div class="mobility-content"><div class="mobility-name">' + c.name + '</div><div class="mobility-detail">' + c.detail + '</div></div></div>';
+  });
+  body += '</div>';
 }
 
-// Complete button
-body += `<div class="wmodal-section">
-  <button onclick="completeWorkout(${idx})" style="width:100%;padding:14px;background:var(--w);border:none;border-radius:8px;color:#fff;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.1em;cursor:pointer;margin-top:4px;">
-    ✓ &nbsp;Mark Workout Complete
-  </button>
-</div>`;
+body += '<div class="wmodal-section"><button onclick="completeWorkout(' + idx + ')" style="width:100%;padding:14px;background:var(--w);border:none;border-radius:8px;color:#fff;font-family:Bebas Neue,sans-serif;font-size:18px;letter-spacing:0.1em;cursor:pointer;margin-top:4px;">✓ &nbsp;Mark Workout Complete</button></div>';
 ```
 
 }
