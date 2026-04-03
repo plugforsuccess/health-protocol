@@ -1696,19 +1696,25 @@ allSteps.map((s, i) => ` <div class="prep-step"> <div class="prep-step-num">${i 
 
 function renderDay(idx) {
 const day = WEEK_MEALS[idx];
-const html = `<div class="benefit-legend-bar"> <span class="benefit-item"><span class="benefit-dot anti"></span>Anti-inflammatory</span> <span class="benefit-item"><span class="benefit-dot fiber"></span>High Fiber</span> <span class="benefit-item"><span class="benefit-dot cancer"></span>Cancer-Protective</span> </div> ${day.meals.map((m, mi) =>`
-<div class="meal-card" id="meal-${idx}-${mi}" onclick="openRecipeModal(${idx}, ${mi})" style="cursor:pointer;">
-<div class="meal-header">
-<span class="meal-time-badge ${m.time}">${m.time}</span>
-<span class="meal-name">${m.name}</span>
-<div class="benefit-dots">
-${m.benefits.map(b => `<span class="benefit-dot ${b}"></span>`).join(’’)}
-</div>
-<div class="expand-btn" style="margin-left:4px; color:var(--diet);">
-<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5h9M7 2l4.5 4.5L7 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-</div>
-</div>
-</div>`).join('')}`;
+let html = ‘<div class="benefit-legend-bar">’;
+html += ‘<span class="benefit-item"><span class="benefit-dot anti"></span>Anti-inflammatory</span>’;
+html += ‘<span class="benefit-item"><span class="benefit-dot fiber"></span>High Fiber</span>’;
+html += ‘<span class="benefit-item"><span class="benefit-dot cancer"></span>Cancer-Protective</span>’;
+html += ‘</div>’;
+day.meals.forEach(function(m, mi) {
+html += ‘<div class="meal-card" id="meal-' + idx + '-' + mi + '" onclick="openRecipeModal(' + idx + ', ' + mi + ')" style="cursor:pointer;">’;
+html += ‘<div class="meal-header">’;
+html += ‘<span class="meal-time-badge ' + m.time + '">’ + m.time + ‘</span>’;
+html += ‘<span class="meal-name">’ + m.name + ‘</span>’;
+html += ‘<div class="benefit-dots">’;
+m.benefits.forEach(function(b) {
+html += ‘<span class="benefit-dot ' + b + '"></span>’;
+});
+html += ‘</div>’;
+html += ‘<div class="expand-btn" style="margin-left:4px; color:var(--diet);">’;
+html += ‘<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5h9M7 2l4.5 4.5L7 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>’;
+html += ‘</div></div></div>’;
+});
 document.getElementById(‘mealsContainer’).innerHTML = html;
 }
 
