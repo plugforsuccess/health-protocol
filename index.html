@@ -1597,15 +1597,15 @@ AVOID_FOODS.map(function(f){return ‘<span class="avoid-pill">’+f+’</span>�
 
 // Day tabs (meal view)
 document.getElementById(‘dayTabs’).innerHTML =
-WEEK_MEALS.map((d, i) =>
-`<button class="day-tab${i===0?' active':''}" onclick="selectDay(${i})">${d.day}</button>`
-).join(’’);
+WEEK_MEALS.map(function(d, i) {
+return ‘<button class="day-tab' + (i===0?' active':'') + '" onclick="selectDay(' + i + ')">’ + d.day + ‘</button>’;
+}).join(’’);
 
 // Prep day picker
 document.getElementById(‘prepDayPicker’).innerHTML =
-WEEK_MEALS.map((d, i) =>
-`<button class="day-tab${i===0?' active':''}" id="prepPick-${i}" onclick="selectPrepDay(${i})">${d.day}</button>`
-).join(’’);
+WEEK_MEALS.map(function(d, i) {
+return ‘<button class="day-tab' + (i===0?' active':'') + '" id="prepPick-' + i + '" onclick="selectPrepDay(' + i + ')">’ + d.day + ‘</button>’;
+}).join(’’);
 
 renderDay(0);
 renderPrepContent(0);
@@ -1613,11 +1613,17 @@ renderEquipment();
 }
 
 function renderEquipment() {
-const haveHTML = EQUIPMENT.have.map(e => ` <div class="equip-row"> <div class="equip-check">✅</div> <div class="equip-main"> <div class="equip-name">${e.item}</div> <div class="equip-use">${e.use}</div> </div> </div>`).join(’’);
+const haveHTML = EQUIPMENT.have.map(function(e) {
+return ‘<div class="equip-row"><div class="equip-check">✅</div><div class="equip-main"><div class="equip-name">’ + e.item + ‘</div><div class="equip-use">’ + e.use + ‘</div></div></div>’;
+}).join(’’);
 
-const needHTML = EQUIPMENT.need.map(e => ` <div class="equip-row need-item"> <div class="equip-check">🛒</div> <div class="equip-main"> <div class="equip-name">${e.item}</div> <div class="equip-use">${e.use}</div> <div class="equip-buy">${e.buy}</div> </div> <div class="urgency-badge">${e.urgency}</div> </div>`).join(’’);
+const needHTML = EQUIPMENT.need.map(function(e) {
+return ‘<div class="equip-row need-item"><div class="equip-check">🛒</div><div class="equip-main"><div class="equip-name">’ + e.item + ‘</div><div class="equip-use">’ + (e.use||’’) + ‘</div></div><div class="urgency-badge">’ + (e.urgency||’’) + ‘</div></div>’;
+}).join(’’);
 
-document.getElementById(‘equipContent’).innerHTML = ` <div class="equip-sub have">✓ You Already Have</div> ${haveHTML} <div class="equip-sub need" style="margin-top:18px;">🛒 You Need to Buy</div> ${needHTML}`;
+document.getElementById(‘equipContent’).innerHTML =
+‘<div class="equip-sub have">✓ You Already Have</div>’ + haveHTML +
+‘<div class="equip-sub need" style="margin-top:18px;">🛒 You Need to Buy</div>’ + needHTML;
 }
 
 let currentPrepDay = 0;
@@ -1672,7 +1678,15 @@ if (!existing.includes(’(’) && item.includes(’(’)) merged[cat][base] = i
 });
 
 document.getElementById(‘groceryList’).innerHTML =
-Object.entries(merged).map(([cat, itemMap]) => ` <div class="grocery-category"> <div class="grocery-cat-title">${cat}</div> <div class="grocery-items">${Object.values(itemMap).map(i => { const key = pantryKey(i); const have = pantryState[key]; return '<span class="grocery-item' + (have ? ' have-it' : '') + '" onclick="togglePantryItem(\'' + key.replace(/'/g,"\\'") + '\', this)"><span class="have-dot"></span>' + i + '</span>'; }).join('')}</div> </div>`).join(’’);
+Object.entries(merged).map(function(entry) {
+var cat = entry[0]; var itemMap = entry[1];
+var itemsHTML = Object.values(itemMap).map(function(i) {
+var key = pantryKey(i);
+var have = pantryState[key];
+return ‘<span class=“grocery-item’ + (have ? ’ have-it’ : ‘’) + ‘” onclick=“togglePantryItem('’ + key.replace(/’/g,”\’”) + ‘', this)”><span class="have-dot"></span>’ + i + ‘</span>’;
+}).join(’’);
+return ‘<div class="grocery-category"><div class="grocery-cat-title">’ + cat + ‘</div><div class="grocery-items">’ + itemsHTML + ‘</div></div>’;
+}).join(’’);
 
 // Merge prep steps for selected range — deduplicate by title, keep earliest occurrence
 const allSteps = [];
@@ -1691,7 +1705,9 @@ allSteps.push({ …s, day: day.label });
 });
 
 document.getElementById(‘prepSteps’).innerHTML =
-allSteps.map((s, i) => ` <div class="prep-step"> <div class="prep-step-num">${i + 1}</div> <div class="prep-step-content"> <div class="prep-step-title">${s.title} <span style="font-size:10px;color:var(--muted);font-family:DM Mono,monospace;">${s.day}</span></div> <div class="prep-step-desc">${s.desc}</div> </div> </div>`).join(’’);
+allSteps.map(function(s, i) {
+return ‘<div class="prep-step"><div class="prep-step-num">’ + (i+1) + ‘</div><div class="prep-step-content"><div class="prep-step-title">’ + s.title + ’ <span style="font-size:10px;color:var(--muted);font-family:DM Mono,monospace;">’ + s.day + ‘</span></div><div class="prep-step-desc">’ + s.desc + ‘</div></div></div>’;
+}).join(’’);
 }
 
 function renderDay(idx) {
@@ -1731,13 +1747,13 @@ function openRecipeModal(dayIdx, mealIdx) {
 const meal = WEEK_MEALS[dayIdx].meals[mealIdx];
 const recipe = RECIPES[meal.name] || null;
 
-document.getElementById(‘modalTimeBadge’).className = `modal-time-badge ${meal.time}`;
+document.getElementById(‘modalTimeBadge’).className = ’modal-time-badge ’ + meal.time;
 document.getElementById(‘modalTimeBadge’).textContent = meal.time;
 document.getElementById(‘modalTitle’).textContent = meal.name;
 
 if (recipe) {
-document.getElementById(‘modalTotalTime’).textContent = `⏱ ${recipe.time}`;
-document.getElementById(‘modalEquipment’).textContent = `🍳 ${recipe.equipment}`;
+document.getElementById(‘modalTotalTime’).textContent = ’⏱ ’ + recipe.time;
+document.getElementById(‘modalEquipment’).textContent = ’🍳 ’ + recipe.equipment;
 } else {
 document.getElementById(‘modalTotalTime’).textContent = ‘’;
 document.getElementById(‘modalEquipment’).textContent = ‘’;
@@ -1745,15 +1761,19 @@ document.getElementById(‘modalEquipment’).textContent = ‘’;
 
 // Ingredients
 document.getElementById(‘modalIngredients’).innerHTML =
-meal.ingredients.map(i => `<span class="modal-ingredient">${i}</span>`).join(’’);
+meal.ingredients.map(function(ing) {
+return ‘<span class="modal-ingredient">’ + ing + ‘</span>’;
+}).join(’’);
 
 // Steps
 if (recipe && recipe.steps) {
 document.getElementById(‘modalSteps’).innerHTML =
-recipe.steps.map((s, i) => ` <div class="modal-step"> <div class="modal-step-num">${i+1}</div> <div class="modal-step-content"> <div class="modal-step-title">${s.title}</div> <div class="modal-step-desc">${s.desc}</div> </div> </div>`).join(’’);
+recipe.steps.map(function(s, i) {
+return ‘<div class="modal-step"><div class="modal-step-num">’ + (i+1) + ‘</div><div class="modal-step-content"><div class="modal-step-title">’ + s.title + ‘</div><div class="modal-step-desc">’ + s.desc + ‘</div></div></div>’;
+}).join(’’);
 } else {
 document.getElementById(‘modalSteps’).innerHTML =
-`<div class="modal-step"><div class="modal-step-num">1</div><div class="modal-step-content"><div class="modal-step-desc">${meal.prep}</div></div></div>`;
+‘<div class="modal-step"><div class="modal-step-num">1</div><div class="modal-step-content"><div class="modal-step-desc">’ + meal.prep + ‘</div></div></div>’;
 }
 
 // Tip
