@@ -993,8 +993,8 @@ function renderSuppItem(s, tab) {
 const checked = !!states[tab][s.id];
 const checkedClass = checked ? ` checked-${tab}` : ‘’;
 const warnClass = s.warn ? ’ warn-item’ : ‘’;
-const dots = (s.nt || []).map(n => `<span class="nt-dot ${n}"></span>`).join(’’);
-const tags = (s.nt || []).map(n => `<span class="drawer-tag ${n}">${NT_LABELS[n]||n}</span>`).join(’’);
+const dots = (s.nt || []).map(function(n){return ‘<span class="nt-dot '+n+'"></span>’;}).join(’’);
+const tags = (s.nt || []).map(function(n){return ‘<span class="drawer-tag '+n+'">’+(NT_LABELS[n]||n)+’</span>’;}).join(’’);
 
 return `<div class="supp-item${checkedClass}${warnClass}" id="item-${s.id}">
 <div class="supp-row" onclick="toggleSupp('${s.id}','${tab}',event)">
@@ -1152,7 +1152,7 @@ const doneClass = `done-${tab}`;
 const html = phases.map(p => {
 const ids = p.supps.map(s => s.id);
 const done = ids.every(id => !!states[tab][id]);
-return `<div class="phase-pill${done ? ' '+doneClass : ''}" onclick="scrollToSection('${tab}-section-${p.key}')">${p.label}</div>`;
+return ‘<div class="phase-pill' + (done ? ' '+doneClass : '') + '" onclick="scrollToSection(\'' + tab + '-section-' + phase + '\')">’ + label + ‘</div>’;
 }).join(’’);
 
 document.getElementById(‘phasePills’).innerHTML = html;
@@ -1275,7 +1275,7 @@ function exportData(tab) {
 const allKeys = [];
 for (let i = 0; i < localStorage.length; i++) {
 const key = localStorage.key(i);
-if (key.startsWith(`protocol_${tab}`) || key.startsWith(`streak_${tab}`)) {
+if (key.startsWith(‘protocol_’ + tab) || key.startsWith(‘streak_’ + tab)) {
 allKeys.push(key);
 }
 }
@@ -1593,7 +1593,7 @@ need: [
 function buildDiet() {
 // Avoid pills
 document.getElementById(‘avoidGrid’).innerHTML =
-AVOID_FOODS.map(f => `<span class="avoid-pill">${f}</span>`).join(’’);
+AVOID_FOODS.map(function(f){return ‘<span class="avoid-pill">’+f+’</span>’;}).join(’’);
 
 // Day tabs (meal view)
 document.getElementById(‘dayTabs’).innerHTML =
@@ -1672,7 +1672,7 @@ if (!existing.includes(’(’) && item.includes(’(’)) merged[cat][base] = i
 });
 
 document.getElementById(‘groceryList’).innerHTML =
-Object.entries(merged).map(([cat, itemMap]) => `<div class="grocery-category"> <div class="grocery-cat-title">${cat}</div> <div class="grocery-items">${Object.values(itemMap).map(i => { const key = pantryKey(i); const have = pantryState[key]; return`<span class=“grocery-item${have ? ’ have-it’ : ‘’}” onclick=“togglePantryItem(’${key.replace(/’/g,”\’”)}’, this)”><span class="have-dot"></span>${i}</span>`; }).join('')}</div> </div>`).join(’’);
+Object.entries(merged).map(([cat, itemMap]) => ` <div class="grocery-category"> <div class="grocery-cat-title">${cat}</div> <div class="grocery-items">${Object.values(itemMap).map(i => { const key = pantryKey(i); const have = pantryState[key]; return '<span class="grocery-item' + (have ? ' have-it' : '') + '" onclick="togglePantryItem(\'' + key.replace(/'/g,"\\'") + '\', this)"><span class="have-dot"></span>' + i + '</span>'; }).join('')}</div> </div>`).join(’’);
 
 // Merge prep steps for selected range — deduplicate by title, keep earliest occurrence
 const allSteps = [];
@@ -2344,9 +2344,9 @@ if (e.target === document.getElementById(‘workoutModal’)) closeWorkoutDayMod
 function logSet(dayIdx, exIdx, setIdx, field, value) {
 const key = getWorkoutDayKey(dayIdx);
 if (!workoutLogs[key]) workoutLogs[key] = {};
-if (!workoutLogs[key][`ex_${exIdx}`]) workoutLogs[key][`ex_${exIdx}`] = {};
-if (!workoutLogs[key][`ex_${exIdx}`][`set_${setIdx}`]) workoutLogs[key][`ex_${exIdx}`][`set_${setIdx}`] = {};
-workoutLogs[key][`ex_${exIdx}`][`set_${setIdx}`][field] = parseFloat(value) || value;
+if (!workoutLogs[key][‘ex_’ + exIdx]) workoutLogs[key][‘ex_’ + exIdx] = {};
+if (!workoutLogs[key][‘ex_’ + exIdx][‘set_’ + setIdx]) workoutLogs[key][‘ex_’ + exIdx][‘set_’ + setIdx] = {};
+workoutLogs[key][‘ex_’ + exIdx][‘set_’ + setIdx][field] = parseFloat(value) || value;
 
 // Calculate volume
 let vol = 0;
@@ -2367,12 +2367,12 @@ saveWorkoutLogs();
 function cycleSetStatus(dayIdx, exIdx, setIdx, btn) {
 const key = getWorkoutDayKey(dayIdx);
 if (!workoutLogs[key]) workoutLogs[key] = {};
-if (!workoutLogs[key][`ex_${exIdx}`]) workoutLogs[key][`ex_${exIdx}`] = {};
-if (!workoutLogs[key][`ex_${exIdx}`][`set_${setIdx}`]) workoutLogs[key][`ex_${exIdx}`][`set_${setIdx}`] = {};
+if (!workoutLogs[key][‘ex_’ + exIdx]) workoutLogs[key][‘ex_’ + exIdx] = {};
+if (!workoutLogs[key][‘ex_’ + exIdx][‘set_’ + setIdx]) workoutLogs[key][‘ex_’ + exIdx][‘set_’ + setIdx] = {};
 
-const current = workoutLogs[key][`ex_${exIdx}`][`set_${setIdx}`].status || ‘’;
+const current = workoutLogs[key][‘ex_’ + exIdx][‘set_’ + setIdx].status || ‘’;
 const next = current === ‘’ ? ‘done’ : current === ‘done’ ? ‘failed’ : ‘’;
-workoutLogs[key][`ex_${exIdx}`][`set_${setIdx}`].status = next;
+workoutLogs[key][‘ex_’ + exIdx][‘set_’ + setIdx].status = next;
 
 btn.className = `set-check${next === 'done' ? ' done' : next === 'failed' ? ' failed' : ''}`;
 btn.textContent = next === ‘done’ ? ‘✓’ : next === ‘failed’ ? ‘✗’ : ‘’;
@@ -2382,12 +2382,12 @@ saveWorkoutLogs();
 function toggleMobility(dayIdx, mobIdx) {
 const key = getWorkoutDayKey(dayIdx);
 if (!workoutLogs[key]) workoutLogs[key] = {};
-workoutLogs[key][`mob_${mobIdx}`] = !workoutLogs[key][`mob_${mobIdx}`];
+workoutLogs[key][‘mob_’ + mobIdx] = !workoutLogs[key][‘mob_’ + mobIdx];
 saveWorkoutLogs();
-const el = document.getElementById(`mob-${dayIdx}-${mobIdx}`);
+const el = document.getElementById(‘mob-’ + dayIdx + ‘-’ + mobIdx);
 if (el) {
-el.classList.toggle(‘done-mob’, !!workoutLogs[key][`mob_${mobIdx}`]);
-el.querySelector(’.mobility-check’).textContent = workoutLogs[key][`mob_${mobIdx}`] ? ‘✓’ : ‘’;
+el.classList.toggle(‘done-mob’, !!workoutLogs[key][‘mob_’ + mobIdx]);
+el.querySelector(’.mobility-check’).textContent = workoutLogs[key][‘mob_’ + mobIdx] ? ‘✓’ : ‘’;
 }
 }
 
@@ -2403,8 +2403,8 @@ function getPrevBest(workoutTitle, exIdx) {
 let best = 0;
 const today = getWorkoutDayKey(currentWorkoutDay);
 Object.entries(workoutLogs).forEach(([date, log]) => {
-if (date === today || !log[`ex_${exIdx}`]) return;
-Object.values(log[`ex_${exIdx}`]).forEach(set => {
+if (date === today || !log[‘ex_’ + exIdx]) return;
+Object.values(log[‘ex_’ + exIdx]).forEach(function(set) {
 if (set.weight && parseFloat(set.weight) > best) best = parseFloat(set.weight);
 });
 });
@@ -2414,7 +2414,7 @@ return best > 0 ? best : null;
 function checkPR(dayIdx, exIdx, key) {
 const prevBest = getPrevBest(WORKOUT_WEEK[dayIdx].title, exIdx);
 if (!prevBest) return;
-const exLog = workoutLogs[key][`ex_${exIdx}`] || {};
+const exLog = workoutLogs[key][‘ex_’ + exIdx] || {};
 let currentBest = 0;
 Object.values(exLog).forEach(set => {
 if (set.weight && parseFloat(set.weight) > currentBest) currentBest = parseFloat(set.weight);
