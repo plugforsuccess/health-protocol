@@ -1152,7 +1152,7 @@ const doneClass = `done-${tab}`;
 const html = phases.map(p => {
 const ids = p.supps.map(s => s.id);
 const done = ids.every(id => !!states[tab][id]);
-return ‘<div class="phase-pill' + (done ? ' '+doneClass : '') + '" onclick="scrollToSection(\'' + tab + '-section-' + phase + '\')">’ + label + ‘</div>’;
+return ‘<div class="phase-pill' + (done ? ' '+doneClass : '') + '" onclick="scrollToSection(\'' + tab + '-section-' + p.key + '\')">’ + p.label + ‘</div>’;
 }).join(’’);
 
 document.getElementById(‘phasePills’).innerHTML = html;
