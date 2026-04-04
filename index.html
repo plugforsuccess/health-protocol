@@ -509,6 +509,101 @@
   body.light .theme-toggle::after { background:#6d28d9; transform:translateX(16px); }
   .theme-toggle-wrap { display:flex; align-items:center; gap:6px; }
   .theme-icon { font-size:13px; line-height:1; }
+  /* ── REST TIMER ── */
+  .rest-timer-wrap {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 700;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+  }
+  .rest-timer-wrap.visible {
+    transform: translateY(0);
+    pointer-events: all;
+  }
+  .rest-timer-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 16px 16px 0 0;
+    padding: 16px 24px 20px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 0 -8px 32px rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .rt-ring-wrap {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+  }
+  .rt-ring-bg {
+    fill: none;
+    stroke: var(--border2);
+    stroke-width: 5;
+  }
+  .rt-ring-fill {
+    fill: none;
+    stroke: var(--w);
+    stroke-width: 5;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: 32px 32px;
+    transition: stroke-dashoffset 1s linear;
+  }
+  .rt-num {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: var(--text);
+    line-height: 1;
+  }
+  .rt-info { flex: 1; }
+  .rt-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+  .rt-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .rt-btns { display: flex; gap: 8px; }
+  .rt-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--label);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .rt-btn:hover { border-color: var(--s); color: var(--s); }
+  .rt-btn.skip { border-color: var(--w); color: var(--w); }
+  .rt-btn.skip:hover { background: var(--w-dim); }
+  body.light .rest-timer-card {
+    background: #fff;
+    border-color: #d4d4e4;
+    box-shadow: 0 -8px 32px rgba(0,0,0,0.15);
+  }
 </style>
 </head>
 <body>
@@ -870,6 +965,27 @@
           <div class="modal-why-title">🌿 Why This Meal</div>
           <div class="modal-why-text" id="modalWhy"></div>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- REST TIMER -->
+<div class="rest-timer-wrap" id="restTimerWrap">
+  <div class="rest-timer-card">
+    <div class="rt-ring-wrap">
+      <svg width="64" height="64" viewBox="0 0 64 64">
+        <circle class="rt-ring-bg" cx="32" cy="32" r="27"/>
+        <circle class="rt-ring-fill" id="rtRingFill" cx="32" cy="32" r="27"
+          stroke-dasharray="169.6" stroke-dashoffset="0"/>
+      </svg>
+      <div class="rt-num" id="rtNum">90</div>
+    </div>
+    <div class="rt-info">
+      <div class="rt-label">Rest Timer</div>
+      <div class="rt-title" id="rtTitle">Next set in…</div>
+      <div class="rt-btns">
+        <button class="rt-btn" id="rtPauseBtn" onclick="toggleTimerPause()">Pause</button>
+        <button class="rt-btn skip" onclick="skipTimer()">Skip →</button>
       </div>
     </div>
   </div>
@@ -2576,6 +2692,137 @@ try {
     }
   } catch(e2) {}
 }
+
+// ─────────────────────────────────────────
+// REST TIMER
+// ─────────────────────────────────────────
+let rtState = {
+  active: false,
+  paused: false,
+  total: 90,
+  remaining: 90,
+  interval: null,
+  hideTimeout: null,
+};
+
+const RT_CIRCUMFERENCE = 169.6; // 2 * Math.PI * 27
+
+/**
+ * Determine rest duration based on the exercise name.
+ */
+function getRestDuration(exName) {
+  if (!exName) return 90;
+  const n = exName.toLowerCase();
+  if (n.includes('wrist') || n.includes('eccentric') || n.includes('elbow')) return 60;
+  if (n.includes('lateral raise') || n.includes('calf') || n.includes('face pull') ||
+      n.includes('band') || n.includes('tricep') || n.includes('curl') ||
+      n.includes('dead bug') || n.includes('plank') || n.includes('pallof')) return 60;
+  if (n.includes('interval') || n.includes('agility') || n.includes('rope') ||
+      n.includes('jump') || n.includes('battle')) return 75;
+  return 90;
+}
+
+function startRestTimer(seconds, exerciseName) {
+  if (rtState.interval) clearInterval(rtState.interval);
+  if (rtState.hideTimeout) clearTimeout(rtState.hideTimeout);
+
+  rtState.total = seconds;
+  rtState.remaining = seconds;
+  rtState.active = true;
+  rtState.paused = false;
+
+  const titleEl = document.getElementById('rtTitle');
+  if (titleEl) titleEl.textContent = exerciseName || 'Next set in…';
+
+  const pauseBtn = document.getElementById('rtPauseBtn');
+  if (pauseBtn) pauseBtn.textContent = 'Pause';
+
+  updateTimerDisplay();
+
+  const wrap = document.getElementById('restTimerWrap');
+  if (wrap) wrap.classList.add('visible');
+
+  rtState.interval = setInterval(function () {
+    if (rtState.paused) return;
+    rtState.remaining--;
+    updateTimerDisplay();
+    if (rtState.remaining <= 0) timerComplete();
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const numEl = document.getElementById('rtNum');
+  const ringEl = document.getElementById('rtRingFill');
+  if (!numEl || !ringEl) return;
+
+  numEl.textContent = Math.max(0, rtState.remaining);
+
+  const pct = rtState.remaining / rtState.total;
+  ringEl.style.strokeDashoffset = RT_CIRCUMFERENCE * (1 - pct);
+
+  if (rtState.remaining <= 10) {
+    ringEl.style.stroke = 'var(--check)';
+  } else if (rtState.remaining <= 20) {
+    ringEl.style.stroke = 'var(--g)';
+  } else {
+    ringEl.style.stroke = 'var(--w)';
+  }
+}
+
+function timerComplete() {
+  clearInterval(rtState.interval);
+  rtState.active = false;
+
+  try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) {}
+
+  const numEl = document.getElementById('rtNum');
+  const ringEl = document.getElementById('rtRingFill');
+  if (numEl) numEl.textContent = 'GO';
+  if (ringEl) ringEl.style.stroke = 'var(--check)';
+
+  rtState.hideTimeout = setTimeout(hideRestTimer, 3000);
+}
+
+function hideRestTimer() {
+  if (rtState.interval) clearInterval(rtState.interval);
+  if (rtState.hideTimeout) clearTimeout(rtState.hideTimeout);
+  rtState.active = false;
+  rtState.paused = false;
+  const wrap = document.getElementById('restTimerWrap');
+  if (wrap) wrap.classList.remove('visible');
+}
+
+function skipTimer() {
+  hideRestTimer();
+}
+
+function toggleTimerPause() {
+  rtState.paused = !rtState.paused;
+  const btn = document.getElementById('rtPauseBtn');
+  if (btn) btn.textContent = rtState.paused ? 'Resume' : 'Pause';
+}
+
+const _origCycleSetStatus = cycleSetStatus;
+cycleSetStatus = function (dayIdx, exIdx, setIdx, btn) {
+  _origCycleSetStatus(dayIdx, exIdx, setIdx, btn);
+
+  const key = getWorkoutDayKey(dayIdx);
+  const setLog =
+    workoutLogs[key] &&
+    workoutLogs[key]['ex_' + exIdx] &&
+    workoutLogs[key]['ex_' + exIdx]['set_' + setIdx];
+  const status = (setLog && setLog.status) || '';
+
+  if (status === 'done' || status === 'failed') {
+    const day = WORKOUT_WEEK[dayIdx];
+    const ex = day && day.exercises && day.exercises[exIdx];
+    const duration = getRestDuration(ex ? ex.name : '');
+    const name = ex ? ex.name : '';
+    startRestTimer(duration, name);
+  } else {
+    hideRestTimer();
+  }
+};
 
 </script>
 </body>
