@@ -2446,10 +2446,19 @@ function openWorkoutDay(idx) {
   }
   else if (day.type === 'mobility') {
     body = '<div class="wmodal-section"><div class="wmodal-section-title green">Mobility Flow</div>';
-    body += '<div style="font-size:11px;color:var(--muted);margin-bottom:12px;font-family:DM Mono,monospace;">Tap each stretch when complete. Work slowly — hold times matter more than reps.</div>';
+    body += '<div style="font-size:11px;color:var(--muted);margin-bottom:12px;font-family:DM Mono,monospace;">Tap each stretch when complete. Timed stretches start a countdown automatically.</div>';
     day.mobility.forEach(function(m, mi) {
       var checked = log['mob_' + mi];
-      body += '<div class="mobility-item' + (checked ? ' done-mob' : '') + '" id="mob-' + idx + '-' + mi + '" onclick="toggleMobility(' + idx + ', ' + mi + ')"><div class="mobility-check">' + (checked ? '✓' : '') + '</div><div class="mobility-content"><div class="mobility-name">' + m.name + ' <span style="font-size:10px;color:var(--muted);font-family:DM Mono,monospace;">' + m.sets + '</span></div><div class="mobility-detail">' + m.detail + '</div></div></div>';
+      var timerDur = getMobilityTimerDuration(m);
+      var timerBadge = timerDur
+        ? '<span style="font-family:DM Mono,monospace;font-size:9px;color:var(--s);margin-left:6px;">⏱ ' + timerDur + 's</span>'
+        : '';
+      body += '<div class="mobility-item' + (checked ? ' done-mob' : '') + '" id="mob-' + idx + '-' + mi + '" onclick="toggleMobility(' + idx + ', ' + mi + ')">';
+      body += '<div class="mobility-check">' + (checked ? '✓' : '') + '</div>';
+      body += '<div class="mobility-content">';
+      body += '<div class="mobility-name">' + m.name + ' <span style="font-size:10px;color:var(--muted);font-family:DM Mono,monospace;">' + m.sets + '</span>' + timerBadge + '</div>';
+      body += '<div class="mobility-detail">' + m.detail + '</div>';
+      body += '</div></div>';
     });
     body += '</div>';
   }
@@ -2555,6 +2564,23 @@ function cycleSetStatus(dayIdx, exIdx, setIdx, btn) {
   saveWorkoutLogs();
 }
 
+function getMobilityTimerDuration(item) {
+  const text = (item.name + ' ' + item.detail).toLowerCase();
+
+  // Rep-based — no timer
+  if (text.includes(' reps') || text.includes('each side') && !text.includes('sec')) return null;
+
+  // Parse explicit seconds
+  const secMatch = text.match(/(\d+)\s*sec/);
+  if (secMatch) return parseInt(secMatch[1]);
+
+  // Parse explicit minutes
+  const minMatch = text.match(/(\d+)\s*min/);
+  if (minMatch) return parseInt(minMatch[1]) * 60;
+
+  return null;
+}
+
 function toggleMobility(dayIdx, mobIdx) {
   const key = getWorkoutDayKey(dayIdx);
   if (!workoutLogs[key]) workoutLogs[key] = {};
@@ -2562,8 +2588,21 @@ function toggleMobility(dayIdx, mobIdx) {
   saveWorkoutLogs();
   const el = document.getElementById('mob-' + dayIdx + '-' + mobIdx);
   if (el) {
-    el.classList.toggle('done-mob', !!workoutLogs[key]['mob_' + mobIdx]);
-    el.querySelector('.mobility-check').textContent = workoutLogs[key]['mob_' + mobIdx] ? '✓' : '';
+    const isNowChecked = !!workoutLogs[key]['mob_' + mobIdx];
+    el.classList.toggle('done-mob', isNowChecked);
+    el.querySelector('.mobility-check').textContent = isNowChecked ? '✓' : '';
+
+    // Start timer if this is a timed stretch
+    const day = WORKOUT_WEEK[dayIdx];
+    const mobItem = day && day.mobility && day.mobility[mobIdx];
+    if (mobItem) {
+      const duration = getMobilityTimerDuration(mobItem);
+      if (isNowChecked && duration) {
+        startRestTimer(duration, mobItem.name);
+      } else if (!isNowChecked) {
+        hideRestTimer();
+      }
+    }
   }
 }
 
