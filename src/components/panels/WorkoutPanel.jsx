@@ -5,6 +5,7 @@ import { WorkoutStats } from '../workout/WorkoutStats.jsx';
 import { VolumeChart } from '../workout/VolumeChart.jsx';
 import { WorkoutDayModal } from '../workout/WorkoutDayModal.jsx';
 import { WORKOUT_WEEK } from '../../data/workoutWeek.js';
+import { workoutDateKey } from '../../hooks/useWorkoutLogs.js';
 import { getRestDuration, getMobilityTimerDuration } from '../../hooks/useRestTimer.js';
 
 export function WorkoutPanel({
@@ -17,31 +18,48 @@ export function WorkoutPanel({
   const [openIdx, setOpenIdx] = useState(null);
 
   const handleCycleStatus = useCallback(
-    async (dayIdx, exIdx, setIdx, exerciseName) => {
-      try {
-        const next = await workout.cycleSetStatus(dayIdx, exIdx, setIdx);
-        if (next === 'done' || next === 'failed') {
-          onStartRestTimer(getRestDuration(exerciseName), exerciseName);
-        } else {
-          onHideRestTimer();
-        }
-      } catch (e) {
-        onError?.(e);
+    (dayIdx, exIdx, setIdx, exerciseName) => {
+      // Compute the next status locally so the rest timer fires IMMEDIATELY
+      // — no awaiting the Supabase roundtrip, and no dependency on the DB
+      // write succeeding. If the tables aren't set up yet or the network
+      // is slow, the timer still rings.
+      const date = workoutDateKey(dayIdx);
+      const key = `${date}::${dayIdx}::${exIdx}::${setIdx}`;
+      const prev = workout.setsMap[key] || {};
+      const current = prev.status || '';
+      const next = current === '' ? 'done' : current === 'done' ? 'failed' : '';
+
+      if (next === 'done' || next === 'failed') {
+        onStartRestTimer(getRestDuration(exerciseName), exerciseName);
+      } else {
+        onHideRestTimer();
       }
+
+      // Fire the DB write in the background. Errors surface a toast but
+      // never block the timer.
+      workout.cycleSetStatus(dayIdx, exIdx, setIdx).catch((e) => {
+        console.warn('[workout] cycleSetStatus failed', e);
+        onError?.(e);
+      });
     },
     [workout, onStartRestTimer, onHideRestTimer, onError]
   );
 
   const handleToggleMobility = useCallback(
-    async (dayIdx, mobIdx, item) => {
-      try {
-        const now = await workout.toggleMobility(dayIdx, mobIdx);
-        const dur = getMobilityTimerDuration(item);
-        if (now && dur) onStartRestTimer(dur, item.name);
-        else if (!now) onHideRestTimer();
-      } catch (e) {
+    (dayIdx, mobIdx, item) => {
+      const date = workoutDateKey(dayIdx);
+      const key = `${date}::${dayIdx}::${mobIdx}`;
+      const wasChecked = !!workout.mobilityMap[key];
+      const now = !wasChecked;
+      const dur = getMobilityTimerDuration(item);
+
+      if (now && dur) onStartRestTimer(dur, item.name);
+      else if (!now) onHideRestTimer();
+
+      workout.toggleMobility(dayIdx, mobIdx).catch((e) => {
+        console.warn('[workout] toggleMobility failed', e);
         onError?.(e);
-      }
+      });
     },
     [workout, onStartRestTimer, onHideRestTimer, onError]
   );

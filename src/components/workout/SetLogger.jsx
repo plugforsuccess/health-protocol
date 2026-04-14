@@ -20,7 +20,9 @@ export function SetLogger({
           type="number"
           placeholder="lbs"
           defaultValue={setLog.weight_lbs ?? ''}
-          inputMode="numeric"
+          inputMode="decimal"
+          step="any"
+          min="0"
           onBlur={(e) => onLogField(dayIdx, exIdx, si, 'weight', e.target.value)}
         />
         <input
@@ -29,6 +31,8 @@ export function SetLogger({
           placeholder="reps"
           defaultValue={setLog.reps ?? ''}
           inputMode="numeric"
+          step="1"
+          min="0"
           onBlur={(e) => onLogField(dayIdx, exIdx, si, 'reps', e.target.value)}
         />
         <button
