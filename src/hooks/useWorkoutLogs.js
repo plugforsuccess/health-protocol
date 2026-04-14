@@ -168,31 +168,44 @@ export function useWorkoutLogs(userId) {
     [userId, getVolumeFor, getPRsFor, sessions]
   );
 
-  /** Log a single field (weight | reps) on a set. */
+  /** Log a single field (weight | reps) on a set. Only writes that column so
+   *  it can't clobber a concurrent status update from the cycle button. */
   const logSetField = useCallback(
     async (dayIdx, exIdx, setIdx, field, value) => {
       if (!userId) return;
       const date = workoutDateKey(dayIdx);
-      const key = `${date}::${dayIdx}::${exIdx}::${setIdx}`;
-      const prev = setsMap[key] || {};
+
+      // Partial payload: PK + the one field we're touching. Supabase upserts
+      // only the columns present, so the other column's latest value is
+      // preserved on conflict (no blur/click race).
       const row = {
         user_id: userId,
         session_date: date,
         day_index: dayIdx,
         exercise_index: exIdx,
         set_index: setIdx,
-        weight_lbs: prev.weight_lbs ?? null,
-        reps: prev.reps ?? null,
-        status: prev.status ?? '',
       };
       if (field === 'weight') row.weight_lbs = value === '' ? null : parseFloat(value);
       if (field === 'reps') row.reps = value === '' ? null : parseInt(value, 10);
 
-      // optimistic
+      // optimistic — merge over any existing local row so we don't drop
+      // previously-entered fields.
       setSets((prev) => {
-        const next = prev.filter((r) => !(r.session_date === date && r.day_index === dayIdx && r.exercise_index === exIdx && r.set_index === setIdx));
-        next.push({ ...row });
-        return next;
+        const i = prev.findIndex(
+          (r) =>
+            r.session_date === date &&
+            r.day_index === dayIdx &&
+            r.exercise_index === exIdx &&
+            r.set_index === setIdx
+        );
+        const existing = i >= 0 ? prev[i] : {};
+        const merged = { ...existing, ...row };
+        if (i >= 0) {
+          const next = prev.slice();
+          next[i] = merged;
+          return next;
+        }
+        return [...prev, merged];
       });
 
       const { error } = await supabase
@@ -205,7 +218,8 @@ export function useWorkoutLogs(userId) {
     [userId, setsMap, upsertSessionSummary]
   );
 
-  /** Cycle a set's status: '' → 'done' → 'failed' → ''. Returns the new status. */
+  /** Cycle a set's status: '' → 'done' → 'failed' → ''. Returns the new status.
+   *  Only writes `status` so it can't clobber a concurrent weight/reps update. */
   const cycleSetStatus = useCallback(
     async (dayIdx, exIdx, setIdx) => {
       if (!userId) return '';
@@ -215,21 +229,32 @@ export function useWorkoutLogs(userId) {
       const current = prev.status || '';
       const next = current === '' ? 'done' : current === 'done' ? 'failed' : '';
 
+      // Partial upsert — PK + status only.
       const row = {
         user_id: userId,
         session_date: date,
         day_index: dayIdx,
         exercise_index: exIdx,
         set_index: setIdx,
-        weight_lbs: prev.weight_lbs ?? null,
-        reps: prev.reps ?? null,
         status: next,
       };
 
       setSets((p) => {
-        const arr = p.filter((r) => !(r.session_date === date && r.day_index === dayIdx && r.exercise_index === exIdx && r.set_index === setIdx));
-        arr.push(row);
-        return arr;
+        const i = p.findIndex(
+          (r) =>
+            r.session_date === date &&
+            r.day_index === dayIdx &&
+            r.exercise_index === exIdx &&
+            r.set_index === setIdx
+        );
+        const existing = i >= 0 ? p[i] : {};
+        const merged = { ...existing, ...row };
+        if (i >= 0) {
+          const arr = p.slice();
+          arr[i] = merged;
+          return arr;
+        }
+        return [...p, merged];
       });
 
       const { error } = await supabase
