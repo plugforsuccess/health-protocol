@@ -14,8 +14,51 @@ export function WorkoutPanel({
   onStartRestTimer,
   onHideRestTimer,
   onError,
+  push,
+  showToast,
 }) {
   const [openIdx, setOpenIdx] = useState(null);
+  const [testing, setTesting] = useState(false);
+
+  // End-to-end push self-test. Schedules a push 10 seconds in the future and
+  // asks the user to switch apps / lock the phone. If the buzz lands, the full
+  // Service Worker + schedule-push + cron + send-due-pushes + VAPID chain is
+  // working. If it doesn't land, at least one of the 5 setup steps is missing.
+  const handleTestPush = useCallback(async () => {
+    if (!push?.schedule) {
+      showToast?.('Push not initialised. Grant notification permission first.', { error: true });
+      return;
+    }
+    setTesting(true);
+    try {
+      const sub = await push.ensureSubscribed?.();
+      if (!sub) {
+        showToast?.('Push subscription unavailable — check permission + VAPID key.', {
+          error: true,
+        });
+        setTesting(false);
+        return;
+      }
+      const fireAt = new Date(Date.now() + 10_000);
+      const id = await push.schedule({
+        fireAt,
+        title: 'Test background buzz',
+        body: 'If you felt this, the whole pipeline is wired up.',
+        tag: 'rest-timer-test',
+      });
+      if (!id) {
+        showToast?.('schedule-push returned no id — Edge Function issue.', { error: true });
+      } else {
+        showToast?.('Test push scheduled. Lock phone / switch apps for 10s…', {
+          duration: 10_000,
+        });
+      }
+    } catch (e) {
+      showToast?.(e?.message || 'Test push failed', { error: true });
+    } finally {
+      setTimeout(() => setTesting(false), 11_000);
+    }
+  }, [push, showToast]);
 
   const handleCycleStatus = useCallback(
     (dayIdx, exIdx, setIdx, exerciseName) => {
@@ -95,6 +138,20 @@ export function WorkoutPanel({
           <WorkoutStats sessions={workout.sessions} />
           <WeekGrid completedMap={workout.completedMap} onOpen={setOpenIdx} />
           <VolumeChart sessions={workout.sessions} />
+
+          {push?.schedule && (
+            <button
+              type="button"
+              className="export-btn"
+              onClick={handleTestPush}
+              disabled={testing}
+              style={{ marginTop: 20 }}
+            >
+              {testing
+                ? '⏳ TEST SCHEDULED — LOCK PHONE / SWITCH APPS'
+                : '🔔 TEST BACKGROUND BUZZ (10S)'}
+            </button>
+          )}
         </div>
       </div>
 

@@ -129,8 +129,10 @@ export function useRestTimer(push) {
         push.cancel(id).catch(() => {});
       }
 
+      // Beefier pattern — 4 × 600ms pulses with short gaps. Total ~2.7s.
+      // Short 500-ms pattern was easy to miss mid-workout.
       try {
-        navigator.vibrate?.([200, 100, 200]);
+        navigator.vibrate?.([600, 150, 600, 150, 600, 150, 600]);
       } catch {}
 
       // If the user is on another tab/app when the timer ends, surface

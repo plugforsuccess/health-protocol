@@ -365,6 +365,8 @@ function SignedInApp({
         onStartRestTimer={restTimer.start}
         onHideRestTimer={restTimer.hide}
         onError={onWorkoutError}
+        push={push}
+        showToast={showToast}
       />
 
       <RestTimer
