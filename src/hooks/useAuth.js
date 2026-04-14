@@ -30,13 +30,24 @@ export function useAuth() {
   }, []);
 
   async function signInWithGoogle() {
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: window.location.origin,
       },
     });
     if (error) throw error;
+    // signInWithOAuth returns the redirect URL but does NOT navigate on its
+    // own in all runtimes. If the browser hasn't started redirecting within
+    // a second, do it explicitly so the button doesn't hang on "SIGNING IN…"
+    // when Google provider misconfiguration blocks the automatic redirect.
+    if (data?.url) {
+      setTimeout(() => {
+        if (document.visibilityState === 'visible') {
+          window.location.href = data.url;
+        }
+      }, 800);
+    }
   }
 
   async function signOut() {

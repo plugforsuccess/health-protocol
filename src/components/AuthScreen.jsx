@@ -1,16 +1,38 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { hasSupabaseConfig } from '../lib/supabase.js';
 
 export function AuthScreen({ onSignIn }) {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState(null);
+  const timeoutRef = useRef(null);
+
+  useEffect(
+    () => () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    },
+    []
+  );
 
   async function handle() {
     setErr(null);
     setLoading(true);
+
+    // Safety net: if `signInWithOAuth` neither throws nor navigates within
+    // 6 seconds, something is wrong (Google provider not enabled, redirect
+    // URL not allow-listed, pop-up blocked, etc.). Reset the loading state
+    // and surface a useful hint.
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      setLoading(false);
+      setErr(
+        'Sign-in didn\'t start. Make sure Google is enabled under Authentication → Providers in your Supabase project, and that this origin is in the redirect URL allowlist.'
+      );
+    }, 6000);
+
     try {
       await onSignIn();
     } catch (e) {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
       setErr(e?.message || 'Sign-in failed');
       setLoading(false);
     }
@@ -20,10 +42,11 @@ export function AuthScreen({ onSignIn }) {
     <div className="auth-screen">
       <div className="auth-card">
         <div className="auth-logo">DAILY PROTOCOL</div>
-        <div className="auth-tag">NEURO · GUT · DIET</div>
+        <div className="auth-tag">NEURO · GUT · DIET · TRAIN</div>
         <div className="auth-sub">
-          Personal protocol tracker. Sign in with Google to sync your daily
-          checks and streaks across devices.
+          Personal protocol tracker. Sign in with Google so your checks,
+          streaks, workout logs and rest-timer notifications sync across
+          devices.
         </div>
         <button
           type="button"
