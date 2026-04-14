@@ -2,11 +2,13 @@ import { StreakBadge } from '../shared/StreakBadge.jsx';
 import { TabSwitcher } from './TabSwitcher.jsx';
 import { ProgressBar } from './ProgressBar.jsx';
 import { PhasePills } from './PhasePills.jsx';
+import { ThemeToggle } from './ThemeToggle.jsx';
 
 const LOGOS = {
   nt: { cls: 'mode-nt', text: 'NT PROTOCOL' },
   gut: { cls: 'mode-gut', text: 'GUT PROTOCOL' },
   diet: { cls: 'mode-diet', text: 'DIET PROTOCOL' },
+  workout: { cls: 'mode-workout', text: 'TRAIN' },
 };
 
 export function StickyHeader({
@@ -18,9 +20,11 @@ export function StickyHeader({
   phases,
   streakCount,
   scrollToPhase,
+  isLight,
+  toggleTheme,
 }) {
-  const hideTrackingUI = tab === 'diet';
-  const logo = LOGOS[tab];
+  const hideTrackingUI = tab === 'diet' || tab === 'workout';
+  const logo = LOGOS[tab] || LOGOS.nt;
   const displayName =
     user?.user_metadata?.full_name ||
     user?.user_metadata?.name ||
@@ -35,6 +39,7 @@ export function StickyHeader({
         <div className={`logo ${logo.cls}`}>{logo.text}</div>
         <div className="header-right">
           {!hideTrackingUI && <StreakBadge count={streakCount} tab={tab} />}
+          <ThemeToggle isLight={isLight} onToggle={toggleTheme} />
           <div className="user-chip" title={displayName}>
             {avatar ? (
               <img className="user-avatar" src={avatar} alt="" referrerPolicy="no-referrer" />

@@ -4,22 +4,27 @@ import { useAuth } from './hooks/useAuth.js';
 import { useProtocolState } from './hooks/useProtocolState.js';
 import { useStreak } from './hooks/useStreak.js';
 import { useToast } from './hooks/useToast.js';
+import { useTheme } from './hooks/useTheme.js';
+import { usePantry } from './hooks/usePantry.js';
+import { useWorkoutLogs } from './hooks/useWorkoutLogs.js';
+import { useRestTimer } from './hooks/useRestTimer.js';
 
 import { AuthScreen } from './components/AuthScreen.jsx';
 import { StickyHeader } from './components/layout/StickyHeader.jsx';
 import { NTPanel } from './components/panels/NTPanel.jsx';
 import { GutPanel } from './components/panels/GutPanel.jsx';
 import { DietPanel } from './components/panels/DietPanel.jsx';
+import { WorkoutPanel } from './components/panels/WorkoutPanel.jsx';
 import { Toast } from './components/shared/Toast.jsx';
+import { RestTimer } from './components/shared/RestTimer.jsx';
 
 import { NT_SUPPS } from './data/ntSupps.js';
 import { NT_LIFESTYLE } from './data/lifestyleNT.js';
 import { GUT_SUPPS } from './data/gutSupps.js';
 import { GUT_LIFESTYLE } from './data/lifestyleGut.js';
 
-const VALID_TABS = ['nt', 'gut', 'diet'];
+const VALID_TABS = ['nt', 'gut', 'diet', 'workout'];
 
-/** Read/write the current tab in the querystring so the back button works. */
 function useTabRouting(defaultTab = 'nt') {
   const [tab, setTab] = useState(() => {
     if (typeof window === 'undefined') return defaultTab;
@@ -45,7 +50,6 @@ function useTabRouting(defaultTab = 'nt') {
   return [tab, setTab];
 }
 
-/** Phase + supplement id maps used for progress/pill/streak calculation. */
 const NT_PHASE_KEYS = ['morning', 'midday', 'evening', 'bedtime', 'weekly'];
 const GUT_PHASE_KEYS = ['morning', 'withfood', 'evening'];
 
@@ -66,11 +70,21 @@ const GUT_PHASE_LABELS = {
 
 export default function App() {
   const { user, loading: authLoading, signInWithGoogle, signOut } = useAuth();
+  const { isLight, toggle: toggleTheme } = useTheme();
   const [tab, setTab] = useTabRouting('nt');
   const { toast, show: showToast } = useToast();
 
+  // Theme is applied even on the auth screen — render nothing theme-dependent
+  // until we know the auth state.
   if (authLoading) return <div className="loading-screen">Loading…</div>;
-  if (!user) return <AuthScreen onSignIn={signInWithGoogle} />;
+  if (!user) {
+    return (
+      <>
+        <AuthScreen onSignIn={signInWithGoogle} />
+        {/* Theme toggle on the auth screen would be nice, but not required */}
+      </>
+    );
+  }
 
   return (
     <SignedInApp
@@ -80,17 +94,22 @@ export default function App() {
       signOut={signOut}
       showToast={showToast}
       toast={toast}
+      isLight={isLight}
+      toggleTheme={toggleTheme}
     />
   );
 }
 
-function SignedInApp({ user, tab, setTab, signOut, showToast, toast }) {
+function SignedInApp({ user, tab, setTab, signOut, showToast, toast, isLight, toggleTheme }) {
   const nt = useProtocolState(user.id, 'nt');
   const gut = useProtocolState(user.id, 'gut');
   const ntStreak = useStreak(user.id, 'nt');
   const gutStreak = useStreak(user.id, 'gut');
+  const pantry = usePantry(user.id);
+  const workout = useWorkoutLogs(user.id);
+  const restTimer = useRestTimer();
 
-  // ── Midnight cross-over: reload today's checks when the local date changes.
+  // ── Midnight cross-over
   useEffect(() => {
     let lastDate = localDateKey();
     const interval = setInterval(() => {
@@ -99,6 +118,7 @@ function SignedInApp({ user, tab, setTab, signOut, showToast, toast }) {
         lastDate = now;
         nt.reload();
         gut.reload();
+        workout.reload();
       }
     }, 60_000);
     const onVis = () => {
@@ -107,6 +127,7 @@ function SignedInApp({ user, tab, setTab, signOut, showToast, toast }) {
         lastDate = now;
         nt.reload();
         gut.reload();
+        workout.reload();
       }
     };
     document.addEventListener('visibilitychange', onVis);
@@ -114,9 +135,9 @@ function SignedInApp({ user, tab, setTab, signOut, showToast, toast }) {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', onVis);
     };
-  }, [nt, gut]);
+  }, [nt, gut, workout]);
 
-  // ── IDs helpers
+  // ── Supplement id maps
   const ntAllSuppIds = useMemo(
     () => NT_PHASE_KEYS.flatMap((p) => (NT_SUPPS[p] || []).map((s) => s.id)),
     []
@@ -126,7 +147,6 @@ function SignedInApp({ user, tab, setTab, signOut, showToast, toast }) {
     []
   );
 
-  // ── Derived progress
   const ntAllIds = useMemo(
     () => [...ntAllSuppIds, ...NT_LIFESTYLE.map((l) => l.id)],
     [ntAllSuppIds]
@@ -151,7 +171,6 @@ function SignedInApp({ user, tab, setTab, signOut, showToast, toast }) {
     [gut.checks, gutAllIds]
   );
 
-  // ── Phase pill "done" computations
   const ntPhases = useMemo(
     () =>
       [
@@ -177,7 +196,6 @@ function SignedInApp({ user, tab, setTab, signOut, showToast, toast }) {
     [gut.checks]
   );
 
-  // ── Supplement-complete check (drives banner + streak increment)
   const ntSuppComplete = ntAllSuppIds.length > 0 && ntAllSuppIds.every((id) => nt.checks[id]);
   const gutSuppComplete = gutAllSuppIds.length > 0 && gutAllSuppIds.every((id) => gut.checks[id]);
 
@@ -188,7 +206,6 @@ function SignedInApp({ user, tab, setTab, signOut, showToast, toast }) {
     if (gutSuppComplete) gutStreak.markCompleteToday().catch(() => {});
   }, [gutSuppComplete]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Toggle handlers with toast-on-error
   const toggleNT = useCallback(
     (id) => {
       nt.toggle(id).catch((e) => showToast(e?.message || 'Sync failed', { error: true }));
@@ -202,7 +219,6 @@ function SignedInApp({ user, tab, setTab, signOut, showToast, toast }) {
     [gut, showToast]
   );
 
-  // ── Reset
   const resetCurrent = useCallback(async () => {
     const label = tab === 'nt' ? 'Neuro' : 'Gut';
     if (!confirm(`Reset all ${label} protocol checks for today?`)) return;
@@ -215,7 +231,6 @@ function SignedInApp({ user, tab, setTab, signOut, showToast, toast }) {
     }
   }, [tab, nt, gut, showToast]);
 
-  // ── Export: pull all of this user's history for the current tab
   const exportCurrent = useCallback(async () => {
     try {
       const [{ data: checks }, { data: streaks }, { data: logs }] = await Promise.all([
@@ -253,7 +268,6 @@ function SignedInApp({ user, tab, setTab, signOut, showToast, toast }) {
     }
   }, [tab, user.id, showToast]);
 
-  // ── Smooth-scroll to a section
   const scrollToPhase = useCallback(
     (phaseKey) => {
       const id = `${tab}-section-${phaseKey}`;
@@ -263,10 +277,20 @@ function SignedInApp({ user, tab, setTab, signOut, showToast, toast }) {
     [tab]
   );
 
-  // ── Header values reflect the active tab
-  const headerProgress = tab === 'nt' ? ntProgress : tab === 'gut' ? gutProgress : { done: 0, total: 0 };
+  // ── Header values
+  const headerProgress =
+    tab === 'nt' ? ntProgress : tab === 'gut' ? gutProgress : { done: 0, total: 0 };
   const headerPhases = tab === 'nt' ? ntPhases : tab === 'gut' ? gutPhases : [];
   const headerStreak = tab === 'nt' ? ntStreak.count : tab === 'gut' ? gutStreak.count : 0;
+
+  const onPantryError = useCallback(
+    (e) => showToast(e?.message || 'Pantry sync failed', { error: true }),
+    [showToast]
+  );
+  const onWorkoutError = useCallback(
+    (e) => showToast(e?.message || 'Workout sync failed', { error: true }),
+    [showToast]
+  );
 
   return (
     <>
@@ -279,6 +303,8 @@ function SignedInApp({ user, tab, setTab, signOut, showToast, toast }) {
         phases={headerPhases}
         streakCount={headerStreak}
         scrollToPhase={scrollToPhase}
+        isLight={isLight}
+        toggleTheme={toggleTheme}
       />
 
       <NTPanel
@@ -299,7 +325,27 @@ function SignedInApp({ user, tab, setTab, signOut, showToast, toast }) {
         allSuppComplete={gutSuppComplete}
       />
 
-      <DietPanel active={tab === 'diet'} />
+      <DietPanel
+        active={tab === 'diet'}
+        pantry={pantry}
+        onTogglePantry={pantry.toggle}
+        onClearPantry={pantry.clear}
+        onPantryError={onPantryError}
+      />
+
+      <WorkoutPanel
+        active={tab === 'workout'}
+        workout={workout}
+        onStartRestTimer={restTimer.start}
+        onHideRestTimer={restTimer.hide}
+        onError={onWorkoutError}
+      />
+
+      <RestTimer
+        state={restTimer.state}
+        onTogglePause={restTimer.togglePause}
+        onSkip={restTimer.hide}
+      />
 
       <Toast toast={toast} />
     </>

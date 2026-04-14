@@ -27,12 +27,15 @@ npm run dev
 2. In **Project Settings → API**, copy the **Project URL** and **anon /
    public** key into `.env.local`.
 
-### 2. Run the database migration
+### 2. Run the database migrations
 
-Open the **SQL editor** in the Supabase dashboard and paste the contents of
-`supabase/migrations/0001_init.sql`, then **Run**. This creates three tables
-(`daily_checks`, `streaks`, `daily_logs`) with row-level-security policies
-so each user only ever sees their own rows.
+Open the **SQL editor** in the Supabase dashboard and run the migrations in
+order:
+
+1. `supabase/migrations/0001_init.sql` — creates `daily_checks`, `streaks`,
+   `daily_logs` with per-user RLS policies.
+2. `supabase/migrations/0002_workout_pantry.sql` — creates `workout_sets`,
+   `workout_sessions`, `workout_mobility`, and `pantry_items` (also RLS-gated).
 
 ### 3. Enable Google OAuth
 
@@ -89,8 +92,30 @@ All writes are optimistic: the UI toggles immediately and a background
 upsert syncs to Supabase. On failure the state reverts and a red toast
 appears.
 
+## Features
+
+- **Four tabs** — Neuro (NT supplements), Gut (gut-healing supplements), Diet
+  (7-day meal plan + prep mode + equipment), and Train (weekly workout
+  program with set logger, rest timer, PRs).
+- **Google auth** gates the app; all data is scoped to the signed-in user
+  via Supabase row-level security.
+- **Optimistic sync** — every check, set, and pantry toggle mutates local
+  state first and syncs to Supabase in the background. Failures revert and
+  surface a red toast.
+- **Rest timer** — animated SVG ring countdown that auto-triggers when a
+  set is marked Done/Failed or a timed mobility stretch is checked. Color
+  shifts red → amber (20s) → green (10s), vibrates and shows GO at zero.
+- **Recipe modal** — meal cards open a bottom-sheet with ingredients
+  (with parsed portions), equipment, step-by-step instructions, tips, and
+  the "why this meal" note. Closes on ✕, overlay click, and Escape.
+- **Pantry tracker** — grocery items persist across prep sessions. Tap to
+  mark "have it", Clear-all button wipes state after confirmation.
+- **Volume chart + PR detection** — volume of the last 8 sessions plus
+  per-exercise PR badges against your previous best weight.
+- **Light/dark theme** — full design system for both modes, persists to
+  `localStorage`, respects `prefers-color-scheme` on first load.
+
 ## Legacy
 
-The original 2800-line single-file prototype (including the unused workout
-tab, recipe modal, and theme toggle — all out of scope for this migration)
-is preserved for reference at `legacy/nt-gut-protocol.html`.
+The original 2800-line single-file prototype is preserved for reference at
+`legacy/nt-gut-protocol.html`. Everything it does is now in the React app.

@@ -1,14 +1,11 @@
-import { useState } from 'react';
+import { pantryKey } from '../../hooks/usePantry.js';
 
 /**
- * Grocery list for a given prep day. Categories come from DAY_PREP[idx].groceries.
- * "Have it" toggles are local UI state (pantry), not synced to Supabase.
+ * Grocery list for a prep day. Items tap to toggle "have it" state in the
+ * shared Supabase-backed pantry (passed in via `pantry`).
  */
-export function GroceryList({ groceries }) {
-  const [haveIt, setHaveIt] = useState({});
-
+export function GroceryList({ groceries, pantry, onToggle }) {
   if (!groceries) return null;
-
   const categories = Object.entries(groceries);
 
   return (
@@ -18,20 +15,13 @@ export function GroceryList({ groceries }) {
           <div className="grocery-cat-title">{category}</div>
           <div className="grocery-items">
             {items.map((item, i) => {
-              const key = `${category}::${item}`;
-              const isHave = !!haveIt[key];
+              const key = pantryKey(item);
+              const isHave = pantry ? !!pantry.have[key] : false;
               return (
                 <span
                   key={i}
                   className={`grocery-item${isHave ? ' have-it' : ''}`}
-                  onClick={() =>
-                    setHaveIt((prev) => {
-                      const next = { ...prev };
-                      if (next[key]) delete next[key];
-                      else next[key] = true;
-                      return next;
-                    })
-                  }
+                  onClick={() => onToggle?.(item)}
                 >
                   <span className="have-dot" />
                   {item}

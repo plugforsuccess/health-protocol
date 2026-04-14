@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { WEEK_MEALS } from '../../data/weekMeals.js';
 import { DateBar } from '../shared/DateBar.jsx';
 import { AvoidBanner } from '../diet/AvoidBanner.jsx';
@@ -6,18 +6,32 @@ import { BenefitLegend } from '../diet/BenefitLegend.jsx';
 import { DayTabs } from '../diet/DayTabs.jsx';
 import { MealCard } from '../diet/MealCard.jsx';
 import { PrepMode } from '../diet/PrepMode.jsx';
+import { RecipeModal } from '../diet/RecipeModal.jsx';
+import { EquipmentSection } from '../diet/EquipmentSection.jsx';
 
 function defaultDayIdx() {
-  // Our WEEK_MEALS is Sun..Sat (0..6) matching Date.getDay().
-  const i = new Date().getDay();
+  const i = new Date().getDay(); // 0=Sun..6=Sat, matches WEEK_MEALS ordering
   return Math.max(0, Math.min(6, i));
 }
 
-export function DietPanel({ active }) {
+export function DietPanel({ active, pantry, onTogglePantry, onClearPantry, onPantryError }) {
   const [prepMode, setPrepMode] = useState(false);
   const [dayIdx, setDayIdx] = useState(defaultDayIdx());
+  const [activeMeal, setActiveMeal] = useState(null);
 
   const day = WEEK_MEALS[dayIdx];
+
+  const handleTogglePantry = useCallback(
+    (item) => {
+      onTogglePantry(item).catch((e) => onPantryError?.(e));
+    },
+    [onTogglePantry, onPantryError]
+  );
+
+  const handleClearPantry = useCallback(() => {
+    if (!confirm('Clear all "have it" marks?')) return;
+    onClearPantry().catch((e) => onPantryError?.(e));
+  }, [onClearPantry, onPantryError]);
 
   return (
     <div className={`panel${active ? ' active' : ''}`} id="panel-diet">
@@ -45,13 +59,21 @@ export function DietPanel({ active }) {
           <>
             <BenefitLegend />
             {(day?.meals || []).map((meal, i) => (
-              <MealCard key={i} meal={meal} />
+              <MealCard key={i} meal={meal} onOpen={setActiveMeal} />
             ))}
+            <EquipmentSection />
           </>
         ) : (
-          <PrepMode initialIdx={dayIdx} />
+          <PrepMode
+            initialIdx={dayIdx}
+            pantry={pantry}
+            onTogglePantry={handleTogglePantry}
+            onClearPantry={handleClearPantry}
+          />
         )}
       </div>
+
+      {active && <RecipeModal meal={activeMeal} onClose={() => setActiveMeal(null)} />}
     </div>
   );
 }

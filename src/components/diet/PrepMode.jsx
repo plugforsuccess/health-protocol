@@ -3,7 +3,7 @@ import { DAY_PREP } from '../../data/dayPrep.js';
 import { PrepDayPicker } from './PrepDayPicker.jsx';
 import { GroceryList } from './GroceryList.jsx';
 
-export function PrepMode({ initialIdx = 0 }) {
+export function PrepMode({ initialIdx = 0, pantry, onTogglePantry, onClearPantry }) {
   const [idx, setIdx] = useState(initialIdx);
   const prep = DAY_PREP[idx];
   if (!prep) return null;
@@ -21,7 +21,18 @@ export function PrepMode({ initialIdx = 0 }) {
       <PrepDayPicker activeIdx={idx} onSelect={setIdx} />
 
       <div style={{ marginTop: '18px' }}>
-        <GroceryList groceries={prep.groceries} />
+        <div className="pantry-legend">
+          <span className="pantry-legend-dot" />
+          <span>Tap items you already own to cross them off</span>
+          <button
+            type="button"
+            className="pantry-clear-btn"
+            onClick={onClearPantry}
+          >
+            Clear all
+          </button>
+        </div>
+        <GroceryList groceries={prep.groceries} pantry={pantry} onToggle={onTogglePantry} />
       </div>
 
       <div style={{ marginTop: '18px' }}>

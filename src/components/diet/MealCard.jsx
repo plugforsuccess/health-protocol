@@ -1,10 +1,11 @@
-import { useState } from 'react';
-
-export function MealCard({ meal }) {
-  const [open, setOpen] = useState(false);
+/**
+ * Meal card — tap anywhere to open the recipe modal (replaces the legacy
+ * inline drawer).
+ */
+export function MealCard({ meal, onOpen }) {
   return (
-    <div className={`meal-card${open ? ' open' : ''}`}>
-      <div className="meal-header" onClick={() => setOpen((v) => !v)}>
+    <div className="meal-card">
+      <div className="meal-header" onClick={() => onOpen(meal)}>
         <span className={`meal-time-badge ${meal.time}`}>{meal.time}</span>
         <div className="meal-name">{meal.name}</div>
         <div className="benefit-dots">
@@ -17,13 +18,13 @@ export function MealCard({ meal }) {
           className="expand-btn"
           onClick={(e) => {
             e.stopPropagation();
-            setOpen((v) => !v);
+            onOpen(meal);
           }}
-          aria-label={open ? 'Collapse' : 'Expand'}
+          aria-label="Open recipe"
         >
           <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
             <polyline
-              points="2.5,4.5 6.5,8.5 10.5,4.5"
+              points="4,2.5 9,6.5 4,10.5"
               stroke="currentColor"
               strokeWidth="1.5"
               strokeLinecap="round"
@@ -31,18 +32,6 @@ export function MealCard({ meal }) {
             />
           </svg>
         </button>
-      </div>
-      <div className="meal-drawer">
-        <div className="meal-drawer-inner">
-          <div className="ingredient-list">
-            {(meal.ingredients || []).map((ing, i) => (
-              <span key={i} className="ingredient-tag">
-                {ing}
-              </span>
-            ))}
-          </div>
-          <div className="meal-prep-note">{meal.prep}</div>
-        </div>
       </div>
     </div>
   );

@@ -2,11 +2,12 @@ const TABS = [
   { key: 'nt', label: '🧠 NEURO' },
   { key: 'gut', label: '🌿 GUT' },
   { key: 'diet', label: '🥗 DIET' },
+  { key: 'workout', label: '💪 TRAIN' },
 ];
 
 export function TabSwitcher({ tab, setTab }) {
   return (
-    <div className="tab-switcher">
+    <div className="tab-switcher tab-switcher-4">
       {TABS.map((t) => (
         <button
           key={t.key}
