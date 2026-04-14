@@ -25,7 +25,7 @@ self.addEventListener('push', (event) => {
     requireInteraction: false,
     icon: payload.icon,
     badge: payload.badge,
-    vibrate: [600, 150, 600, 150, 600, 150, 600],
+    vibrate: [1500, 100, 1500, 100, 1500, 100, 1500],
     data: { url: payload.url || '/' },
   };
 

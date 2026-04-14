@@ -50,6 +50,57 @@ export function useRestTimer(push) {
   const finishedRef = useRef(false);
   const activeRef = useRef(false);
   const scheduledPushIdRef = useRef(null);  // id of the queued push row (for cancellation)
+  const audioCtxRef = useRef(null);         // shared AudioContext for the beep
+
+  // ── Audio beep ───────────────────────────────────────────────────
+  // The Vibration API can't increase motor strength (that's fixed hardware),
+  // and vibration alone is missable when the phone is in a pocket or on iOS
+  // where the API doesn't exist. We pair the vibrate pattern with a loud
+  // 4-beep alarm via Web Audio.
+  //
+  // AudioContext must be created/resumed inside a user gesture; we init it
+  // at start() (which IS a user-gesture descendant via the set-check tap)
+  // so the context is unlocked and ready when the timer fires at 0s.
+  const ensureAudio = useCallback(() => {
+    if (audioCtxRef.current) return audioCtxRef.current;
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) audioCtxRef.current = new AC();
+    } catch {}
+    return audioCtxRef.current;
+  }, []);
+
+  const playBeep = useCallback(() => {
+    const ac = audioCtxRef.current;
+    if (!ac) return;
+    // Resume if Safari auto-suspended it (happens on focus loss).
+    if (ac.state === 'suspended') {
+      ac.resume().catch(() => {});
+    }
+    const now = ac.currentTime;
+    // Four 220ms "beeps" at alternating pitches — snappy, unambiguous,
+    // impossible to confuse with a regular notification chime.
+    const pattern = [
+      { t: 0.00, freq: 880 },
+      { t: 0.33, freq: 1320 },
+      { t: 0.66, freq: 880 },
+      { t: 0.99, freq: 1320 },
+    ];
+    pattern.forEach(({ t, freq }) => {
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.type = 'square'; // harsher + louder-sounding than sine
+      osc.frequency.value = freq;
+      // Envelope to avoid harsh click at start/end.
+      gain.gain.setValueAtTime(0.0001, now + t);
+      gain.gain.exponentialRampToValueAtTime(0.45, now + t + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + t + 0.22);
+      osc.connect(gain);
+      gain.connect(ac.destination);
+      osc.start(now + t);
+      osc.stop(now + t + 0.23);
+    });
+  }, []);
 
   // ── Wake Lock helpers ─────────────────────────────────────────────
   const acquireWakeLock = useCallback(async () => {
@@ -129,11 +180,17 @@ export function useRestTimer(push) {
         push.cancel(id).catch(() => {});
       }
 
-      // Beefier pattern — 4 × 600ms pulses with short gaps. Total ~2.7s.
-      // Short 500-ms pattern was easy to miss mid-workout.
+      // Maximum-perceivability pattern. Vibration motors can't be made
+      // stronger (intensity is hardware-fixed), so we maximise DURATION
+      // and density: four 1.5-second pulses with 100ms gaps = 6.1 s of
+      // near-continuous buzzing. Alarm-like rather than notification-like.
       try {
-        navigator.vibrate?.([600, 150, 600, 150, 600, 150, 600]);
+        navigator.vibrate?.([1500, 100, 1500, 100, 1500, 100, 1500]);
       } catch {}
+
+      // Simultaneous audio alarm — compensates when the phone is in a
+      // pocket, on iOS (no Vibration API), or on low-intensity motors.
+      playBeep();
 
       // If the user is on another tab/app when the timer ends, surface
       // a system notification so they know rest is done.
@@ -169,7 +226,7 @@ export function useRestTimer(push) {
 
     // Normal tick — update remaining in state only if it changed.
     setState((s) => (s.remaining === remaining ? s : { ...s, remaining }));
-  }, [hide, releaseWakeLock]);
+  }, [hide, releaseWakeLock, playBeep, push]);
 
   // ── Public API ────────────────────────────────────────────────────
   const start = useCallback(
@@ -184,6 +241,15 @@ export function useRestTimer(push) {
         push.cancel(prevId).catch(() => {});
       }
       scheduledPushIdRef.current = null;
+
+      // Init + resume the AudioContext while we're inside a user gesture
+      // (this start() call descends from the set-check tap). iOS/Safari
+      // require this so the beep can fire from a non-gesture context
+      // when the timer expires.
+      const ac = ensureAudio();
+      if (ac && ac.state === 'suspended') {
+        ac.resume().catch(() => {});
+      }
 
       finishedRef.current = false;
       activeRef.current = true;
@@ -233,7 +299,7 @@ export function useRestTimer(push) {
           .catch(() => {});
       }
     },
-    [acquireWakeLock, clearTimers, releaseWakeLock, tick, push]
+    [acquireWakeLock, clearTimers, ensureAudio, releaseWakeLock, tick, push]
   );
 
   const togglePause = useCallback(() => {
