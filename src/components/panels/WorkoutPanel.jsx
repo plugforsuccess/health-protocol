@@ -70,12 +70,14 @@ export function WorkoutPanel({
   );
 
   return (
-    <div className={`panel${active ? ' active' : ''}`} id="panel-workout">
-      <div className="wrap">
-        <DateBar />
-        <WorkoutStats sessions={workout.sessions} />
-        <WeekGrid completedMap={workout.completedMap} onOpen={setOpenIdx} />
-        <VolumeChart sessions={workout.sessions} />
+    <>
+      <div className={`panel${active ? ' active' : ''}`} id="panel-workout">
+        <div className="wrap">
+          <DateBar />
+          <WorkoutStats sessions={workout.sessions} />
+          <WeekGrid completedMap={workout.completedMap} onOpen={setOpenIdx} />
+          <VolumeChart sessions={workout.sessions} />
+        </div>
       </div>
 
       {active && openIdx !== null && WORKOUT_WEEK[openIdx] && (
@@ -91,6 +93,6 @@ export function WorkoutPanel({
           onComplete={handleComplete}
         />
       )}
-    </div>
+    </>
   );
 }
