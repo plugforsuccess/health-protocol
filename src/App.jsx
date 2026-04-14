@@ -8,6 +8,7 @@ import { useTheme } from './hooks/useTheme.js';
 import { usePantry } from './hooks/usePantry.js';
 import { useWorkoutLogs } from './hooks/useWorkoutLogs.js';
 import { useRestTimer } from './hooks/useRestTimer.js';
+import { usePushSubscription } from './hooks/usePushSubscription.js';
 
 import { AuthScreen } from './components/AuthScreen.jsx';
 import { StickyHeader } from './components/layout/StickyHeader.jsx';
@@ -69,7 +70,13 @@ const GUT_PHASE_LABELS = {
 };
 
 export default function App() {
-  const { user, loading: authLoading, signInWithGoogle, signOut } = useAuth();
+  const {
+    user,
+    loading: authLoading,
+    signInAnonymously,
+    signInWithGoogle,
+    signOut,
+  } = useAuth();
   const { isLight, toggle: toggleTheme } = useTheme();
   const [tab, setTab] = useTabRouting('nt');
   const { toast, show: showToast } = useToast();
@@ -79,10 +86,10 @@ export default function App() {
   if (authLoading) return <div className="loading-screen">Loading…</div>;
   if (!user) {
     return (
-      <>
-        <AuthScreen onSignIn={signInWithGoogle} />
-        {/* Theme toggle on the auth screen would be nice, but not required */}
-      </>
+      <AuthScreen
+        onSignInAnonymously={signInAnonymously}
+        onSignInWithGoogle={signInWithGoogle}
+      />
     );
   }
 
@@ -107,7 +114,8 @@ function SignedInApp({ user, tab, setTab, signOut, showToast, toast, isLight, to
   const gutStreak = useStreak(user.id, 'gut');
   const pantry = usePantry(user.id);
   const workout = useWorkoutLogs(user.id);
-  const restTimer = useRestTimer();
+  const push = usePushSubscription(user.id);
+  const restTimer = useRestTimer(push);
 
   // ── Midnight cross-over
   useEffect(() => {

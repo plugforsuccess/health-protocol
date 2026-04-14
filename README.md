@@ -36,8 +36,28 @@ order:
    `daily_logs` with per-user RLS policies.
 2. `supabase/migrations/0002_workout_pantry.sql` — creates `workout_sets`,
    `workout_sessions`, `workout_mobility`, and `pantry_items` (also RLS-gated).
+3. `supabase/migrations/0003_push.sql` — creates `push_subscriptions` and
+   `scheduled_pushes` for Web Push. Skip only if you are disabling Web Push.
 
-### 3. Enable Google OAuth
+### 3. Enable anonymous sign-in (one toggle)
+
+The primary "Start tracking" button uses Supabase anonymous auth so you
+can use the app immediately with zero external config. To enable it:
+
+1. Open **Supabase Dashboard → Authentication → Sign In / Providers**.
+2. Scroll to **Anonymous Sign-Ins** and flip it on.
+3. Save.
+
+That's it. Every first-time visitor gets a real `auth.uid()` with a
+generated user id; RLS works normally; data persists as long as the
+browser keeps its auth token. If you ever want to keep the data when
+switching devices, you can later add `linkIdentity()` to bind the
+anonymous account to an email.
+
+### 3b. (Optional) Enable Google OAuth
+
+Only needed if you want the secondary "Use Google instead" button to work.
+Skip entirely unless you need cross-device sync on a shared Google account.
 
 1. **Authentication → Providers → Google** — toggle on and paste a Google
    OAuth client ID / secret (create one at
@@ -46,7 +66,74 @@ order:
    domain as authorized redirect URLs both in Google Cloud **and** in the
    Supabase Auth redirect-URL allowlist.
 
-### 4. Run it
+### 4. Set up Web Push (optional but recommended)
+
+The rest timer in the Train tab uses Web Push to buzz your phone even when
+the tab is fully backgrounded / the screen is locked. Skipping this step
+leaves you with the local notification + wake lock only (works fine when
+the tab is alive).
+
+#### 4a. Generate a VAPID key pair
+
+```bash
+npx web-push generate-vapid-keys
+```
+
+Copy the two base64-url strings you get back.
+
+- Put the **public** key in `.env.local` as `VITE_VAPID_PUBLIC_KEY`.
+- Keep the **private** key secret — you'll set it as an Edge Function secret
+  in the next step.
+
+#### 4b. Deploy the Edge Functions
+
+With the [Supabase CLI](https://supabase.com/docs/guides/cli) logged in
+(`supabase login && supabase link --project-ref <your-project-ref>`):
+
+```bash
+supabase functions deploy schedule-push
+supabase functions deploy send-due-pushes
+
+supabase secrets set \
+  VAPID_PUBLIC_KEY="<public-key>" \
+  VAPID_PRIVATE_KEY="<private-key>" \
+  VAPID_SUBJECT="mailto:you@example.com"
+```
+
+#### 4c. Schedule the cron job
+
+In the Supabase SQL editor, enable `pg_cron` + `pg_net` if you haven't
+already, then schedule the sender to run every minute:
+
+```sql
+create extension if not exists pg_cron;
+create extension if not exists pg_net;
+
+select cron.schedule(
+  'send-due-pushes',
+  '* * * * *',  -- every minute
+  $$
+  select net.http_post(
+    url := 'https://<your-project-ref>.supabase.co/functions/v1/send-due-pushes',
+    headers := jsonb_build_object(
+      'Authorization', 'Bearer ' || current_setting('app.service_role_key', true),
+      'Content-Type', 'application/json'
+    ),
+    body := '{}'::jsonb
+  );
+  $$
+);
+```
+
+You'll need to set `app.service_role_key` at the database level (in the
+Supabase dashboard → Project Settings → API → copy the service_role secret,
+then in SQL editor: `alter database postgres set app.service_role_key = 'eyJ…';`).
+
+The cron fires every minute, and the Edge Function self-loops for ~55s
+sending pushes as they come due — net delivery granularity is ~2 seconds
+even though the cron itself only runs 1/min.
+
+### 5. Run it
 
 ```bash
 npm run dev       # vite dev server on :5173

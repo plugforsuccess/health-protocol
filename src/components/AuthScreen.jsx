@@ -1,18 +1,59 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { hasSupabaseConfig } from '../lib/supabase.js';
 
-export function AuthScreen({ onSignIn }) {
+export function AuthScreen({ onSignInAnonymously, onSignInWithGoogle }) {
   const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState(null); // 'anon' | 'google' | null
   const [err, setErr] = useState(null);
+  const [showGoogle, setShowGoogle] = useState(false);
+  const timeoutRef = useRef(null);
 
-  async function handle() {
+  useEffect(
+    () => () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    },
+    []
+  );
+
+  async function handleAnon() {
     setErr(null);
     setLoading(true);
+    setMode('anon');
     try {
-      await onSignIn();
+      await onSignInAnonymously();
     } catch (e) {
+      const msg = e?.message || 'Sign-in failed';
+      // Common case: admin hasn't toggled on anonymous sign-ins yet.
+      const friendly = /anonymous/i.test(msg)
+        ? 'Anonymous sign-in is disabled. Enable it in Supabase → Authentication → Sign In / Providers → "Allow anonymous sign-ins".'
+        : msg;
+      setErr(friendly);
+      setLoading(false);
+      setMode(null);
+    }
+  }
+
+  async function handleGoogle() {
+    setErr(null);
+    setLoading(true);
+    setMode('google');
+
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      setLoading(false);
+      setMode(null);
+      setErr(
+        'Sign-in didn\'t start. Enable Google under Authentication → Providers in Supabase, and add this origin to the redirect URL allowlist.'
+      );
+    }, 6000);
+
+    try {
+      await onSignInWithGoogle();
+    } catch (e) {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
       setErr(e?.message || 'Sign-in failed');
       setLoading(false);
+      setMode(null);
     }
   }
 
@@ -20,20 +61,54 @@ export function AuthScreen({ onSignIn }) {
     <div className="auth-screen">
       <div className="auth-card">
         <div className="auth-logo">DAILY PROTOCOL</div>
-        <div className="auth-tag">NEURO · GUT · DIET</div>
+        <div className="auth-tag">NEURO · GUT · DIET · TRAIN</div>
         <div className="auth-sub">
-          Personal protocol tracker. Sign in with Google to sync your daily
-          checks and streaks across devices.
+          Personal protocol tracker. Your checks, streaks, workout logs, and
+          rest-timer pushes all sync to a private account tied to this
+          browser.
         </div>
+
         <button
           type="button"
           className="auth-btn"
-          onClick={handle}
+          onClick={handleAnon}
           disabled={loading || !hasSupabaseConfig}
         >
-          <GoogleIcon />
-          {loading ? 'SIGNING IN…' : 'CONTINUE WITH GOOGLE'}
+          {loading && mode === 'anon' ? 'STARTING…' : '→  START TRACKING'}
         </button>
+
+        {!showGoogle ? (
+          <button
+            type="button"
+            onClick={() => setShowGoogle(true)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--muted)',
+              fontFamily: 'DM Mono, monospace',
+              fontSize: 10,
+              letterSpacing: '0.1em',
+              marginTop: 14,
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              textUnderlineOffset: 3,
+            }}
+          >
+            USE GOOGLE INSTEAD
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="auth-btn"
+            onClick={handleGoogle}
+            disabled={loading || !hasSupabaseConfig}
+            style={{ marginTop: 10 }}
+          >
+            <GoogleIcon />
+            {loading && mode === 'google' ? 'SIGNING IN…' : 'CONTINUE WITH GOOGLE'}
+          </button>
+        )}
+
         {!hasSupabaseConfig && (
           <div className="auth-error">
             Missing Supabase env. Copy .env.example → .env.local and fill in

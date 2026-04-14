@@ -18,16 +18,20 @@ import { useCallback, useEffect, useRef, useState } from 'react';
  *    screen from sleeping mid-rest. The lock is re-acquired on return
  *    because browsers auto-release it when the document hides.
  *
- * 4. If the timer completes while the tab is hidden we fire a browser
- *    Notification (if permission was granted). Permission is requested
- *    the first time `start()` is called.
+ * 4. If the timer completes while the tab is hidden we fire a local
+ *    Notification (if permission was granted).
  *
- * Caveat — on a fully locked phone, the tab/JS runtime may be suspended
- * entirely. In that case the notification only fires once the user
- * unlocks and revives the page. The only real fix for that is Web Push
- * via a Service Worker, which requires server infrastructure.
+ * 5. To survive a FULLY suspended / locked device: when the timer starts
+ *    we optionally schedule a Web Push via the caller-provided
+ *    `push.schedule({ fireAt, title, body })`. If the tab dies before the
+ *    timer fires, the server-side cron sends the push and the OS wakes
+ *    the phone. If the tab is alive and the timer completes locally we
+ *    `push.cancel(id)` to avoid a duplicate buzz.
+ *
+ * The `push` argument is optional — without it, the timer still works
+ * exactly as before.
  */
-export function useRestTimer() {
+export function useRestTimer(push) {
   const [state, setState] = useState({
     active: false,
     paused: false,
@@ -45,6 +49,7 @@ export function useRestTimer() {
   const wakeLockRef = useRef(null);
   const finishedRef = useRef(false);
   const activeRef = useRef(false);
+  const scheduledPushIdRef = useRef(null);  // id of the queued push row (for cancellation)
 
   // ── Wake Lock helpers ─────────────────────────────────────────────
   const acquireWakeLock = useCallback(async () => {
@@ -83,6 +88,15 @@ export function useRestTimer() {
   const hide = useCallback(() => {
     clearTimers();
     releaseWakeLock();
+    // Cancel any outstanding scheduled push so the server doesn't fire a
+    // redundant buzz after the user has already moved on.
+    if (scheduledPushIdRef.current && push?.cancel) {
+      const id = scheduledPushIdRef.current;
+      scheduledPushIdRef.current = null;
+      push.cancel(id).catch(() => {});
+    } else {
+      scheduledPushIdRef.current = null;
+    }
     endTimeRef.current = null;
     pauseStartRef.current = null;
     finishedRef.current = false;
@@ -93,7 +107,7 @@ export function useRestTimer() {
       paused: false,
       finished: false,
     }));
-  }, [clearTimers, releaseWakeLock]);
+  }, [clearTimers, releaseWakeLock, push]);
 
   // ── Core tick: compute remaining from wall clock ──────────────────
   const tick = useCallback(() => {
@@ -107,6 +121,13 @@ export function useRestTimer() {
       // Fire completion side effects exactly once
       finishedRef.current = true;
       setState((s) => ({ ...s, remaining: 0, finished: true, active: true }));
+
+      // Tab was alive at completion, so cancel the server-side fallback push.
+      if (scheduledPushIdRef.current && push?.cancel) {
+        const id = scheduledPushIdRef.current;
+        scheduledPushIdRef.current = null;
+        push.cancel(id).catch(() => {});
+      }
 
       try {
         navigator.vibrate?.([200, 100, 200]);
@@ -154,10 +175,19 @@ export function useRestTimer() {
       clearTimers();
       releaseWakeLock();
 
+      // If a previous timer scheduled a fallback push and hasn't been
+      // cancelled yet, cancel it now — we're starting fresh.
+      if (scheduledPushIdRef.current && push?.cancel) {
+        const prevId = scheduledPushIdRef.current;
+        push.cancel(prevId).catch(() => {});
+      }
+      scheduledPushIdRef.current = null;
+
       finishedRef.current = false;
       activeRef.current = true;
       pauseStartRef.current = null;
-      endTimeRef.current = Date.now() + seconds * 1000;
+      const endMs = Date.now() + seconds * 1000;
+      endTimeRef.current = endMs;
 
       setState({
         active: true,
@@ -168,25 +198,40 @@ export function useRestTimer() {
         finished: false,
       });
 
-      // Request notification permission on first use (async, non-blocking).
-      if (
-        typeof window !== 'undefined' &&
-        'Notification' in window &&
-        Notification.permission === 'default'
-      ) {
-        try {
-          Notification.requestPermission().catch(() => {});
-        } catch {}
-      }
-
       acquireWakeLock();
 
       // Tick at 250ms when visible for smooth ring animation. Browsers throttle
       // this when hidden, but wall-clock arithmetic keeps remaining correct.
       intervalRef.current = setInterval(tick, 250);
       tick();
+
+      // Fallback: schedule a Web Push on the server for 2s AFTER the local
+      // completion. If the tab is alive at t=seconds the local notification
+      // fires and we'll cancel this push. If the tab is dead the server
+      // delivers the push 2s later so the OS wakes the phone.
+      if (push?.schedule) {
+        const title2 = title || 'Next set ready';
+        push
+          .schedule({
+            fireAt: new Date(endMs + 2000),
+            title: 'Rest timer done',
+            body: title2,
+            tag: 'rest-timer',
+          })
+          .then((id) => {
+            // Only store if we're still the active timer — start() may have
+            // been called again in the interim.
+            if (id && endTimeRef.current === endMs) {
+              scheduledPushIdRef.current = id;
+            } else if (id && push?.cancel) {
+              // Stale — cancel it.
+              push.cancel(id).catch(() => {});
+            }
+          })
+          .catch(() => {});
+      }
     },
-    [acquireWakeLock, clearTimers, releaseWakeLock, tick]
+    [acquireWakeLock, clearTimers, releaseWakeLock, tick, push]
   );
 
   const togglePause = useCallback(() => {
