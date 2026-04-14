@@ -25,12 +25,15 @@ export function StickyHeader({
 }) {
   const hideTrackingUI = tab === 'diet' || tab === 'workout';
   const logo = LOGOS[tab] || LOGOS.nt;
-  const displayName =
-    user?.user_metadata?.full_name ||
-    user?.user_metadata?.name ||
-    user?.email?.split('@')[0] ||
-    'you';
-  const avatar = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
+  const isAnonymous = user?.is_anonymous === true;
+  const displayName = isAnonymous
+    ? 'guest'
+    : user?.user_metadata?.full_name ||
+      user?.user_metadata?.name ||
+      user?.email?.split('@')[0] ||
+      'you';
+  const avatar =
+    !isAnonymous && (user?.user_metadata?.avatar_url || user?.user_metadata?.picture);
   const initials = (displayName || '?').slice(0, 1).toUpperCase();
 
   return (

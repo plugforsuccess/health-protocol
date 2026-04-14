@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase.js';
 
 /**
  * Auth hook wrapping Supabase session.
- * Exposes: { session, user, loading, signInWithGoogle, signOut }
+ * Exposes: { session, user, loading, signInAnonymously, signInWithGoogle, signOut }
  */
 export function useAuth() {
   const [session, setSession] = useState(null);
@@ -50,6 +50,12 @@ export function useAuth() {
     }
   }
 
+  async function signInAnonymously() {
+    const { error } = await supabase.auth.signInAnonymously();
+    if (error) throw error;
+    // The session fires through onAuthStateChange, which updates state.
+  }
+
   async function signOut() {
     await supabase.auth.signOut();
   }
@@ -58,6 +64,7 @@ export function useAuth() {
     session,
     user: session?.user ?? null,
     loading,
+    signInAnonymously,
     signInWithGoogle,
     signOut,
   };

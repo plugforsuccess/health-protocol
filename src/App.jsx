@@ -70,7 +70,13 @@ const GUT_PHASE_LABELS = {
 };
 
 export default function App() {
-  const { user, loading: authLoading, signInWithGoogle, signOut } = useAuth();
+  const {
+    user,
+    loading: authLoading,
+    signInAnonymously,
+    signInWithGoogle,
+    signOut,
+  } = useAuth();
   const { isLight, toggle: toggleTheme } = useTheme();
   const [tab, setTab] = useTabRouting('nt');
   const { toast, show: showToast } = useToast();
@@ -80,10 +86,10 @@ export default function App() {
   if (authLoading) return <div className="loading-screen">Loading…</div>;
   if (!user) {
     return (
-      <>
-        <AuthScreen onSignIn={signInWithGoogle} />
-        {/* Theme toggle on the auth screen would be nice, but not required */}
-      </>
+      <AuthScreen
+        onSignInAnonymously={signInAnonymously}
+        onSignInWithGoogle={signInWithGoogle}
+      />
     );
   }
 

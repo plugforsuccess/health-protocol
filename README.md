@@ -39,7 +39,25 @@ order:
 3. `supabase/migrations/0003_push.sql` — creates `push_subscriptions` and
    `scheduled_pushes` for Web Push. Skip only if you are disabling Web Push.
 
-### 3. Enable Google OAuth
+### 3. Enable anonymous sign-in (one toggle)
+
+The primary "Start tracking" button uses Supabase anonymous auth so you
+can use the app immediately with zero external config. To enable it:
+
+1. Open **Supabase Dashboard → Authentication → Sign In / Providers**.
+2. Scroll to **Anonymous Sign-Ins** and flip it on.
+3. Save.
+
+That's it. Every first-time visitor gets a real `auth.uid()` with a
+generated user id; RLS works normally; data persists as long as the
+browser keeps its auth token. If you ever want to keep the data when
+switching devices, you can later add `linkIdentity()` to bind the
+anonymous account to an email.
+
+### 3b. (Optional) Enable Google OAuth
+
+Only needed if you want the secondary "Use Google instead" button to work.
+Skip entirely unless you need cross-device sync on a shared Google account.
 
 1. **Authentication → Providers → Google** — toggle on and paste a Google
    OAuth client ID / secret (create one at

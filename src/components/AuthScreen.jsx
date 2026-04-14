@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { hasSupabaseConfig } from '../lib/supabase.js';
 
-export function AuthScreen({ onSignIn }) {
+export function AuthScreen({ onSignInAnonymously, onSignInWithGoogle }) {
   const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState(null); // 'anon' | 'google' | null
   const [err, setErr] = useState(null);
+  const [showGoogle, setShowGoogle] = useState(false);
   const timeoutRef = useRef(null);
 
   useEffect(
@@ -13,28 +15,45 @@ export function AuthScreen({ onSignIn }) {
     []
   );
 
-  async function handle() {
+  async function handleAnon() {
     setErr(null);
     setLoading(true);
+    setMode('anon');
+    try {
+      await onSignInAnonymously();
+    } catch (e) {
+      const msg = e?.message || 'Sign-in failed';
+      // Common case: admin hasn't toggled on anonymous sign-ins yet.
+      const friendly = /anonymous/i.test(msg)
+        ? 'Anonymous sign-in is disabled. Enable it in Supabase → Authentication → Sign In / Providers → "Allow anonymous sign-ins".'
+        : msg;
+      setErr(friendly);
+      setLoading(false);
+      setMode(null);
+    }
+  }
 
-    // Safety net: if `signInWithOAuth` neither throws nor navigates within
-    // 6 seconds, something is wrong (Google provider not enabled, redirect
-    // URL not allow-listed, pop-up blocked, etc.). Reset the loading state
-    // and surface a useful hint.
+  async function handleGoogle() {
+    setErr(null);
+    setLoading(true);
+    setMode('google');
+
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
       setLoading(false);
+      setMode(null);
       setErr(
-        'Sign-in didn\'t start. Make sure Google is enabled under Authentication → Providers in your Supabase project, and that this origin is in the redirect URL allowlist.'
+        'Sign-in didn\'t start. Enable Google under Authentication → Providers in Supabase, and add this origin to the redirect URL allowlist.'
       );
     }, 6000);
 
     try {
-      await onSignIn();
+      await onSignInWithGoogle();
     } catch (e) {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       setErr(e?.message || 'Sign-in failed');
       setLoading(false);
+      setMode(null);
     }
   }
 
@@ -44,19 +63,52 @@ export function AuthScreen({ onSignIn }) {
         <div className="auth-logo">DAILY PROTOCOL</div>
         <div className="auth-tag">NEURO · GUT · DIET · TRAIN</div>
         <div className="auth-sub">
-          Personal protocol tracker. Sign in with Google so your checks,
-          streaks, workout logs and rest-timer notifications sync across
-          devices.
+          Personal protocol tracker. Your checks, streaks, workout logs, and
+          rest-timer pushes all sync to a private account tied to this
+          browser.
         </div>
+
         <button
           type="button"
           className="auth-btn"
-          onClick={handle}
+          onClick={handleAnon}
           disabled={loading || !hasSupabaseConfig}
         >
-          <GoogleIcon />
-          {loading ? 'SIGNING IN…' : 'CONTINUE WITH GOOGLE'}
+          {loading && mode === 'anon' ? 'STARTING…' : '→  START TRACKING'}
         </button>
+
+        {!showGoogle ? (
+          <button
+            type="button"
+            onClick={() => setShowGoogle(true)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--muted)',
+              fontFamily: 'DM Mono, monospace',
+              fontSize: 10,
+              letterSpacing: '0.1em',
+              marginTop: 14,
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              textUnderlineOffset: 3,
+            }}
+          >
+            USE GOOGLE INSTEAD
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="auth-btn"
+            onClick={handleGoogle}
+            disabled={loading || !hasSupabaseConfig}
+            style={{ marginTop: 10 }}
+          >
+            <GoogleIcon />
+            {loading && mode === 'google' ? 'SIGNING IN…' : 'CONTINUE WITH GOOGLE'}
+          </button>
+        )}
+
         {!hasSupabaseConfig && (
           <div className="auth-error">
             Missing Supabase env. Copy .env.example → .env.local and fill in
