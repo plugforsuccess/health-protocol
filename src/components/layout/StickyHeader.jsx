@@ -16,6 +16,7 @@ export function StickyHeader({
   setTab,
   user,
   onSignOut,
+  onConnectAccount,
   progress,
   phases,
   streakCount,
@@ -51,6 +52,16 @@ export function StickyHeader({
             )}
             <span className="user-name">{displayName}</span>
           </div>
+          {isAnonymous && onConnectAccount && (
+            <button
+              type="button"
+              className="connect-btn"
+              onClick={onConnectAccount}
+              title="Connect an email or Google account to sync across devices"
+            >
+              🔗 CONNECT
+            </button>
+          )}
           <button type="button" className="signout-btn" onClick={onSignOut}>
             OUT
           </button>

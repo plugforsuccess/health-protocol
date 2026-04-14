@@ -125,6 +125,22 @@
   body.light .theme-toggle { background:rgba(109,40,217,0.12); border-color:#6d28d9; }
   body.light .theme-toggle::after { background:#6d28d9; transform:translateX(16px); }
 
+/* ── CONNECT ACCOUNT ── */
+  .connect-btn { background:rgba(6,182,212,0.1); border:1px solid rgba(6,182,212,0.35); color:var(--s); font-family:DM Mono,monospace; font-size:10px; letter-spacing:0.1em; padding:4px 9px; border-radius:6px; cursor:pointer; transition:all 0.2s; white-space:nowrap; }
+  .connect-btn:hover { background:rgba(6,182,212,0.18); border-color:var(--s); }
+  body.light .connect-btn { background:rgba(3,105,161,0.08); border-color:rgba(3,105,161,0.35); color:#0369a1; }
+  .connect-sheet { max-width:440px; }
+  .connect-sub { font-size:12px; color:var(--label); line-height:1.6; margin-top:4px; }
+  .connect-email-form { display:flex; flex-direction:column; }
+  .connect-email-input { background:var(--surface2); border:1px solid var(--border2); border-radius:8px; padding:11px 14px; font-size:14px; color:var(--text); font-family:'DM Sans',sans-serif; }
+  .connect-email-input:focus { outline:none; border-color:var(--a); }
+  .connect-email-input:disabled { opacity:0.6; }
+  .connect-hint { font-size:11px; color:var(--muted); margin-top:8px; font-family:DM Mono,monospace; line-height:1.6; }
+  .connect-msg { margin-top:16px; padding:10px 12px; border-radius:6px; font-size:12px; font-family:DM Mono,monospace; line-height:1.6; }
+  .connect-msg.ok { background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); color:var(--a); }
+  .connect-msg.err { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.25); color:var(--warn); }
+  body.light .connect-email-input { background:#fff; border-color:#c0c0d4; color:#12122a; }
+
 /* ── THEME TOGGLE ── */
   .theme-toggle { width:36px; height:20px; border-radius:10px; border:1.5px solid var(--border2); background:var(--surface2); cursor:pointer; position:relative; transition:all 0.25s; flex-shrink:0; padding:0; }
   .theme-toggle::after { content:''; position:absolute; top:2px; left:2px; width:12px; height:12px; border-radius:50%; background:var(--muted); transition:all 0.25s; }

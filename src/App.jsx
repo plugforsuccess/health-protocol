@@ -11,6 +11,7 @@ import { useRestTimer } from './hooks/useRestTimer.js';
 import { usePushSubscription } from './hooks/usePushSubscription.js';
 
 import { AuthScreen } from './components/AuthScreen.jsx';
+import { ConnectAccountDialog } from './components/ConnectAccountDialog.jsx';
 import { StickyHeader } from './components/layout/StickyHeader.jsx';
 import { NTPanel } from './components/panels/NTPanel.jsx';
 import { GutPanel } from './components/panels/GutPanel.jsx';
@@ -76,6 +77,8 @@ export default function App() {
     signInAnonymously,
     signInWithGoogle,
     signOut,
+    linkWithGoogle,
+    linkWithEmail,
   } = useAuth();
   const { isLight, toggle: toggleTheme } = useTheme();
   const [tab, setTab] = useTabRouting('nt');
@@ -99,6 +102,8 @@ export default function App() {
       tab={tab}
       setTab={setTab}
       signOut={signOut}
+      linkWithGoogle={linkWithGoogle}
+      linkWithEmail={linkWithEmail}
       showToast={showToast}
       toast={toast}
       isLight={isLight}
@@ -107,7 +112,19 @@ export default function App() {
   );
 }
 
-function SignedInApp({ user, tab, setTab, signOut, showToast, toast, isLight, toggleTheme }) {
+function SignedInApp({
+  user,
+  tab,
+  setTab,
+  signOut,
+  linkWithGoogle,
+  linkWithEmail,
+  showToast,
+  toast,
+  isLight,
+  toggleTheme,
+}) {
+  const [connectOpen, setConnectOpen] = useState(false);
   const nt = useProtocolState(user.id, 'nt');
   const gut = useProtocolState(user.id, 'gut');
   const ntStreak = useStreak(user.id, 'nt');
@@ -307,6 +324,7 @@ function SignedInApp({ user, tab, setTab, signOut, showToast, toast, isLight, to
         setTab={setTab}
         user={user}
         onSignOut={signOut}
+        onConnectAccount={() => setConnectOpen(true)}
         progress={headerProgress}
         phases={headerPhases}
         streakCount={headerStreak}
@@ -353,6 +371,13 @@ function SignedInApp({ user, tab, setTab, signOut, showToast, toast, isLight, to
         state={restTimer.state}
         onTogglePause={restTimer.togglePause}
         onSkip={restTimer.hide}
+      />
+
+      <ConnectAccountDialog
+        open={connectOpen}
+        onClose={() => setConnectOpen(false)}
+        onLinkGoogle={linkWithGoogle}
+        onLinkEmail={linkWithEmail}
       />
 
       <Toast toast={toast} />
