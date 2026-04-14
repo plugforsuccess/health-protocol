@@ -50,9 +50,27 @@ can use the app immediately with zero external config. To enable it:
 
 That's it. Every first-time visitor gets a real `auth.uid()` with a
 generated user id; RLS works normally; data persists as long as the
-browser keeps its auth token. If you ever want to keep the data when
-switching devices, you can later add `linkIdentity()` to bind the
-anonymous account to an email.
+browser keeps its auth token.
+
+#### Cross-device upgrade (optional)
+
+Anonymous accounts are browser-specific. If you ever want to use the
+same data on a second device, click the **🔗 CONNECT** button that
+appears next to your user chip in the header when signed in
+anonymously. That opens a dialog to:
+
+- **Link Google** — upgrades the anon account to a Google identity
+  (requires the optional Google provider setup in section 3b AND
+  **Authentication → Settings → "Allow manual linking" toggled on**).
+- **Link email** — sends a magic link to the given address; clicking
+  the link from any device finishes the upgrade. Requires an email
+  provider — Supabase ships with a default SMTP sufficient for
+  personal use; for higher volume configure SMTP under
+  **Authentication → SMTP Settings**.
+
+The `user_id` stays the same through linking, so every existing
+check, streak, workout set, and pantry row follows along — nothing is
+re-keyed or lost.
 
 ### 3b. (Optional) Enable Google OAuth
 
