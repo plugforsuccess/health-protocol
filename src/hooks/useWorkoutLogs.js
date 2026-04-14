@@ -1,0 +1,319 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { supabase, localDateKey } from '../lib/supabase.js';
+import { WORKOUT_WEEK } from '../data/workoutWeek.js';
+
+const DAY_MAP = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+/** ISO date for the given day-index relative to this week's occurrence. */
+export function workoutDateKey(dayIdx, now = new Date()) {
+  const today = now.getDay();
+  const target = DAY_MAP.indexOf(WORKOUT_WEEK[dayIdx]?.day);
+  if (target < 0) return localDateKey(now);
+  const diff = target - today;
+  const d = new Date(now);
+  d.setDate(now.getDate() + diff);
+  return localDateKey(d);
+}
+
+export function getTodayWorkoutIdx() {
+  const name = DAY_MAP[new Date().getDay()];
+  return WORKOUT_WEEK.findIndex((d) => d.day === name);
+}
+
+/**
+ * Aggregates everything a workout UI needs:
+ *   - sessions[] — list of workout_sessions rows (for stats / volume chart)
+ *   - sets[]    — all sets for a given dayIdx's computed date (for modal)
+ *   - mobility[] — mobility completions for same
+ *   - logSet, cycleStatus, toggleMobility, completeWorkout
+ *
+ * Volume + PR are recomputed client-side on each set change, then the summary
+ * is written to workout_sessions.
+ */
+export function useWorkoutLogs(userId) {
+  const [sessions, setSessions] = useState([]);
+  const [sets, setSets] = useState([]);
+  const [mobility, setMobility] = useState([]);
+  const [ready, setReady] = useState(false);
+
+  const loadAll = useCallback(async () => {
+    if (!userId) return;
+    setReady(false);
+    const [sess, allSets, mob] = await Promise.all([
+      supabase
+        .from('workout_sessions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('session_date', { ascending: false }),
+      supabase.from('workout_sets').select('*').eq('user_id', userId),
+      supabase.from('workout_mobility').select('*').eq('user_id', userId),
+    ]);
+    if (!sess.error) setSessions(sess.data || []);
+    if (!allSets.error) setSets(allSets.data || []);
+    if (!mob.error) setMobility(mob.data || []);
+    setReady(true);
+  }, [userId]);
+
+  useEffect(() => {
+    loadAll();
+  }, [loadAll]);
+
+  /** { [session_date__day_index]: true } for completed sessions — fast lookup. */
+  const completedMap = useMemo(() => {
+    const m = {};
+    sessions.forEach((s) => {
+      if (s.completed) m[`${s.session_date}__${s.day_index}`] = true;
+    });
+    return m;
+  }, [sessions]);
+
+  /** Sets keyed by `${date}::${dayIdx}::${exIdx}::${setIdx}` for modal lookup. */
+  const setsMap = useMemo(() => {
+    const m = {};
+    sets.forEach((row) => {
+      m[`${row.session_date}::${row.day_index}::${row.exercise_index}::${row.set_index}`] = row;
+    });
+    return m;
+  }, [sets]);
+
+  const mobilityMap = useMemo(() => {
+    const m = {};
+    mobility.forEach((row) => {
+      m[`${row.session_date}::${row.day_index}::${row.mobility_index}`] = row.completed;
+    });
+    return m;
+  }, [mobility]);
+
+  /** Calculate best weight for (exercise_index, day_index) across all past dates except `excludeDate`. */
+  const getPrevBest = useCallback(
+    (dayIdx, exIdx, excludeDate) => {
+      let best = 0;
+      sets.forEach((row) => {
+        if (row.day_index !== dayIdx) return;
+        if (row.exercise_index !== exIdx) return;
+        if (excludeDate && row.session_date === excludeDate) return;
+        const w = parseFloat(row.weight_lbs) || 0;
+        if (w > best) best = w;
+      });
+      return best > 0 ? best : null;
+    },
+    [sets]
+  );
+
+  /** Calculate total volume for a given date+dayIdx. */
+  const getVolumeFor = useCallback(
+    (date, dayIdx) => {
+      let vol = 0;
+      sets.forEach((row) => {
+        if (row.session_date !== date || row.day_index !== dayIdx) return;
+        const w = parseFloat(row.weight_lbs) || 0;
+        const r = parseFloat(row.reps) || 0;
+        vol += w * r;
+      });
+      return vol;
+    },
+    [sets]
+  );
+
+  /** Calculate PR count: for each exercise in this session, is current-best > prev-best? */
+  const getPRsFor = useCallback(
+    (date, dayIdx) => {
+      const byEx = {};
+      sets.forEach((row) => {
+        if (row.session_date !== date || row.day_index !== dayIdx) return;
+        const w = parseFloat(row.weight_lbs) || 0;
+        if (!byEx[row.exercise_index] || w > byEx[row.exercise_index]) {
+          byEx[row.exercise_index] = w;
+        }
+      });
+      let prs = 0;
+      Object.entries(byEx).forEach(([exIdx, current]) => {
+        const prev = getPrevBest(dayIdx, parseInt(exIdx, 10), date);
+        if (prev && current > prev) prs += 1;
+      });
+      return prs;
+    },
+    [sets, getPrevBest]
+  );
+
+  /** Upsert session summary row (volume + prs). */
+  const upsertSessionSummary = useCallback(
+    async (date, dayIdx) => {
+      if (!userId) return;
+      const volume = getVolumeFor(date, dayIdx);
+      const prs = getPRsFor(date, dayIdx);
+      const existing = sessions.find(
+        (s) => s.session_date === date && s.day_index === dayIdx
+      );
+      const payload = {
+        user_id: userId,
+        session_date: date,
+        day_index: dayIdx,
+        volume_lbs: volume,
+        prs_set: prs,
+        completed: existing?.completed || false,
+      };
+      const { error } = await supabase
+        .from('workout_sessions')
+        .upsert(payload, { onConflict: 'user_id,session_date,day_index' });
+      if (error) throw error;
+      // Reload sessions list to reflect new totals
+      const { data } = await supabase
+        .from('workout_sessions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('session_date', { ascending: false });
+      if (data) setSessions(data);
+    },
+    [userId, getVolumeFor, getPRsFor, sessions]
+  );
+
+  /** Log a single field (weight | reps) on a set. */
+  const logSetField = useCallback(
+    async (dayIdx, exIdx, setIdx, field, value) => {
+      if (!userId) return;
+      const date = workoutDateKey(dayIdx);
+      const key = `${date}::${dayIdx}::${exIdx}::${setIdx}`;
+      const prev = setsMap[key] || {};
+      const row = {
+        user_id: userId,
+        session_date: date,
+        day_index: dayIdx,
+        exercise_index: exIdx,
+        set_index: setIdx,
+        weight_lbs: prev.weight_lbs ?? null,
+        reps: prev.reps ?? null,
+        status: prev.status ?? '',
+      };
+      if (field === 'weight') row.weight_lbs = value === '' ? null : parseFloat(value);
+      if (field === 'reps') row.reps = value === '' ? null : parseInt(value, 10);
+
+      // optimistic
+      setSets((prev) => {
+        const next = prev.filter((r) => !(r.session_date === date && r.day_index === dayIdx && r.exercise_index === exIdx && r.set_index === setIdx));
+        next.push({ ...row });
+        return next;
+      });
+
+      const { error } = await supabase
+        .from('workout_sets')
+        .upsert(row, { onConflict: 'user_id,session_date,day_index,exercise_index,set_index' });
+      if (error) throw error;
+
+      await upsertSessionSummary(date, dayIdx);
+    },
+    [userId, setsMap, upsertSessionSummary]
+  );
+
+  /** Cycle a set's status: '' → 'done' → 'failed' → ''. Returns the new status. */
+  const cycleSetStatus = useCallback(
+    async (dayIdx, exIdx, setIdx) => {
+      if (!userId) return '';
+      const date = workoutDateKey(dayIdx);
+      const key = `${date}::${dayIdx}::${exIdx}::${setIdx}`;
+      const prev = setsMap[key] || {};
+      const current = prev.status || '';
+      const next = current === '' ? 'done' : current === 'done' ? 'failed' : '';
+
+      const row = {
+        user_id: userId,
+        session_date: date,
+        day_index: dayIdx,
+        exercise_index: exIdx,
+        set_index: setIdx,
+        weight_lbs: prev.weight_lbs ?? null,
+        reps: prev.reps ?? null,
+        status: next,
+      };
+
+      setSets((p) => {
+        const arr = p.filter((r) => !(r.session_date === date && r.day_index === dayIdx && r.exercise_index === exIdx && r.set_index === setIdx));
+        arr.push(row);
+        return arr;
+      });
+
+      const { error } = await supabase
+        .from('workout_sets')
+        .upsert(row, { onConflict: 'user_id,session_date,day_index,exercise_index,set_index' });
+      if (error) throw error;
+      return next;
+    },
+    [userId, setsMap]
+  );
+
+  const toggleMobility = useCallback(
+    async (dayIdx, mobIdx) => {
+      if (!userId) return false;
+      const date = workoutDateKey(dayIdx);
+      const key = `${date}::${dayIdx}::${mobIdx}`;
+      const next = !mobilityMap[key];
+
+      setMobility((prev) => {
+        const arr = prev.filter(
+          (r) => !(r.session_date === date && r.day_index === dayIdx && r.mobility_index === mobIdx)
+        );
+        arr.push({
+          user_id: userId,
+          session_date: date,
+          day_index: dayIdx,
+          mobility_index: mobIdx,
+          completed: next,
+        });
+        return arr;
+      });
+
+      const { error } = await supabase.from('workout_mobility').upsert(
+        {
+          user_id: userId,
+          session_date: date,
+          day_index: dayIdx,
+          mobility_index: mobIdx,
+          completed: next,
+        },
+        { onConflict: 'user_id,session_date,day_index,mobility_index' }
+      );
+      if (error) throw error;
+      return next;
+    },
+    [userId, mobilityMap]
+  );
+
+  const completeWorkout = useCallback(
+    async (dayIdx) => {
+      if (!userId) return;
+      const date = workoutDateKey(dayIdx);
+      const volume = getVolumeFor(date, dayIdx);
+      const prs = getPRsFor(date, dayIdx);
+      const { error } = await supabase.from('workout_sessions').upsert(
+        {
+          user_id: userId,
+          session_date: date,
+          day_index: dayIdx,
+          completed: true,
+          volume_lbs: volume,
+          prs_set: prs,
+        },
+        { onConflict: 'user_id,session_date,day_index' }
+      );
+      if (error) throw error;
+      await loadAll();
+    },
+    [userId, getVolumeFor, getPRsFor, loadAll]
+  );
+
+  return {
+    ready,
+    sessions,
+    sets,
+    mobility,
+    setsMap,
+    mobilityMap,
+    completedMap,
+    getPrevBest,
+    logSetField,
+    cycleSetStatus,
+    toggleMobility,
+    completeWorkout,
+    reload: loadAll,
+  };
+}

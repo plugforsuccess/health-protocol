@@ -1,0 +1,121 @@
+export const WEEK_MEALS = [
+  {
+    day: 'Sun', label: 'Sunday',
+    meals: [
+      { time: 'breakfast', name: 'Salmon & Veggie Frittata', benefits: ['anti','fiber','cancer'],
+        ingredients: ['4 eggs','4oz wild salmon','spinach','bell pepper','garlic','olive oil','turmeric'],
+        prep: 'Whisk eggs with turmeric. Sauté garlic, pepper, spinach in olive oil. Add flaked salmon. Pour eggs over, finish in oven at 375°F for 12 min. Meal prep: make double batch, refrigerate for Mon breakfast too.' },
+      { time: 'lunch', name: 'Lentil & Kale Soup', benefits: ['anti','fiber','cancer'],
+        ingredients: ['1 cup green lentils','2 cups kale','carrots','celery','onion','garlic','turmeric','cumin','bone broth'],
+        prep: 'Sauté aromatics, add lentils and broth. Simmer 25 min. Add kale last 5 min. Batch cook full pot — this is lunch Mon–Wed.' },
+      { time: 'dinner', name: 'Grass-Fed Sirloin + Roasted Cruciferous', benefits: ['anti','cancer'],
+        ingredients: ['6oz grass-fed sirloin','broccoli','Brussels sprouts','garlic','olive oil','lemon','rosemary'],
+        prep: 'Season steak simply. Sear 3–4 min per side. Roast vegetables at 400°F 20 min with olive oil and garlic. Red meat max 1–2x this week — enjoy it here.' },
+      { time: 'snack', name: 'Walnuts + Blueberries', benefits: ['anti','cancer'],
+        ingredients: ['1oz raw walnuts','1 cup blueberries'],
+        prep: 'No prep. Portion walnuts into small bags for the week. Blueberries are one of the highest antioxidant foods — eat them daily.' },
+    ]
+  },
+  {
+    day: 'Mon', label: 'Monday',
+    meals: [
+      { time: 'breakfast', name: 'Leftover Frittata + Bone Broth', benefits: ['anti','fiber'],
+        ingredients: ['Frittata from Sunday','1 cup bone broth','ginger (fresh or powder)'],
+        prep: 'Reheat frittata. Heat bone broth with a pinch of ginger. This is your gut-lining morning hit on top of your L-Glutamine.' },
+      { time: 'lunch', name: 'Lentil & Kale Soup (batch)', benefits: ['anti','fiber','cancer'],
+        ingredients: ['From Sunday batch'],
+        prep: 'Reheat Sunday soup. Add a drizzle of olive oil and squeeze of lemon before serving to boost absorption of fat-soluble nutrients.' },
+      { time: 'dinner', name: 'Baked Salmon + Quinoa + Asparagus', benefits: ['anti','fiber','cancer'],
+        ingredients: ['6oz wild salmon','1 cup quinoa','asparagus','garlic','lemon','olive oil','dill'],
+        prep: 'Bake salmon at 400°F 12–15 min. Cook quinoa in bone broth instead of water for extra gut benefit. Roast asparagus alongside salmon.' },
+      { time: 'snack', name: 'Apple + Almond Butter', benefits: ['fiber','anti'],
+        ingredients: ['1 medium apple','2 tbsp almond butter'],
+        prep: 'Slice apple. The pectin fiber in apple skin specifically feeds beneficial gut bacteria.' },
+    ]
+  },
+  {
+    day: 'Tue', label: 'Tuesday',
+    meals: [
+      { time: 'breakfast', name: 'Overnight Oats + Berries + Flaxseed', benefits: ['fiber','anti','cancer'],
+        ingredients: ['1 cup rolled oats','almond milk','1 tbsp ground flaxseed','1 tbsp chia seeds','mixed berries','honey (raw)','cinnamon'],
+        prep: 'Prep Sunday night: combine oats, milk, seeds in jar. Refrigerate overnight. Top with berries morning of. Flaxseed contains lignans — among the most studied compounds for colorectal cancer prevention.' },
+      { time: 'lunch', name: 'Lentil Soup + Side Salad', benefits: ['anti','fiber','cancer'],
+        ingredients: ['Sunday batch soup','arugula','cherry tomatoes','cucumber','olive oil','lemon','hemp seeds'],
+        prep: 'Last of the Sunday soup batch. Add fresh salad alongside — arugula contains glucosinolates, cancer-protective compounds found in cruciferous greens.' },
+      { time: 'dinner', name: 'Chicken Thighs + Sweet Potato + Broccoli', benefits: ['anti','fiber','cancer'],
+        ingredients: ['6oz chicken thighs (skin-on)','1 large sweet potato','broccoli','garlic','paprika','olive oil','fresh herbs'],
+        prep: 'Season chicken with paprika, garlic, herbs. Roast at 425°F 30–35 min. Cube and roast sweet potato alongside. Steam or roast broccoli. Batch extra chicken for Wed lunch.' },
+      { time: 'snack', name: 'Pumpkin Seeds + Dark Chocolate', benefits: ['anti','cancer'],
+        ingredients: ['2 tbsp pumpkin seeds','1oz 85%+ dark chocolate'],
+        prep: 'Pumpkin seeds are high in zinc and magnesium. 85%+ dark chocolate is anti-inflammatory and gut-microbiome supportive.' },
+    ]
+  },
+  {
+    day: 'Wed', label: 'Wednesday',
+    meals: [
+      { time: 'breakfast', name: 'Turmeric Scrambled Eggs + Avocado Toast', benefits: ['anti','cancer'],
+        ingredients: ['3 eggs','½ avocado','1 slice sourdough','turmeric','black pepper','olive oil','cherry tomatoes'],
+        prep: 'Scramble eggs with turmeric and black pepper — black pepper increases curcumin absorption by 2000%. Sourdough is lower-glycemic and contains beneficial bacteria from fermentation.' },
+      { time: 'lunch', name: 'Chicken & Veggie Bowl', benefits: ['anti','fiber'],
+        ingredients: ['Leftover chicken from Tuesday','brown rice or farro','roasted vegetables','tahini drizzle','lemon'],
+        prep: 'Use Tuesday batch chicken. Serve over grain with leftover roasted veg. Tahini is high in sesame lignans — anti-inflammatory and supports gut lining.' },
+      { time: 'dinner', name: 'Shrimp Stir-Fry + Brown Rice', benefits: ['anti','fiber','cancer'],
+        ingredients: ['6oz shrimp','broccoli','snap peas','carrots','garlic','ginger','low-sodium soy sauce','sesame oil','brown rice'],
+        prep: 'High heat stir-fry, 8–10 min total. Garlic and ginger together are synergistically anti-inflammatory. Brown rice adds resistant starch that feeds beneficial colon bacteria.' },
+      { time: 'snack', name: 'Greek-Style Coconut Yogurt + Flaxseed', benefits: ['fiber','cancer'],
+        ingredients: ['coconut yogurt (unsweetened)','1 tbsp ground flaxseed','berries'],
+        prep: 'Non-dairy yogurt with live cultures. Adds another probiotic hit to complement your capsule protocol.' },
+    ]
+  },
+  {
+    day: 'Thu', label: 'Thursday',
+    meals: [
+      { time: 'breakfast', name: 'Green Smoothie Bowl', benefits: ['anti','fiber','cancer'],
+        ingredients: ['1 cup spinach','½ banana','1 cup frozen mango','1 tbsp flaxseed','1 tbsp collagen peptides','almond milk','toppings: granola, berries, chia'],
+        prep: 'Blend spinach, banana, mango, flaxseed, collagen, and milk until thick. Pour into bowl, add toppings. Collagen here doubles as your breakfast supplement dose.' },
+      { time: 'lunch', name: 'Black Bean & Roasted Veggie Wrap', benefits: ['fiber','anti','cancer'],
+        ingredients: ['½ cup black beans','roasted bell peppers','spinach','avocado','salsa','whole wheat or grain-free tortilla','cumin','lime'],
+        prep: 'Warm tortilla, layer ingredients. Black beans are one of the highest fiber legumes — 15g per cup. Fiber is your single most powerful dietary tool against colorectal cancer.' },
+      { time: 'dinner', name: 'Baked Cod + Garlic Roasted Cauliflower + Wild Rice', benefits: ['anti','fiber','cancer'],
+        ingredients: ['6oz cod fillet','1 head cauliflower','garlic','lemon','capers','olive oil','wild rice','fresh parsley'],
+        prep: 'Bake cod at 400°F 15 min with lemon and capers. Roast cauliflower at 425°F until caramelized. Cauliflower contains sulforaphane — one of the most researched anti-cancer plant compounds.' },
+      { time: 'snack', name: 'Hummus + Veggie Sticks', benefits: ['fiber','anti'],
+        ingredients: ['¼ cup hummus','carrots','celery','cucumber','bell pepper'],
+        prep: 'Chickpeas in hummus are high in butyrate-producing fiber. Butyrate is the primary fuel source for colon epithelial cells — directly protective.' },
+    ]
+  },
+  {
+    day: 'Fri', label: 'Friday',
+    meals: [
+      { time: 'breakfast', name: 'Smoked Salmon Avocado Bowl', benefits: ['anti','cancer'],
+        ingredients: ['3oz smoked wild salmon','½ avocado','2 poached eggs','arugula','capers','lemon','everything bagel seasoning'],
+        prep: 'Poach eggs 3–4 min. Layer arugula, avocado, salmon, eggs. Omega-3s from salmon are directly anti-inflammatory in the colon lining.' },
+      { time: 'lunch', name: 'Mediterranean Chickpea Salad', benefits: ['fiber','anti','cancer'],
+        ingredients: ['1 can chickpeas','cucumber','cherry tomatoes','kalamata olives','red onion','parsley','olive oil','lemon','oregano','feta (optional, skip for dairy-free)'],
+        prep: 'Combine all, dress with olive oil and lemon. No cooking needed. Olives contain hydroxytyrosol — one of the most potent anti-inflammatory polyphenols.' },
+      { time: 'dinner', name: 'Turkey Meatballs + Zucchini Noodles + Marinara', benefits: ['anti','fiber','cancer'],
+        ingredients: ['6oz ground turkey','zucchini','garlic','onion','egg','almond flour','Italian herbs','crushed tomatoes','olive oil'],
+        prep: 'Mix turkey with egg, almond flour, garlic, herbs. Bake at 400°F 18 min. Spiralize zucchini. Tomatoes are high in lycopene — cooked tomatoes have higher bioavailable lycopene than raw.' },
+      { time: 'snack', name: 'Edamame + Green Tea', benefits: ['anti','cancer'],
+        ingredients: ['1 cup edamame (shelled)','green tea (brewed)'],
+        prep: 'Edamame contains isoflavones. Green tea EGCG is one of the most studied cancer-protective plant compounds — aim for 1–2 cups daily.' },
+    ]
+  },
+  {
+    day: 'Sat', label: 'Saturday',
+    meals: [
+      { time: 'breakfast', name: 'Veggie Breakfast Hash', benefits: ['anti','fiber','cancer'],
+        ingredients: ['sweet potato','bell peppers','onion','garlic','spinach','2 eggs','olive oil','smoked paprika','cumin','fresh herbs'],
+        prep: 'Dice and roast sweet potato at 400°F 20 min. Sauté peppers and onion, add sweet potato, wilt spinach. Make wells for eggs, cover and cook 3–4 min. Weekend breakfast worth the extra time.' },
+      { time: 'lunch', name: 'Grilled Chicken Caesar (Dairy-Free)', benefits: ['anti','fiber'],
+        ingredients: ['6oz chicken breast','romaine','anchovy paste','garlic','lemon','olive oil','Dijon mustard','nutritional yeast','grain-free croutons'],
+        prep: 'Grill chicken 6 min per side. Blend dressing ingredients. Nutritional yeast replaces parmesan — high in B vitamins and beta-glucans.' },
+      { time: 'dinner', name: 'Grass-Fed Lamb Chops + Roasted Root Veg + Chimichurri', benefits: ['anti','cancer'],
+        ingredients: ['2 lamb chops (grass-fed)','parsnips','carrots','beets','garlic','fresh parsley','cilantro','red wine vinegar','olive oil','chili flakes'],
+        prep: 'Sear lamb 3 min per side, rest 5 min. Roast root veg at 425°F 25 min. Blend chimichurri. Beets contain betalains — potent anti-inflammatory and detox-supporting compounds. This is your Saturday treat meal.' },
+      { time: 'snack', name: 'Brazil Nuts + Raspberries', benefits: ['anti','cancer'],
+        ingredients: ['3–4 Brazil nuts','1 cup raspberries'],
+        prep: '3–4 Brazil nuts hits your entire weekly selenium requirement. Selenium is critical for DNA repair in colon cells. Raspberries are highest-fiber berry per cup.' },
+    ]
+  },
+];
