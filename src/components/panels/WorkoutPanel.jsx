@@ -46,7 +46,8 @@ export function WorkoutPanel({
         tag: 'rest-timer-test',
       });
       if (!id) {
-        showToast?.('schedule-push returned no id — Edge Function issue.', { error: true });
+        const why = push.scheduleReason || 'unknown';
+        showToast?.(`schedule-push failed: ${why}`, { error: true, duration: 12000 });
       } else {
         showToast?.('Test push scheduled. Lock phone / switch apps for 10s…', {
           duration: 10_000,
@@ -220,7 +221,12 @@ function PushDebugPanel({ debug }) {
       <Row label="Signed in" ok={debug.userId} value={debug.userId ? 'yes' : 'no'} />
       {debug.reason && (
         <div style={{ marginTop: 6, color: 'var(--err, #ef4444)' }}>
-          last failure: {debug.reason}
+          last subscribe failure: {debug.reason}
+        </div>
+      )}
+      {debug.scheduleReason && (
+        <div style={{ marginTop: 6, color: 'var(--err, #ef4444)', wordBreak: 'break-word' }}>
+          last schedule failure: {debug.scheduleReason}
         </div>
       )}
     </div>
