@@ -33,7 +33,7 @@ export function WorkoutPanel({
     try {
       const sub = await push.ensureSubscribed?.();
       if (!sub) {
-        const why = push.reason || 'unknown';
+        const why = push.getReason?.() || push.reason || 'unknown';
         showToast?.(`Push unavailable: ${why}`, { error: true, duration: 8000 });
         setTesting(false);
         return;
@@ -46,7 +46,7 @@ export function WorkoutPanel({
         tag: 'rest-timer-test',
       });
       if (!id) {
-        const why = push.scheduleReason || 'unknown';
+        const why = push.getScheduleReason?.() || push.scheduleReason || 'unknown';
         showToast?.(`schedule-push failed: ${why}`, { error: true, duration: 12000 });
       } else {
         showToast?.('Test push scheduled. Lock phone / switch apps for 10s…', {
