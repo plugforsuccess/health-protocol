@@ -108,6 +108,59 @@ function weightStep(exerciseName) {
   return SMALL_MUSCLE_KEYWORDS.some((k) => n.includes(k)) ? 2.5 : 5;
 }
 
+/** Best-effort pull of a starter weight from the hardcoded rec_weight string.
+ *  Examples handled:
+ *    "30lb dumbbell (week 1-2)"   → 30
+ *    "25lb each hand (week 1)"    → 25
+ *    "65-75lb barbell (week 1)"   → 65 (lower bound — start light)
+ *    "10-12lb"                    → 10
+ *    "Bodyweight only — weeks…"   → null
+ *    "Speed 6.5-7.5 mph (160lb athlete)" → null (the 160lb is the athlete
+ *                                                weight, not the load)
+ */
+function parseStarterWeight(recWeight) {
+  if (!recWeight) return null;
+  const s = String(recWeight);
+  if (/bodyweight/i.test(s)) return null;
+  // Skip cardio strings that mention mph / speed.
+  if (/\bmph\b|\bspeed\b/i.test(s)) return null;
+  // First "<num>lb" occurrence; for ranges like "65-75lb" the FIRST number
+  // is the lower bound which is what we want for week-1 start.
+  const m = s.match(/(\d+(?:\.\d+)?)\s*(?:-\s*\d+(?:\.\d+)?\s*)?lb/i);
+  if (!m) return null;
+  const n = parseFloat(m[1]);
+  return Number.isFinite(n) ? n : null;
+}
+
+/** Best-effort pull of a starter rep target from the reps string.
+ *  Examples:
+ *    "10"            → 10
+ *    "10 each side"  → 10
+ *    "8 each leg"    → 8
+ *    "30 sec"        → null (duration kind handles its own prefill)
+ */
+function parseStarterReps(reps) {
+  if (!reps) return null;
+  const s = String(reps);
+  if (/sec|min|yard/i.test(s)) return null;
+  const m = s.match(/(\d+)/);
+  return m ? parseInt(m[1], 10) : null;
+}
+
+/** Best-effort pull of a starter "load" value for the duration column —
+ *  seconds or yards. */
+function parseStarterDuration(reps) {
+  if (!reps) return null;
+  const s = String(reps);
+  const ydMatch = s.match(/(\d+)\s*yard/i);
+  if (ydMatch) return parseInt(ydMatch[1], 10);
+  const secMatch = s.match(/(\d+)\s*sec/i);
+  if (secMatch) return parseInt(secMatch[1], 10);
+  const minMatch = s.match(/(\d+)\s*min/i);
+  if (minMatch) return parseInt(minMatch[1], 10) * 60;
+  return null;
+}
+
 /**
  * Aggregate a prior session's rows for one exercise into a decision shape.
  *   rows      — array of workout_sets rows, all for the SAME date/ex.
@@ -159,9 +212,13 @@ export function suggestProgression({ ex, priorRows, priorCountTarget }) {
   const kind = classifyExercise(ex);
   const last = summariseLast(priorRows, priorCountTarget || ex?.sets);
 
+  const baseRepTarget = parseStarterReps(ex?.reps);
+  const baseDuration = parseStarterDuration(ex?.reps);
+  const baseWeight = parseStarterWeight(ex?.rec_weight);
+
   // Duration / cardio → never show "lbs". Progression is time or rounds.
   if (kind.kind === 'duration') {
-    const base = kind.target;
+    const base = kind.target ?? baseDuration;
     if (!last || last.loggedCount === 0) {
       return {
         kind: 'duration',
@@ -169,6 +226,8 @@ export function suggestProgression({ ex, priorRows, priorCountTarget }) {
         reason: 'First time — use the programmed effort level.',
         dynamic: false,
         delta: 0,
+        prefillWeight: null,
+        prefillReps: base ?? null,
       };
     }
     if (last.anyFailed) {
@@ -178,6 +237,8 @@ export function suggestProgression({ ex, priorRows, priorCountTarget }) {
         reason: 'You bailed early last time — repeat same work at same effort.',
         dynamic: true,
         delta: 0,
+        prefillWeight: null,
+        prefillReps: base ?? null,
       };
     }
     if (last.allDone) {
@@ -192,15 +253,20 @@ export function suggestProgression({ ex, priorRows, priorCountTarget }) {
           reason: 'All rounds completed last session — time to progress.',
           dynamic: true,
           delta: 1,
+          prefillWeight: null,
+          prefillReps: base ?? null,
         };
       }
       const bump = 15;
+      const next = base ? base + bump : null;
       return {
         kind: 'duration',
-        display: base ? `${base + bump}s` : `+${bump}s`,
+        display: base ? `${next}s` : `+${bump}s`,
         reason: 'All work completed last session — add 15s.',
         dynamic: true,
         delta: bump,
+        prefillWeight: null,
+        prefillReps: next,
       };
     }
     return {
@@ -209,46 +275,60 @@ export function suggestProgression({ ex, priorRows, priorCountTarget }) {
       reason: 'Mixed result last session — hold the same work target.',
       dynamic: true,
       delta: 0,
+      prefillWeight: null,
+      prefillReps: base ?? null,
     };
   }
 
-  // Bodyweight → no weight column. Progression is reps or harder variation.
+  // Bodyweight → weight column starts as "BW" but is OPEN for a weighted
+  // progression (loaded box jumps, dumbbell split squats, etc). If the
+  // user logged a weight last session, prefill that weight as the
+  // starting load this session.
   if (kind.kind === 'bodyweight') {
-    const base = kind.target || 0;
+    const base = kind.target || baseRepTarget || 0;
+    const lastWeight = last?.maxWeight && last.maxWeight > 0 ? last.maxWeight : null;
     if (!last || last.loggedCount === 0) {
       return {
         kind: 'bodyweight',
         display: `Bodyweight · ${ex.reps} reps`,
-        reason: 'First time — hit the programmed rep target.',
+        reason: 'First time — hit the programmed rep target. Add weight if it is too easy.',
         dynamic: false,
         delta: 0,
+        prefillWeight: null,
+        prefillReps: base || null,
       };
     }
     if (last.anyFailed) {
       return {
         kind: 'bodyweight',
-        display: `Bodyweight · ${ex.reps} reps`,
-        reason: 'Form broke down last session — repeat same reps clean.',
+        display: lastWeight ? `${lastWeight}lb · ${base} reps` : `Bodyweight · ${base} reps`,
+        reason: 'Form broke down last session — repeat same load and own the reps.',
         dynamic: true,
         delta: 0,
+        prefillWeight: lastWeight,
+        prefillReps: base || null,
       };
     }
     if (last.allDone && base > 0) {
       const next = base + 2;
       return {
         kind: 'bodyweight',
-        display: `Bodyweight · ${next} reps`,
+        display: lastWeight ? `${lastWeight}lb · ${next} reps` : `Bodyweight · ${next} reps`,
         reason: `Cleared all sets of ${base} reps — push to ${next}.`,
         dynamic: true,
         delta: 2,
+        prefillWeight: lastWeight,
+        prefillReps: next,
       };
     }
     return {
       kind: 'bodyweight',
-      display: `Bodyweight · ${ex.reps} reps`,
+      display: lastWeight ? `${lastWeight}lb · ${ex.reps} reps` : `Bodyweight · ${ex.reps} reps`,
       reason: 'Hold the programmed rep target.',
       dynamic: true,
       delta: 0,
+      prefillWeight: lastWeight,
+      prefillReps: base || null,
     };
   }
 
@@ -260,6 +340,8 @@ export function suggestProgression({ ex, priorRows, priorCountTarget }) {
       reason: 'First time — start with the programmed weight.',
       dynamic: false,
       delta: 0,
+      prefillWeight: baseWeight,
+      prefillReps: baseRepTarget,
     };
   }
   const step = weightStep(ex?.name);
@@ -270,6 +352,8 @@ export function suggestProgression({ ex, priorRows, priorCountTarget }) {
       reason: `You missed a rep at ${last.maxWeight}lb — hold it and own the reps this week.`,
       dynamic: true,
       delta: 0,
+      prefillWeight: last.maxWeight,
+      prefillReps: baseRepTarget,
     };
   }
   if (last.allDone) {
@@ -280,6 +364,8 @@ export function suggestProgression({ ex, priorRows, priorCountTarget }) {
       reason: `All sets cleared at ${last.maxWeight}lb — bump +${step}lb.`,
       dynamic: true,
       delta: step,
+      prefillWeight: next,
+      prefillReps: baseRepTarget,
     };
   }
   // Partial → stay at the weight you most recently used.
@@ -289,5 +375,7 @@ export function suggestProgression({ ex, priorRows, priorCountTarget }) {
     reason: `Only ${last.doneCount}/${priorCountTarget || ex?.sets || '?'} sets last session — repeat before progressing.`,
     dynamic: true,
     delta: 0,
+    prefillWeight: last.maxWeight,
+    prefillReps: baseRepTarget,
   };
 }

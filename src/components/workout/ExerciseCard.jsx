@@ -59,6 +59,7 @@ export function ExerciseCard({
         sessionDate={sessionDate}
         setsMap={setsMap}
         kind={kind}
+        suggestion={suggestion}
         onLogField={onLogField}
         onCycleStatus={onCycleStatus}
       />

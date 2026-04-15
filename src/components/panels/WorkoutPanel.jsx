@@ -115,9 +115,14 @@ export function WorkoutPanel({
   );
 
   // Warm-up chain:
-  //   phase 1 → 10s prep countdown (title: "Get ready — <name>")
-  //   phase 2 → optional work timer if the warm-up is timed
-  //   phase 3 → onDone() → modal marks the warm-up complete
+  //   For each programmed round (item.sets, defaults to 1):
+  //     phase A → 10s prep countdown ("Get ready — Round N — <name>")
+  //     phase B → optional work timer if the warm-up has a parsed duration
+  //   After the LAST round → onDone() → modal marks the warm-up complete
+  //
+  // This handles "Lateral Bound — sets: 3" (3 prep countdowns), "High
+  // Knees — 30 sec × 3" (3 prep+work cycles), and "5 min Jump Rope" (a
+  // single prep+work cycle), all with the same code path.
   //
   // item=null means "cancel" (user tapped the warm-up again mid-prep).
   const handleStartWarmup = useCallback(
@@ -127,32 +132,50 @@ export function WorkoutPanel({
         return;
       }
       const workDur = getMobilityTimerDuration(item);
+      const totalRounds = Math.max(1, parseInt(item.sets, 10) || 1);
 
       const finish = () => {
         try { onDone?.(); } catch {}
       };
 
-      const runWorkPhase = () => {
+      // Round N work phase. If the warm-up isn't timed, skip straight to
+      // the next round's prep (or finish, if N was the last).
+      const runWorkPhase = (round) => {
+        const isLast = round >= totalRounds;
+        const next = isLast ? finish : () => runPrepPhase(round + 1);
         if (!workDur) {
-          finish();
+          next();
           return;
         }
-        onStartRestTimer(workDur, item.name, {
+        const title = totalRounds > 1
+          ? `${item.name} — Round ${round}/${totalRounds}`
+          : item.name;
+        onStartRestTimer(workDur, title, {
           label: 'Warm-up · Work',
-          onComplete: finish,
-          // Linger for a second so the user sees "GO" and realises the
-          // phase ended, then snap out of the way.
-          autoHideMs: 1200,
+          onComplete: next,
+          // Brief lingering on the last round so the user sees "GO";
+          // shorter when chaining into another prep phase.
+          autoHideMs: isLast ? 1200 : 200,
         });
       };
 
-      onStartRestTimer(WARMUP_PREP_SECONDS, `Get ready — ${item.name}`, {
-        label: 'Warm-up · Prep',
-        onComplete: runWorkPhase,
-        // Minimal hide delay when chaining into a work timer, longer when
-        // there's no work phase so the user notices the prep ended.
-        autoHideMs: workDur ? 200 : 1500,
-      });
+      const runPrepPhase = (round) => {
+        const title = totalRounds > 1
+          ? `Get ready — Round ${round}/${totalRounds} — ${item.name}`
+          : `Get ready — ${item.name}`;
+        onStartRestTimer(WARMUP_PREP_SECONDS, title, {
+          label: totalRounds > 1
+            ? `Warm-up · Prep ${round}/${totalRounds}`
+            : 'Warm-up · Prep',
+          onComplete: () => runWorkPhase(round),
+          // Almost no hide delay when chaining into a work phase, longer
+          // pause when there's no work timer so the user notices the
+          // round ended before the next prep starts.
+          autoHideMs: workDur ? 200 : 600,
+        });
+      };
+
+      runPrepPhase(1);
     },
     [onStartRestTimer, onHideRestTimer]
   );

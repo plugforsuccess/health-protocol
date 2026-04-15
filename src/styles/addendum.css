@@ -283,8 +283,15 @@
   .suggestion-reason { font-family:DM Mono,monospace; font-size:10px; color:var(--muted); line-height:1.5; margin-top:4px; padding:6px 10px; border-left:2px solid var(--border2); background:var(--surface2); border-radius:0 6px 6px 0; }
   .suggestion-reason.dynamic { border-left-color:var(--s); color:var(--label); }
 
-  /* N/A CELL — replaces weight input for bodyweight / duration exercises */
+  /* N/A CELL — replaces weight input for duration exercises only */
   .set-na { background:var(--surface2); border:1px dashed var(--border2); border-radius:6px; padding:6px 8px; font-size:11px; color:var(--muted); width:100%; text-align:center; font-family:DM Mono,monospace; letter-spacing:0.05em; }
+
+  /* LOCKED SET ROW — sequential unlocking */
+  .set-row.locked { opacity:0.42; }
+  .set-row.locked .set-input { background:var(--bg); border-style:dashed; border-color:var(--border); cursor:not-allowed; color:var(--muted); }
+  .set-row.locked .set-check { cursor:not-allowed; border-style:dashed; color:var(--muted); font-size:12px; }
+  .set-input:disabled { cursor:not-allowed; }
+  .set-check:disabled { cursor:not-allowed; }
 
   /* WARMUP ITEM — tappable with prep/work states */
   .warmup-item { cursor:pointer; }
