@@ -38,6 +38,7 @@ export function useRestTimer(push) {
     total: 90,
     remaining: 90,
     title: '',
+    label: 'Rest Timer',
     finished: false,
   });
 
@@ -51,6 +52,8 @@ export function useRestTimer(push) {
   const activeRef = useRef(false);
   const scheduledPushIdRef = useRef(null);  // id of the queued push row (for cancellation)
   const audioCtxRef = useRef(null);         // shared AudioContext for the beep
+  const onCompleteRef = useRef(null);       // optional caller callback fired once at 0s
+  const autoHideDelayRef = useRef(3000);    // ms to keep the card visible after completion
 
   // ── Audio beep ───────────────────────────────────────────────────
   // The Vibration API can't increase motor strength (that's fixed hardware),
@@ -152,6 +155,9 @@ export function useRestTimer(push) {
     pauseStartRef.current = null;
     finishedRef.current = false;
     activeRef.current = false;
+    // Drop any pending completion callback — user explicitly skipped / hid.
+    onCompleteRef.current = null;
+    autoHideDelayRef.current = 3000;
     setState((s) => ({
       ...s,
       active: false,
@@ -209,9 +215,19 @@ export function useRestTimer(push) {
         } catch {}
       }
 
-      // Auto-hide the card 3s later. setTimeout may be throttled in a
+      // Fire the caller's optional onComplete callback EXACTLY once. This is
+      // how chained phases work (warm-up prep → warm-up work → done): the
+      // callback calls start() again, which clears the auto-hide timeout
+      // below before it ever fires.
+      const cb = onCompleteRef.current;
+      onCompleteRef.current = null;
+
+      // Auto-hide the card after a delay. setTimeout may be throttled in a
       // hidden tab — that's fine, we just clear it on hide() regardless.
-      hideTimeoutRef.current = setTimeout(() => hide(), 3000);
+      // The delay is configurable so chained phases can hide almost
+      // instantly instead of lingering for 3s.
+      const delay = autoHideDelayRef.current;
+      hideTimeoutRef.current = setTimeout(() => hide(), delay);
 
       // Stop the interval — we're done ticking until next start().
       if (intervalRef.current) {
@@ -221,6 +237,13 @@ export function useRestTimer(push) {
 
       // Release screen lock; rest is over.
       releaseWakeLock();
+
+      // Fire the callback AFTER we've scheduled the hide — the callback
+      // commonly calls start() which in turn calls clearTimers() and cancels
+      // the hide. If the callback throws we still want the hide to happen.
+      if (cb) {
+        try { cb(); } catch (e) { console.warn('[restTimer] onComplete threw', e); }
+      }
       return;
     }
 
@@ -229,8 +252,17 @@ export function useRestTimer(push) {
   }, [hide, releaseWakeLock, playBeep, push]);
 
   // ── Public API ────────────────────────────────────────────────────
+  // Options:
+  //   onComplete  — callback fired exactly once when the timer hits 0. Used
+  //                 for chained phases (warm-up prep → warm-up work) and
+  //                 warm-up completion marking.
+  //   autoHideMs  — how long to keep the card visible after completion.
+  //                 Defaults to 3000. Set to a small value (e.g. 300) when
+  //                 chaining so the transition feels seamless.
+  //   label       — short tag shown above the title (e.g. "Warm-up" /
+  //                 "Prep"). Falls back to "Rest Timer".
   const start = useCallback(
-    (seconds, title = '') => {
+    (seconds, title = '', options = {}) => {
       clearTimers();
       releaseWakeLock();
 
@@ -254,6 +286,12 @@ export function useRestTimer(push) {
       finishedRef.current = false;
       activeRef.current = true;
       pauseStartRef.current = null;
+      onCompleteRef.current = typeof options?.onComplete === 'function'
+        ? options.onComplete
+        : null;
+      autoHideDelayRef.current = Number.isFinite(options?.autoHideMs)
+        ? Math.max(0, options.autoHideMs)
+        : 3000;
       const endMs = Date.now() + seconds * 1000;
       endTimeRef.current = endMs;
 
@@ -263,6 +301,7 @@ export function useRestTimer(push) {
         total: seconds,
         remaining: seconds,
         title: title || 'Next set in…',
+        label: options?.label || 'Rest Timer',
         finished: false,
       });
 

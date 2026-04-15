@@ -1,7 +1,7 @@
 const RT_CIRCUMFERENCE = 169.6; // 2 * π * 27
 
 export function RestTimer({ state, onTogglePause, onSkip }) {
-  const { active, paused, total, remaining, title, finished } = state;
+  const { active, paused, total, remaining, title, label, finished } = state;
 
   const display = finished ? 'GO' : Math.max(0, remaining);
   const pct = total > 0 ? remaining / total : 0;
@@ -30,7 +30,7 @@ export function RestTimer({ state, onTogglePause, onSkip }) {
           <div className="rt-num">{display}</div>
         </div>
         <div className="rt-info">
-          <div className="rt-label">Rest Timer</div>
+          <div className="rt-label">{label || 'Rest Timer'}</div>
           <div className="rt-title">{title}</div>
           <div className="rt-btns">
             <button type="button" className="rt-btn" onClick={onTogglePause} disabled={finished}>
