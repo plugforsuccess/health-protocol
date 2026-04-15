@@ -14,6 +14,7 @@ const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 export function usePushSubscription(userId) {
   const [status, setStatus] = useState('unknown'); // 'unknown' | 'unsupported' | 'prompt' | 'granted' | 'denied'
   const [reason, setReason] = useState(null); // last failure reason code from ensureSubscribed
+  const [scheduleReason, setScheduleReason] = useState(null); // last failure reason code from schedule()
   const [swRegistered, setSwRegistered] = useState(false);
   const regRef = useRef(null);
 
@@ -120,17 +121,45 @@ export function usePushSubscription(userId) {
   const schedule = useCallback(
     async ({ fireAt, title, body, tag = 'rest-timer' }) => {
       const sub = await ensureSubscribed();
-      if (!sub) return null;
-      const iso =
-        fireAt instanceof Date ? fireAt.toISOString() : new Date(fireAt).toISOString();
-      const { data, error } = await supabase.functions.invoke('schedule-push', {
-        body: { fire_at: iso, title, body, tag },
-      });
-      if (error) {
-        console.warn('[push] schedule failed', error);
+      if (!sub) {
+        setScheduleReason('not-subscribed');
         return null;
       }
-      return data?.id || null;
+      const iso =
+        fireAt instanceof Date ? fireAt.toISOString() : new Date(fireAt).toISOString();
+      let data, error;
+      try {
+        ({ data, error } = await supabase.functions.invoke('schedule-push', {
+          body: { fire_at: iso, title, body, tag },
+        }));
+      } catch (e) {
+        console.warn('[push] invoke threw', e);
+        setScheduleReason(`invoke-threw: ${e?.message || e?.name || 'unknown'}`);
+        return null;
+      }
+      if (error) {
+        console.warn('[push] schedule failed', error);
+        // Try to pull HTTP status + body out of the FunctionsHttpError shape.
+        let detail = error.message || error.name || 'unknown';
+        const ctx = error.context;
+        if (ctx?.status) detail = `HTTP ${ctx.status}`;
+        if (ctx?.response) {
+          try {
+            const body = await ctx.response.clone().text();
+            if (body) detail += `: ${body.slice(0, 200)}`;
+          } catch {
+            /* ignore */
+          }
+        }
+        setScheduleReason(`edge-fn: ${detail}`);
+        return null;
+      }
+      if (!data?.id) {
+        setScheduleReason(`no-id: ${JSON.stringify(data).slice(0, 150)}`);
+        return null;
+      }
+      setScheduleReason(null);
+      return data.id;
     },
     [ensureSubscribed]
   );
@@ -161,9 +190,10 @@ export function usePushSubscription(userId) {
     userId: !!userId,
     status,
     reason,
+    scheduleReason,
   };
 
-  return { status, reason, debug, ensureSubscribed, schedule, cancel };
+  return { status, reason, scheduleReason, debug, ensureSubscribed, schedule, cancel };
 }
 
 /** Convert a base64-url VAPID public key to the Uint8Array PushManager wants. */
