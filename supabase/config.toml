@@ -1,0 +1,29 @@
+# Supabase project config — function-level overrides only.
+# Global project settings (auth providers, database extensions, etc.) live in
+# the Supabase dashboard; this file only controls what the CLI deploys.
+
+# ─────────────────────────────────────────
+# Edge Functions
+# ─────────────────────────────────────────
+
+# Disable gateway-level JWT verification.
+#
+# Supabase projects using ES256 asymmetric JWT signing hit a known gateway bug:
+#   UNAUTHORIZED_UNSUPPORTED_TOKEN_ALGORITHM / "Unsupported JWT algorithm ES256"
+# …because the Edge Functions gateway only verifies HS256 JWTs at the gateway
+# layer. Turning `verify_jwt` off lets the request reach the function, which
+# then does its own auth check via `supabase.auth.getUser()` — that path calls
+# out to Supabase Auth which fully supports ES256.
+#
+# Security note: each function still enforces auth internally (returns 401 if
+# no valid user). Disabling `verify_jwt` does NOT make the endpoints anonymous.
+
+[functions.schedule-push]
+verify_jwt = false
+
+# send-due-pushes is cron-triggered with the service-role key and does its own
+# Authorization-header check inside the function, so it also doesn't need the
+# gateway-level JWT check. (It wouldn't fail the ES256 issue anyway because
+# the service role JWT is HS256, but disabling it here for consistency.)
+[functions.send-due-pushes]
+verify_jwt = false
