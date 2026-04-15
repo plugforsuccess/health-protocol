@@ -22,12 +22,15 @@ if (!VAPID_PUBLIC || !VAPID_PRIVATE) {
 webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE);
 
 Deno.serve(async (req) => {
-  // Optional guard: require a shared secret header so only the cron job can
-  // trigger this (the service role key alone isn't checked by this function —
-  // but Supabase requires a valid JWT to invoke, and we double-check it here).
+  // The function has verify_jwt=true, so Supabase's gateway has already
+  // validated the signature of the bearer token before we get here. All we
+  // need to check is that the caller is the service role (not an end user).
+  // We purposefully do NOT string-compare against SUPABASE_SERVICE_ROLE_KEY,
+  // because the token pg_cron sends and the env-injected key can be issued
+  // at different times / formats and still both be valid service-role JWTs.
   const authHeader = req.headers.get('Authorization') || '';
-  const expected = `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`;
-  if (authHeader !== expected) {
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+  if (!isServiceRoleJwt(token)) {
     return new Response('unauthorized', { status: 401 });
   }
 
@@ -128,4 +131,18 @@ Deno.serve(async (req) => {
 
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
+}
+
+function isServiceRoleJwt(token: string): boolean {
+  if (!token) return false;
+  const parts = token.split('.');
+  if (parts.length !== 3) return false;
+  try {
+    const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padded = b64 + '='.repeat((4 - (b64.length % 4)) % 4);
+    const payload = JSON.parse(atob(padded)) as { role?: string };
+    return payload.role === 'service_role';
+  } catch {
+    return false;
+  }
 }
