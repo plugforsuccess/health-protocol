@@ -33,9 +33,8 @@ export function WorkoutPanel({
     try {
       const sub = await push.ensureSubscribed?.();
       if (!sub) {
-        showToast?.('Push subscription unavailable — check permission + VAPID key.', {
-          error: true,
-        });
+        const why = push.reason || 'unknown';
+        showToast?.(`Push unavailable: ${why}`, { error: true, duration: 8000 });
         setTesting(false);
         return;
       }
@@ -152,6 +151,8 @@ export function WorkoutPanel({
                 : '🔔 TEST BACKGROUND BUZZ (10S)'}
             </button>
           )}
+
+          {push?.debug && <PushDebugPanel debug={push.debug} />}
         </div>
       </div>
 
@@ -169,5 +170,59 @@ export function WorkoutPanel({
         />
       )}
     </>
+  );
+}
+
+function PushDebugPanel({ debug }) {
+  const Row = ({ label, ok, value }) => (
+    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+      <span style={{ opacity: 0.8 }}>{label}</span>
+      <span style={{ color: ok ? 'var(--ok, #22c55e)' : 'var(--err, #ef4444)' }}>
+        {ok ? '✓' : '✗'} {value}
+      </span>
+    </div>
+  );
+  return (
+    <div
+      style={{
+        marginTop: 16,
+        padding: 12,
+        border: '1px solid var(--border, #333)',
+        borderRadius: 8,
+        fontFamily: 'monospace',
+        fontSize: 12,
+        lineHeight: 1.6,
+      }}
+    >
+      <div style={{ fontWeight: 'bold', marginBottom: 6 }}>PUSH DIAGNOSTIC</div>
+      <Row
+        label="VAPID key in build"
+        ok={debug.vapidKeyPresent}
+        value={debug.vapidKeyPresent ? debug.vapidKeyPrefix + '…' : 'MISSING'}
+      />
+      <Row label="serviceWorker API" ok={debug.swSupported} value={debug.swSupported ? 'yes' : 'no'} />
+      <Row label="PushManager API" ok={debug.pushSupported} value={debug.pushSupported ? 'yes' : 'no'} />
+      <Row
+        label="SW registered"
+        ok={debug.swRegistered}
+        value={debug.swRegistered ? 'yes' : 'pending'}
+      />
+      <Row
+        label="Notification perm"
+        ok={debug.permission === 'granted'}
+        value={debug.permission}
+      />
+      <Row
+        label="Standalone PWA"
+        ok={debug.standalone}
+        value={debug.standalone ? 'yes' : 'add to home screen'}
+      />
+      <Row label="Signed in" ok={debug.userId} value={debug.userId ? 'yes' : 'no'} />
+      {debug.reason && (
+        <div style={{ marginTop: 6, color: 'var(--err, #ef4444)' }}>
+          last failure: {debug.reason}
+        </div>
+      )}
+    </div>
   );
 }

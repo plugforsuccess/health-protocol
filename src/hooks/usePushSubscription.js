@@ -13,6 +13,8 @@ const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
  */
 export function usePushSubscription(userId) {
   const [status, setStatus] = useState('unknown'); // 'unknown' | 'unsupported' | 'prompt' | 'granted' | 'denied'
+  const [reason, setReason] = useState(null); // last failure reason code from ensureSubscribed
+  const [swRegistered, setSwRegistered] = useState(false);
   const regRef = useRef(null);
 
   // Register the Service Worker once on mount.
@@ -25,6 +27,7 @@ export function usePushSubscription(userId) {
       .register('/sw.js')
       .then((reg) => {
         regRef.current = reg;
+        setSwRegistered(true);
         setStatus(
           Notification.permission === 'granted'
             ? 'granted'
@@ -40,38 +43,60 @@ export function usePushSubscription(userId) {
   }, []);
 
   const ensureSubscribed = useCallback(async () => {
-    if (!userId) return null;
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
+    if (!userId) {
+      setReason('no-user');
+      return null;
+    }
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      setReason('unsupported-browser');
+      return null;
+    }
     if (!VAPID_PUBLIC_KEY) {
       console.warn('[push] VITE_VAPID_PUBLIC_KEY missing; push disabled.');
+      setReason('missing-vapid-key');
       return null;
     }
 
     const reg = regRef.current || (await navigator.serviceWorker.ready);
-    if (!reg) return null;
+    if (!reg) {
+      setReason('no-sw-registration');
+      return null;
+    }
 
     // Permission gate — will prompt if still 'default'.
     if (Notification.permission === 'default') {
       const result = await Notification.requestPermission();
       setStatus(result === 'granted' ? 'granted' : result === 'denied' ? 'denied' : 'prompt');
-      if (result !== 'granted') return null;
+      if (result !== 'granted') {
+        setReason(`permission-${result}`);
+        return null;
+      }
     } else {
       setStatus(Notification.permission);
     }
-    if (Notification.permission !== 'granted') return null;
+    if (Notification.permission !== 'granted') {
+      setReason(`permission-${Notification.permission}`);
+      return null;
+    }
 
     // Reuse existing subscription if present.
     let sub = await reg.pushManager.getSubscription();
     if (!sub) {
-      sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-      });
+      try {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        });
+      } catch (err) {
+        console.warn('[push] subscribe() failed', err);
+        setReason(`subscribe-failed: ${err?.name || 'unknown'}`);
+        return null;
+      }
     }
 
     const json = sub.toJSON();
     // Upsert the subscription (idempotent per endpoint).
-    await supabase.from('push_subscriptions').upsert(
+    const { error: upsertErr } = await supabase.from('push_subscriptions').upsert(
       {
         user_id: userId,
         endpoint: json.endpoint,
@@ -81,7 +106,13 @@ export function usePushSubscription(userId) {
       },
       { onConflict: 'user_id,endpoint' }
     );
+    if (upsertErr) {
+      console.warn('[push] upsert failed', upsertErr);
+      setReason(`db-upsert-failed: ${upsertErr.message}`);
+      return null;
+    }
 
+    setReason(null);
     return sub;
   }, [userId]);
 
@@ -114,7 +145,25 @@ export function usePushSubscription(userId) {
       .eq('sent', false);
   }, []);
 
-  return { status, ensureSubscribed, schedule, cancel };
+  const debug = {
+    vapidKeyPresent: !!VAPID_PUBLIC_KEY,
+    vapidKeyPrefix: VAPID_PUBLIC_KEY ? VAPID_PUBLIC_KEY.slice(0, 10) : null,
+    swSupported: typeof navigator !== 'undefined' && 'serviceWorker' in navigator,
+    pushSupported: typeof window !== 'undefined' && 'PushManager' in window,
+    notificationApi: typeof Notification !== 'undefined',
+    permission: typeof Notification !== 'undefined' ? Notification.permission : 'n/a',
+    standalone:
+      (typeof window !== 'undefined' &&
+        window.matchMedia?.('(display-mode: standalone)').matches) ||
+      (typeof navigator !== 'undefined' && navigator.standalone) ||
+      false,
+    swRegistered,
+    userId: !!userId,
+    status,
+    reason,
+  };
+
+  return { status, reason, debug, ensureSubscribed, schedule, cancel };
 }
 
 /** Convert a base64-url VAPID public key to the Uint8Array PushManager wants. */
