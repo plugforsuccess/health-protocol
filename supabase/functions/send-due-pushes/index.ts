@@ -22,12 +22,11 @@ if (!VAPID_PUBLIC || !VAPID_PRIVATE) {
 webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE);
 
 Deno.serve(async (req) => {
-  // The function has verify_jwt=true, so Supabase's gateway has already
-  // validated the signature of the bearer token before we get here. All we
-  // need to check is that the caller is the service role (not an end user).
-  // We purposefully do NOT string-compare against SUPABASE_SERVICE_ROLE_KEY,
-  // because the token pg_cron sends and the env-injected key can be issued
-  // at different times / formats and still both be valid service-role JWTs.
+  // verify_jwt is disabled at the gateway (see supabase/config.toml) because
+  // Supabase's gateway JWT check doesn't support the project's ES256 user
+  // JWTs. We therefore do our own auth here: decode the bearer token (already
+  // signed by the project) and confirm role === 'service_role' so end-user
+  // JWTs can't invoke this function.
   const authHeader = req.headers.get('Authorization') || '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
   if (!isServiceRoleJwt(token)) {
