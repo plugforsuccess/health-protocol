@@ -17,6 +17,20 @@ export function usePushSubscription(userId) {
   const [scheduleReason, setScheduleReason] = useState(null); // last failure reason code from schedule()
   const [swRegistered, setSwRegistered] = useState(false);
   const regRef = useRef(null);
+  // Mirror the reason + scheduleReason state in refs so callers can read
+  // the latest value synchronously after `await push.*()`. The state vars
+  // are still needed so the debug panel re-renders; the refs are the
+  // source of truth for post-await reads.
+  const reasonRef = useRef(null);
+  const scheduleReasonRef = useRef(null);
+  const setSubReason = (r) => {
+    reasonRef.current = r;
+    setReason(r);
+  };
+  const setSchedReason = (r) => {
+    scheduleReasonRef.current = r;
+    setScheduleReason(r);
+  };
 
   // Register the Service Worker once on mount.
   useEffect(() => {
@@ -45,22 +59,22 @@ export function usePushSubscription(userId) {
 
   const ensureSubscribed = useCallback(async () => {
     if (!userId) {
-      setReason('no-user');
+      setSubReason('no-user');
       return null;
     }
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      setReason('unsupported-browser');
+      setSubReason('unsupported-browser');
       return null;
     }
     if (!VAPID_PUBLIC_KEY) {
       console.warn('[push] VITE_VAPID_PUBLIC_KEY missing; push disabled.');
-      setReason('missing-vapid-key');
+      setSubReason('missing-vapid-key');
       return null;
     }
 
     const reg = regRef.current || (await navigator.serviceWorker.ready);
     if (!reg) {
-      setReason('no-sw-registration');
+      setSubReason('no-sw-registration');
       return null;
     }
 
@@ -69,14 +83,14 @@ export function usePushSubscription(userId) {
       const result = await Notification.requestPermission();
       setStatus(result === 'granted' ? 'granted' : result === 'denied' ? 'denied' : 'prompt');
       if (result !== 'granted') {
-        setReason(`permission-${result}`);
+        setSubReason(`permission-${result}`);
         return null;
       }
     } else {
       setStatus(Notification.permission);
     }
     if (Notification.permission !== 'granted') {
-      setReason(`permission-${Notification.permission}`);
+      setSubReason(`permission-${Notification.permission}`);
       return null;
     }
 
@@ -90,7 +104,7 @@ export function usePushSubscription(userId) {
         });
       } catch (err) {
         console.warn('[push] subscribe() failed', err);
-        setReason(`subscribe-failed: ${err?.name || 'unknown'}`);
+        setSubReason(`subscribe-failed: ${err?.name || 'unknown'}`);
         return null;
       }
     }
@@ -109,11 +123,11 @@ export function usePushSubscription(userId) {
     );
     if (upsertErr) {
       console.warn('[push] upsert failed', upsertErr);
-      setReason(`db-upsert-failed: ${upsertErr.message}`);
+      setSubReason(`db-upsert-failed: ${upsertErr.message}`);
       return null;
     }
 
-    setReason(null);
+    setSubReason(null);
     return sub;
   }, [userId]);
 
@@ -122,7 +136,7 @@ export function usePushSubscription(userId) {
     async ({ fireAt, title, body, tag = 'rest-timer' }) => {
       const sub = await ensureSubscribed();
       if (!sub) {
-        setScheduleReason('not-subscribed');
+        setSchedReason(`not-subscribed: ${reasonRef.current || 'unknown'}`);
         return null;
       }
       const iso =
@@ -134,31 +148,33 @@ export function usePushSubscription(userId) {
         }));
       } catch (e) {
         console.warn('[push] invoke threw', e);
-        setScheduleReason(`invoke-threw: ${e?.message || e?.name || 'unknown'}`);
+        setSchedReason(`invoke-threw: ${e?.message || e?.name || 'unknown'}`);
         return null;
       }
       if (error) {
         console.warn('[push] schedule failed', error);
-        // Try to pull HTTP status + body out of the FunctionsHttpError shape.
+        // FunctionsHttpError's `context` IS the Response object itself — not
+        // nested. So we read status directly off it and call .clone().text()
+        // on `context`, not on `context.response`.
         let detail = error.message || error.name || 'unknown';
         const ctx = error.context;
-        if (ctx?.status) detail = `HTTP ${ctx.status}`;
-        if (ctx?.response) {
+        if (ctx && typeof ctx.status === 'number') detail = `HTTP ${ctx.status}`;
+        if (ctx && typeof ctx.clone === 'function') {
           try {
-            const body = await ctx.response.clone().text();
-            if (body) detail += `: ${body.slice(0, 200)}`;
+            const body = await ctx.clone().text();
+            if (body) detail += ` ${body.slice(0, 300)}`;
           } catch {
             /* ignore */
           }
         }
-        setScheduleReason(`edge-fn: ${detail}`);
+        setSchedReason(`edge-fn: ${detail}`);
         return null;
       }
       if (!data?.id) {
-        setScheduleReason(`no-id: ${JSON.stringify(data).slice(0, 150)}`);
+        setSchedReason(`no-id: ${JSON.stringify(data).slice(0, 150)}`);
         return null;
       }
-      setScheduleReason(null);
+      setSchedReason(null);
       return data.id;
     },
     [ensureSubscribed]
@@ -193,7 +209,22 @@ export function usePushSubscription(userId) {
     scheduleReason,
   };
 
-  return { status, reason, scheduleReason, debug, ensureSubscribed, schedule, cancel };
+  // Getter that always reads the ref — use this in callers after `await`
+  // to avoid stale-closure reads of the `scheduleReason` state value.
+  const getScheduleReason = () => scheduleReasonRef.current;
+  const getReason = () => reasonRef.current;
+
+  return {
+    status,
+    reason,
+    scheduleReason,
+    debug,
+    ensureSubscribed,
+    schedule,
+    cancel,
+    getScheduleReason,
+    getReason,
+  };
 }
 
 /** Convert a base64-url VAPID public key to the Uint8Array PushManager wants. */
