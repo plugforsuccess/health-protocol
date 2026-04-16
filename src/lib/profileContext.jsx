@@ -13,6 +13,8 @@ const ProfileContext = createContext({
   profile: null,
   injuries: [],
   surgeries: [],
+  dietProfile: null,
+  activeMealPlan: null,
   loading: true,
   refreshProfile: () => Promise.resolve(),
   updateProfile: () => Promise.resolve(),
@@ -22,25 +24,30 @@ const ProfileContext = createContext({
   saveSurgery: () => Promise.resolve(),
   deleteSurgery: () => Promise.resolve(),
   completeOnboarding: () => Promise.resolve(),
+  refreshDietProfile: () => Promise.resolve(),
 });
 
 export function ProfileProvider({ userId, children }) {
-  const [profile, setProfile]     = useState(null);
-  const [injuries, setInjuries]   = useState([]);
-  const [surgeries, setSurgeries] = useState([]);
-  const [loading, setLoading]     = useState(true);
+  const [profile, setProfile]             = useState(null);
+  const [injuries, setInjuries]           = useState([]);
+  const [surgeries, setSurgeries]         = useState([]);
+  const [dietProfile, setDietProfile]     = useState(null);
+  const [activeMealPlan, setActiveMealPlan] = useState(null);
+  const [loading, setLoading]             = useState(true);
 
   const refreshProfile = useCallback(async () => {
     if (!userId) {
       setProfile(null);
       setInjuries([]);
       setSurgeries([]);
+      setDietProfile(null);
+      setActiveMealPlan(null);
       setLoading(false);
       return;
     }
     setLoading(true);
     try {
-      const [{ data: prof }, { data: inj }, { data: sx }] = await Promise.all([
+      const [{ data: prof }, { data: inj }, { data: sx }, { data: dp }, { data: mp }] = await Promise.all([
         supabase
           .from('user_profiles')
           .select('*')
@@ -56,15 +63,30 @@ export function ProfileProvider({ userId, children }) {
           .select('*')
           .eq('user_id', userId)
           .order('created_at', { ascending: true }),
+        supabase
+          .from('user_diet_profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle(),
+        supabase
+          .from('user_meal_plans')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('is_active', true)
+          .maybeSingle(),
       ]);
       setProfile(prof || null);
       setInjuries(inj || []);
       setSurgeries(sx || []);
+      setDietProfile(dp || null);
+      setActiveMealPlan(mp || null);
     } catch (e) {
       console.warn('[profileContext] load failed', e?.message || e);
       setProfile(null);
       setInjuries([]);
       setSurgeries([]);
+      setDietProfile(null);
+      setActiveMealPlan(null);
     } finally {
       setLoading(false);
     }
@@ -204,11 +226,33 @@ export function ProfileProvider({ userId, children }) {
     setSurgeries((prev) => prev.filter((x) => x.id !== surgeryId));
   }, []);
 
+  // ── Diet profile ────────────────────────────────────────────────────
+  const refreshDietProfile = useCallback(async () => {
+    if (!userId) return;
+    const [{ data: dp }, { data: mp }] = await Promise.all([
+      supabase
+        .from('user_diet_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle(),
+      supabase
+        .from('user_meal_plans')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .maybeSingle(),
+    ]);
+    setDietProfile(dp || null);
+    setActiveMealPlan(mp || null);
+  }, [userId]);
+
   const value = useMemo(
     () => ({
       profile,
       injuries,
       surgeries,
+      dietProfile,
+      activeMealPlan,
       loading,
       refreshProfile,
       updateProfile,
@@ -218,11 +262,14 @@ export function ProfileProvider({ userId, children }) {
       saveSurgery,
       deleteSurgery,
       completeOnboarding,
+      refreshDietProfile,
     }),
     [
       profile,
       injuries,
       surgeries,
+      dietProfile,
+      activeMealPlan,
       loading,
       refreshProfile,
       updateProfile,
@@ -232,6 +279,7 @@ export function ProfileProvider({ userId, children }) {
       saveSurgery,
       deleteSurgery,
       completeOnboarding,
+      refreshDietProfile,
     ]
   );
 

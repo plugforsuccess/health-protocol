@@ -336,3 +336,44 @@ body.light .exercise-contra-warn { background: rgba(180,83,9,0.06); border-color
 body.light .onb-pain-input { background: #c0c0d4; }
 body.light .profile-tab { color: #6060a0; }
 body.light .profile-tab.active { color: #6d28d9; border-bottom-color: #6d28d9; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DIET ONBOARDING — GENERATING SCREEN
+   Full-screen loading state while Claude generates a personalized meal plan.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.onb-generating {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  flex: 1; padding: 40px 24px; text-align: center;
+}
+.onb-generating-icon {
+  font-size: 48px; margin-bottom: 20px;
+  animation: gentlePulse 2s ease-in-out infinite;
+}
+.onb-generating-title {
+  font-family: 'Bebas Neue', sans-serif; font-size: 24px;
+  letter-spacing: 0.06em; color: var(--text); margin: 0 0 8px;
+}
+.onb-generating-sub {
+  font-size: 12px; color: var(--label); margin: 0 0 28px;
+  font-family: DM Mono, monospace; max-width: 280px;
+}
+.onb-generating-spinner {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 3px solid var(--border2);
+  border-top-color: var(--d);
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes gentlePulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.12); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* light mode */
+body.light .onb-generating-title { color: #12122a; }
+body.light .onb-generating-sub { color: #6060a0; }
+body.light .onb-generating-spinner { border-color: #c0c0d4; border-top-color: #6d28d9; }

@@ -23,7 +23,9 @@ export function RecipeModal({ meal, onClose }) {
 
   if (!meal) return null;
 
-  const recipe = RECIPES[meal.name] || null;
+  // AI-generated meals embed their recipe inline; fall back to the
+  // hardcoded RECIPES lookup for the default protocol plan.
+  const recipe = meal.recipe || RECIPES[meal.name] || null;
   const ingredients = recipe?.ingredients || meal.ingredients || [];
 
   const overlayClick = (e) => {
@@ -115,6 +117,15 @@ export function RecipeModal({ meal, onClose }) {
               <div className="modal-why-box">
                 <div className="modal-why-title">Why This Meal</div>
                 <div className="modal-why-text">{recipe.why}</div>
+              </div>
+            </div>
+          )}
+
+          {meal.protocolNote && (
+            <div className="modal-section">
+              <div className="modal-why-box">
+                <div className="modal-why-title">Protocol Note</div>
+                <div className="modal-why-text">{meal.protocolNote}</div>
               </div>
             </div>
           )}
