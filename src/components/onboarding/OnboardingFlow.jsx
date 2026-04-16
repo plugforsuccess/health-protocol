@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useOnboarding } from '../../hooks/useOnboarding.js';
+import { generateWorkoutPlan } from '../../lib/workoutPlanGenerator.js';
 import { ProgressBar } from './components/ProgressBar.jsx';
 import { Step1Identity } from './steps/Step1Identity.jsx';
 import { Step2TrainingBackground } from './steps/Step2TrainingBackground.jsx';
@@ -36,6 +37,9 @@ export function OnboardingFlow({ onComplete, onSignOut }) {
     submit,
   } = onb;
 
+  const [generating, setGenerating] = useState(false);
+  const [longWait, setLongWait] = useState(false);
+
   // Simple slide animation between steps. We track the previous step index
   // so we can reverse the slide direction when the user goes back. Flipping
   // a key on the outer div forces React to re-mount the step body so the
@@ -58,13 +62,49 @@ export function OnboardingFlow({ onComplete, onSignOut }) {
   const handleNext = async () => {
     if (currentStep?.key === 'confirmation') {
       const ok = await submit();
-      if (ok) onComplete?.();
+      if (!ok) return;
+
+      // Trigger workout plan generation
+      setGenerating(true);
+      setLongWait(false);
+      const timer = setTimeout(() => setLongWait(true), 8000);
+      try {
+        await generateWorkoutPlan();
+      } catch (e) {
+        // Non-blocking — user proceeds with hardcoded fallback plan.
+        // Retry happens silently on next app open via profileContext refresh.
+        console.warn('[OnboardingFlow] workout plan generation failed:', e?.message || e);
+      } finally {
+        clearTimeout(timer);
+        setGenerating(false);
+      }
+      onComplete?.();
       return;
     }
     tryGoNext();
   };
 
   const handleEditFromConfirmation = () => goTo(0);
+
+  if (generating) {
+    return (
+      <div className="onb-screen">
+        <div className="onb-generating">
+          <div className="onb-generating-icon">💪</div>
+          <h2 className="onb-generating-title">Building your personalized program…</h2>
+          <p className="onb-generating-sub">
+            Analyzing your goals, schedule, injuries, and equipment
+          </p>
+          <div className="onb-generating-spinner" />
+          {longWait && (
+            <p className="onb-generating-sub" style={{ marginTop: 12, opacity: 0.7 }}>
+              This may take a moment
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="onb-screen">

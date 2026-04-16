@@ -1,10 +1,10 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { DateBar } from '../shared/DateBar.jsx';
 import { WeekGrid } from '../workout/WeekGrid.jsx';
 import { WorkoutStats } from '../workout/WorkoutStats.jsx';
 import { VolumeChart } from '../workout/VolumeChart.jsx';
 import { WorkoutDayModal } from '../workout/WorkoutDayModal.jsx';
-import { WORKOUT_WEEK } from '../../data/workoutWeek.js';
+import { useWorkoutPlan } from '../../hooks/useWorkoutPlan.js';
 import { workoutDateKey } from '../../hooks/useWorkoutLogs.js';
 import { getRestDuration, getMobilityTimerDuration } from '../../hooks/useRestTimer.js';
 
@@ -24,7 +24,18 @@ export function WorkoutPanel({
   push,
   showToast,
 }) {
+  const { weekPlan } = useWorkoutPlan();
+
+  // Snapshot the plan when the modal opens so a mid-workout regeneration
+  // can't swap exercises out from under the user. The grid always shows
+  // the latest plan; the modal uses the plan it started with.
+  const modalPlanRef = useRef(weekPlan);
   const [openIdx, setOpenIdx] = useState(null);
+
+  const handleOpen = useCallback((idx) => {
+    modalPlanRef.current = weekPlan; // snapshot at open time
+    setOpenIdx(idx);
+  }, [weekPlan]);
   const [testing, setTesting] = useState(false);
 
   // End-to-end push self-test. Schedules a push 10 seconds in the future and
@@ -73,7 +84,7 @@ export function WorkoutPanel({
       // — no awaiting the Supabase roundtrip, and no dependency on the DB
       // write succeeding. If the tables aren't set up yet or the network
       // is slow, the timer still rings.
-      const date = workoutDateKey(dayIdx);
+      const date = workoutDateKey(dayIdx, undefined, weekPlan);
       const key = `${date}::${dayIdx}::${exIdx}::${setIdx}`;
       const prev = workout.setsMap[key] || {};
       const current = prev.status || '';
@@ -92,12 +103,12 @@ export function WorkoutPanel({
         onError?.(e);
       });
     },
-    [workout, onStartRestTimer, onHideRestTimer, onError]
+    [workout, weekPlan, onStartRestTimer, onHideRestTimer, onError]
   );
 
   const handleToggleMobility = useCallback(
     (dayIdx, mobIdx, item) => {
-      const date = workoutDateKey(dayIdx);
+      const date = workoutDateKey(dayIdx, undefined, weekPlan);
       const key = `${date}::${dayIdx}::${mobIdx}`;
       const wasChecked = !!workout.mobilityMap[key];
       const now = !wasChecked;
@@ -111,7 +122,7 @@ export function WorkoutPanel({
         onError?.(e);
       });
     },
-    [workout, onStartRestTimer, onHideRestTimer, onError]
+    [workout, weekPlan, onStartRestTimer, onHideRestTimer, onError]
   );
 
   // Warm-up chain:
@@ -209,7 +220,7 @@ export function WorkoutPanel({
         <div className="wrap">
           <DateBar />
           <WorkoutStats sessions={workout.sessions} />
-          <WeekGrid completedMap={workout.completedMap} onOpen={setOpenIdx} />
+          <WeekGrid weekPlan={weekPlan} completedMap={workout.completedMap} onOpen={handleOpen} />
           <VolumeChart sessions={workout.sessions} />
 
           {push?.schedule && (
@@ -230,9 +241,10 @@ export function WorkoutPanel({
         </div>
       </div>
 
-      {active && openIdx !== null && WORKOUT_WEEK[openIdx] && (
+      {active && openIdx !== null && modalPlanRef.current[openIdx] && (
         <WorkoutDayModal
           dayIdx={openIdx}
+          weekPlan={modalPlanRef.current}
           onClose={() => setOpenIdx(null)}
           setsMap={workout.setsMap}
           mobilityMap={workout.mobilityMap}

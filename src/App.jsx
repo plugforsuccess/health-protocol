@@ -7,6 +7,7 @@ import { useToast } from './hooks/useToast.js';
 import { useTheme } from './hooks/useTheme.js';
 import { usePantry } from './hooks/usePantry.js';
 import { useWorkoutLogs } from './hooks/useWorkoutLogs.js';
+import { useWorkoutPlan } from './hooks/useWorkoutPlan.js';
 import { useRestTimer } from './hooks/useRestTimer.js';
 import { usePushSubscription } from './hooks/usePushSubscription.js';
 
@@ -138,7 +139,8 @@ function SignedInApp({
   const ntStreak = useStreak(user.id, 'nt');
   const gutStreak = useStreak(user.id, 'gut');
   const pantry = usePantry(user.id);
-  const workout = useWorkoutLogs(user.id);
+  const { weekPlan } = useWorkoutPlan();
+  const workout = useWorkoutLogs(user.id, weekPlan);
   const push = usePushSubscription(user.id);
   const restTimer = useRestTimer(push);
 

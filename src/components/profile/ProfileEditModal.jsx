@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useProfile } from '../../lib/profileContext.jsx';
+import { supabase } from '../../lib/supabase.js';
+import { generateWorkoutPlan } from '../../lib/workoutPlanGenerator.js';
 import {
   ACTIVITY_LEVEL,
   AVG_SLEEP,
@@ -28,17 +30,51 @@ import { FieldGroup } from '../onboarding/components/StepShell.jsx';
 // they can mark a region "healed" (active=false) without losing the
 // historical record.
 
+// Fields that affect workout plan generation. Changes to any of these
+// trigger a regeneration prompt after saving.
+//
+// DO trigger: schedule, goals, equipment, exercise restrictions, travel equipment
+// DO NOT trigger: name, age, sex, sleep, stress, recovery, travel frequency
+const PLAN_RELEVANT_FIELDS = [
+  'days_per_week',
+  'preferred_days',
+  'session_duration_min',
+  'primary_goal',
+  'equipment',
+  'travel_equipment_access',
+  'excluded_exercises',
+  'primary_sport',
+  'performance_goals',
+];
+
+function planFieldsChanged(before, after) {
+  for (const key of PLAN_RELEVANT_FIELDS) {
+    // Only compare fields that exist in the patch — fields not present
+    // in the edit form (like preferred_days) are not editable here and
+    // should not trigger a false positive.
+    if (!(key in after)) continue;
+    const a = JSON.stringify(before?.[key] ?? null);
+    const b = JSON.stringify(after?.[key] ?? null);
+    if (a !== b) return true;
+  }
+  return false;
+}
+
 export function ProfileEditModal({ open, onClose, onError }) {
   const {
     profile,
     injuries,
+    activeWorkoutPlan,
     updateProfile,
     markInjuryHealed,
     reactivateInjury,
+    refreshWorkoutPlan,
   } = useProfile();
   const [tab, setTab] = useState('profile');
   const [draft, setDraft] = useState(() => profileToDraft(profile));
   const [saving, setSaving] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
+  const [confirmRegen, setConfirmRegen] = useState(false);
 
   // Reset the local draft every time the modal is opened, so cancel
   // really discards in-flight edits.
@@ -46,6 +82,8 @@ export function ProfileEditModal({ open, onClose, onError }) {
     if (open) {
       setDraft(profileToDraft(profile));
       setTab('profile');
+      setConfirmRegen(false);
+      setRegenerating(false);
     }
   }, [open, profile]);
 
@@ -65,7 +103,14 @@ export function ProfileEditModal({ open, onClose, onError }) {
   const save = async () => {
     setSaving(true);
     try {
-      await updateProfile(draftToPatch(draft));
+      const patch = draftToPatch(draft);
+      await updateProfile(patch);
+      // If plan-relevant fields changed and an AI plan exists, offer regeneration
+      if (activeWorkoutPlan && planFieldsChanged(profile, patch)) {
+        setConfirmRegen(true);
+        setSaving(false);
+        return;
+      }
       onClose?.();
     } catch (e) {
       onError?.(e);
@@ -74,10 +119,99 @@ export function ProfileEditModal({ open, onClose, onError }) {
     }
   };
 
+  const handleRegenerate = useCallback(async () => {
+    setConfirmRegen(false);
+    setRegenerating(true);
+    try {
+      await generateWorkoutPlan();
+      await refreshWorkoutPlan();
+    } catch (e) {
+      console.warn('[ProfileEdit] workout plan regeneration failed:', e?.message || e);
+    } finally {
+      setRegenerating(false);
+      onClose?.();
+    }
+  }, [refreshWorkoutPlan, onClose]);
+
+  const handleManualRegenerate = useCallback(async () => {
+    if (!window.confirm(
+      'This will build a new workout program. Your logged sets and PRs are preserved. Continue?'
+    )) return;
+    setRegenerating(true);
+    try {
+      await generateWorkoutPlan();
+      await refreshWorkoutPlan();
+    } catch (e) {
+      console.warn('[ProfileEdit] manual regeneration failed:', e?.message || e);
+      onError?.(e);
+    } finally {
+      setRegenerating(false);
+    }
+  }, [refreshWorkoutPlan, onError]);
+
   const activeInjuries = useMemo(() => injuries.filter((i) => i.active !== false), [injuries]);
   const healedInjuries = useMemo(() => injuries.filter((i) => i.active === false), [injuries]);
 
   if (!open) return null;
+
+  // Regenerating loading state
+  if (regenerating) {
+    return (
+      <div className="wmodal-overlay open" role="dialog" aria-modal="true">
+        <div className="wmodal-sheet">
+          <div className="wmodal-handle" />
+          <div className="wmodal-body">
+            <div className="onb-generating">
+              <div className="onb-generating-icon">💪</div>
+              <h2 className="onb-generating-title">Building your new program…</h2>
+              <p className="onb-generating-sub">
+                Analyzing your goals, schedule, injuries, and equipment
+              </p>
+              <div className="onb-generating-spinner" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Confirmation dialog after saving plan-relevant changes
+  if (confirmRegen) {
+    return (
+      <div className="wmodal-overlay open" role="dialog" aria-modal="true">
+        <div className="wmodal-sheet">
+          <div className="wmodal-handle" />
+          <div className="wmodal-header">
+            <div className="wmodal-title-row">
+              <div className="wmodal-title">Build a new program?</div>
+            </div>
+          </div>
+          <div className="wmodal-body">
+            <p style={{ fontSize: 13, lineHeight: 1.5, color: 'var(--text)', marginBottom: 16 }}>
+              You changed settings that affect your workout plan. Would you like to build a new
+              program? Your logged sets and PRs are preserved.
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                type="button"
+                className="onb-btn ghost"
+                onClick={() => { setConfirmRegen(false); onClose?.(); }}
+              >
+                Keep current
+              </button>
+              <button
+                type="button"
+                className="onb-btn primary"
+                onClick={handleRegenerate}
+              >
+                Build new program
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -112,28 +246,61 @@ export function ProfileEditModal({ open, onClose, onError }) {
             >
               Injuries ({activeInjuries.length})
             </button>
+            <button
+              type="button"
+              className={`profile-tab${tab === 'programs' ? ' active' : ''}`}
+              onClick={() => setTab('programs')}
+            >
+              Programs
+            </button>
           </div>
         </div>
         <div className="wmodal-body">
-          {tab === 'profile' ? (
-            <ProfileFields draft={draft} set={set} />
-          ) : (
+          {tab === 'profile' && (
+            <>
+              <ProfileFields draft={draft} set={set} />
+              <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+                <button type="button" className="onb-btn ghost" onClick={onClose} disabled={saving}>
+                  Cancel
+                </button>
+                <button type="button" className="onb-btn primary" onClick={save} disabled={saving}>
+                  {saving ? 'Saving…' : 'Save changes'}
+                </button>
+              </div>
+            </>
+          )}
+
+          {tab === 'injuries' && (
             <InjuriesPanel
               active={activeInjuries}
               healed={healedInjuries}
               onMarkHealed={markInjuryHealed}
               onReactivate={reactivateInjury}
               onError={onError}
+              onInjuryChanged={() => {
+                if (activeWorkoutPlan) setConfirmRegen(true);
+              }}
             />
           )}
 
-          {tab === 'profile' && (
-            <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-              <button type="button" className="onb-btn ghost" onClick={onClose} disabled={saving}>
-                Cancel
-              </button>
-              <button type="button" className="onb-btn primary" onClick={save} disabled={saving}>
-                {saving ? 'Saving…' : 'Save changes'}
+          {tab === 'programs' && (
+            <ProgramsPanel
+              onRegenerate={handleManualRegenerate}
+              regenerating={regenerating}
+              onError={onError}
+            />
+          )}
+
+          {tab !== 'programs' && activeWorkoutPlan && (
+            <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--border2)' }}>
+              <button
+                type="button"
+                className="onb-btn ghost"
+                style={{ width: '100%' }}
+                onClick={handleManualRegenerate}
+                disabled={regenerating}
+              >
+                Build a new program
               </button>
             </div>
           )}
@@ -375,10 +542,264 @@ function ProfileFields({ draft, set }) {
   );
 }
 
-function InjuriesPanel({ active, healed, onMarkHealed, onReactivate, onError }) {
+// ── Programs Panel ────────────────────────────────────────────────────
+// Shows all workout plans (active + archived). Each card is expandable
+// to reveal the day-by-day breakdown. Previous plans are kept with
+// is_active=false for audit purposes.
+
+const TYPE_ICON = { strength: '🏋️', conditioning: '⚡', mobility: '🧘', rest: '😴' };
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function PlanDayRow({ day }) {
+  const icon = TYPE_ICON[day.type] || '📋';
+  const exerciseCount =
+    day.type === 'mobility'
+      ? day.mobility?.length || 0
+      : day.exercises?.length || 0;
+  const label =
+    day.type === 'rest'
+      ? 'Rest'
+      : `${exerciseCount} exercise${exerciseCount !== 1 ? 's' : ''}`;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3px 0' }}>
+      <span style={{ fontSize: 14, width: 22, textAlign: 'center' }}>{icon}</span>
+      <span style={{ fontSize: 11, fontFamily: 'DM Mono, monospace', color: 'var(--muted)', width: 32 }}>
+        {day.day}
+      </span>
+      <span style={{ fontSize: 12, color: 'var(--text)', flex: 1 }}>{day.title}</span>
+      <span style={{ fontSize: 10, fontFamily: 'DM Mono, monospace', color: 'var(--muted)' }}>
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function PlanExerciseList({ day }) {
+  if (day.type === 'rest') {
+    return (
+      <div style={{ paddingLeft: 30, marginTop: 4 }}>
+        {(day.rest_tips || []).map((tip, i) => (
+          <div key={i} style={{ fontSize: 11, color: 'var(--muted)', fontFamily: 'DM Mono, monospace', padding: '2px 0' }}>
+            {tip}
+          </div>
+        ))}
+      </div>
+    );
+  }
+  const items = day.type === 'mobility' ? day.mobility : day.exercises;
+  if (!items?.length) return null;
+  return (
+    <div style={{ paddingLeft: 30, marginTop: 4 }}>
+      {items.map((ex, i) => (
+        <div key={i} style={{ fontSize: 11, color: 'var(--muted)', fontFamily: 'DM Mono, monospace', padding: '2px 0' }}>
+          {ex.name}
+          {ex.sets ? ` · ${ex.sets}×${ex.reps}` : ''}
+          {ex.detail ? ` — ${ex.detail}` : ''}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function PlanCard({ plan, isActive, expandedId, onToggle, onReactivate, reactivating }) {
+  const pd = plan.plan_data;
+  const expanded = expandedId === plan.id;
+  const days = pd?.days || [];
+  const trainingDays = days.filter((d) => d.type !== 'rest').length;
+
+  return (
+    <div className={`onb-card${isActive ? '' : ' muted'}`}>
+      <div
+        className="onb-card-head"
+        style={{ cursor: 'pointer', marginBottom: expanded ? 10 : 0 }}
+        onClick={() => onToggle(plan.id)}
+      >
+        <div>
+          <span className="onb-card-title">
+            {isActive ? 'Current program' : formatDate(plan.generated_at)}
+          </span>
+          <div className="onb-field-hint" style={{ marginTop: 2 }}>
+            {trainingDays} training day{trainingDays !== 1 ? 's' : ''} / week
+            {isActive ? '' : ` · v${plan.generation_prompt_version || '1'}`}
+          </div>
+        </div>
+        <span style={{ fontSize: 14, color: 'var(--muted)', transition: 'transform 0.2s', transform: expanded ? 'rotate(180deg)' : 'none' }}>
+          ▾
+        </span>
+      </div>
+
+      {expanded && (
+        <div>
+          {pd?.planSummary && (
+            <div style={{ fontSize: 12, color: 'var(--text)', lineHeight: 1.5, marginBottom: 10, padding: '8px 10px', background: 'var(--surface2, var(--surface))', borderRadius: 6 }}>
+              {pd.planSummary}
+            </div>
+          )}
+          {days.map((day, i) => (
+            <div key={i}>
+              <PlanDayRow day={day} />
+              <PlanExerciseList day={day} />
+            </div>
+          ))}
+          {isActive && (
+            <div className="onb-field-hint" style={{ marginTop: 8 }}>
+              Generated {formatDate(plan.generated_at)}
+            </div>
+          )}
+          {!isActive && onReactivate && (
+            <button
+              type="button"
+              className="onb-btn primary"
+              style={{ width: '100%', marginTop: 10 }}
+              onClick={() => onReactivate(plan.id)}
+              disabled={reactivating}
+            >
+              {reactivating ? 'Switching…' : 'Use this program'}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProgramsPanel({ onRegenerate, regenerating, onError }) {
+  const { activeWorkoutPlan, refreshWorkoutPlan } = useProfile();
+  const [allPlans, setAllPlans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [expandedId, setExpandedId] = useState(null);
+  const [reactivating, setReactivating] = useState(false);
+
+  const loadPlans = useCallback(async () => {
+    setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setLoading(false); return; }
+    const { data, error } = await supabase
+      .from('user_workout_plans')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('generated_at', { ascending: false });
+    if (error) {
+      console.warn('[ProgramsPanel] load failed', error);
+      onError?.(error);
+    }
+    setAllPlans(data || []);
+    setLoading(false);
+  }, [onError]);
+
+  useEffect(() => {
+    loadPlans();
+  }, [loadPlans, activeWorkoutPlan]);
+
+  const handleToggle = (id) => {
+    setExpandedId((prev) => (prev === id ? null : id));
+  };
+
+  const handleReactivate = useCallback(async (planId) => {
+    setReactivating(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not signed in');
+
+      // Deactivate current plan
+      await supabase
+        .from('user_workout_plans')
+        .update({ is_active: false })
+        .eq('user_id', user.id)
+        .eq('is_active', true);
+
+      // Reactivate selected plan
+      const { error } = await supabase
+        .from('user_workout_plans')
+        .update({ is_active: true })
+        .eq('id', planId);
+
+      if (error) throw error;
+
+      await refreshWorkoutPlan();
+      await loadPlans();
+    } catch (e) {
+      console.warn('[ProgramsPanel] reactivate failed', e?.message || e);
+      onError?.(e);
+    } finally {
+      setReactivating(false);
+    }
+  }, [refreshWorkoutPlan, loadPlans, onError]);
+
+
+  if (loading) {
+    return (
+      <div className="onb-step-body">
+        <p className="onb-field-hint">Loading programs…</p>
+      </div>
+    );
+  }
+
+  const active = allPlans.find((p) => p.is_active);
+  const previous = allPlans.filter((p) => !p.is_active);
+
+  return (
+    <div className="onb-step-body">
+      <h3 className="profile-section-title">Current program</h3>
+      {active ? (
+        <PlanCard
+          plan={active}
+          isActive
+          expandedId={expandedId}
+          onToggle={handleToggle}
+        />
+      ) : (
+        <div className="onb-card">
+          <p className="onb-field-hint" style={{ margin: 0 }}>
+            No AI-generated program yet. You're using the default plan.
+          </p>
+        </div>
+      )}
+
+      <button
+        type="button"
+        className="onb-btn ghost"
+        style={{ width: '100%', marginTop: 12 }}
+        onClick={onRegenerate}
+        disabled={regenerating}
+      >
+        {active ? 'Build a new program' : 'Build my program'}
+      </button>
+
+      {previous.length > 0 && (
+        <>
+          <h3 className="profile-section-title" style={{ marginTop: 24 }}>
+            Previous programs ({previous.length})
+          </h3>
+          {previous.map((plan) => (
+            <PlanCard
+              key={plan.id}
+              plan={plan}
+              isActive={false}
+              expandedId={expandedId}
+              onToggle={handleToggle}
+              onReactivate={handleReactivate}
+              reactivating={reactivating}
+            />
+          ))}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── Injuries Panel ────────────────────────────────────────────────────
+
+function InjuriesPanel({ active, healed, onMarkHealed, onReactivate, onError, onInjuryChanged }) {
   const handle = async (fn, id) => {
     try {
       await fn(id);
+      onInjuryChanged?.();
     } catch (e) {
       onError?.(e);
     }

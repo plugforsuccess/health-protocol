@@ -15,6 +15,7 @@ const ProfileContext = createContext({
   surgeries: [],
   dietProfile: null,
   activeMealPlan: null,
+  activeWorkoutPlan: null,
   loading: true,
   refreshProfile: () => Promise.resolve(),
   updateProfile: () => Promise.resolve(),
@@ -25,6 +26,7 @@ const ProfileContext = createContext({
   deleteSurgery: () => Promise.resolve(),
   completeOnboarding: () => Promise.resolve(),
   refreshDietProfile: () => Promise.resolve(),
+  refreshWorkoutPlan: () => Promise.resolve(),
 });
 
 export function ProfileProvider({ userId, children }) {
@@ -33,6 +35,7 @@ export function ProfileProvider({ userId, children }) {
   const [surgeries, setSurgeries]         = useState([]);
   const [dietProfile, setDietProfile]     = useState(null);
   const [activeMealPlan, setActiveMealPlan] = useState(null);
+  const [activeWorkoutPlan, setActiveWorkoutPlan] = useState(null);
   const [loading, setLoading]             = useState(true);
 
   const refreshProfile = useCallback(async () => {
@@ -42,12 +45,13 @@ export function ProfileProvider({ userId, children }) {
       setSurgeries([]);
       setDietProfile(null);
       setActiveMealPlan(null);
+      setActiveWorkoutPlan(null);
       setLoading(false);
       return;
     }
     setLoading(true);
     try {
-      const [{ data: prof }, { data: inj }, { data: sx }, { data: dp }, { data: mp }] = await Promise.all([
+      const [{ data: prof }, { data: inj }, { data: sx }, { data: dp }, { data: mp }, { data: wp }] = await Promise.all([
         supabase
           .from('user_profiles')
           .select('*')
@@ -74,12 +78,19 @@ export function ProfileProvider({ userId, children }) {
           .eq('user_id', userId)
           .eq('is_active', true)
           .maybeSingle(),
+        supabase
+          .from('user_workout_plans')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('is_active', true)
+          .maybeSingle(),
       ]);
       setProfile(prof || null);
       setInjuries(inj || []);
       setSurgeries(sx || []);
       setDietProfile(dp || null);
       setActiveMealPlan(mp || null);
+      setActiveWorkoutPlan(wp || null);
     } catch (e) {
       console.warn('[profileContext] load failed', e?.message || e);
       setProfile(null);
@@ -87,6 +98,7 @@ export function ProfileProvider({ userId, children }) {
       setSurgeries([]);
       setDietProfile(null);
       setActiveMealPlan(null);
+      setActiveWorkoutPlan(null);
     } finally {
       setLoading(false);
     }
@@ -246,6 +258,18 @@ export function ProfileProvider({ userId, children }) {
     setActiveMealPlan(mp || null);
   }, [userId]);
 
+  // ── Workout plan ────────────────────────────────────────────────────
+  const refreshWorkoutPlan = useCallback(async () => {
+    if (!userId) return;
+    const { data: wp } = await supabase
+      .from('user_workout_plans')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .maybeSingle();
+    setActiveWorkoutPlan(wp || null);
+  }, [userId]);
+
   const value = useMemo(
     () => ({
       profile,
@@ -253,6 +277,7 @@ export function ProfileProvider({ userId, children }) {
       surgeries,
       dietProfile,
       activeMealPlan,
+      activeWorkoutPlan,
       loading,
       refreshProfile,
       updateProfile,
@@ -263,6 +288,7 @@ export function ProfileProvider({ userId, children }) {
       deleteSurgery,
       completeOnboarding,
       refreshDietProfile,
+      refreshWorkoutPlan,
     }),
     [
       profile,
@@ -270,6 +296,7 @@ export function ProfileProvider({ userId, children }) {
       surgeries,
       dietProfile,
       activeMealPlan,
+      activeWorkoutPlan,
       loading,
       refreshProfile,
       updateProfile,
@@ -280,6 +307,7 @@ export function ProfileProvider({ userId, children }) {
       deleteSurgery,
       completeOnboarding,
       refreshDietProfile,
+      refreshWorkoutPlan,
     ]
   );
 
