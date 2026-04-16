@@ -91,11 +91,11 @@ const REGION_LABEL = {
 // explicit movementPatterns: [...] later, that overrides everything here.
 const PATTERN_RULES = [
   { pattern: 'overhead-pressing', test: /(overhead|shoulder press|push press|jerk|landmine press)/i },
-  { pattern: 'pushing',           test: /(bench press|push[- ]?up|push press|chest press|dip\b|tricep)/i },
+  { pattern: 'pushing',           test: /(bench press|push[- ]?up|push press|chest press|dip\b|tricep|pushdown)/i },
   { pattern: 'pulling',           test: /(\brow\b|pull[- ]?up|chin[- ]?up|lat pulldown|face pull|deadlift|reverse fly)/i },
   { pattern: 'squatting',         test: /(squat|lunge|step[- ]?up|leg press)/i },
   { pattern: 'hinging',           test: /(deadlift|romanian|rdl|hip thrust|kettlebell swing|good morning|hinge)/i },
-  { pattern: 'rotation',          test: /(rotation|twist|wood chop|pallof|russian twist|landmine rotation)/i },
+  { pattern: 'rotation',          test: /(rotation|twist|wood ?chop|pallof|russian twist|landmine rotation)/i },
   { pattern: 'impact',            test: /(jump|sprint|bound|hop\b|plyo|run\b|sled|interval)/i },
   { pattern: 'gripping',          test: /(farmer carry|farmer's walk|deadlift|grip|hang|hold|carry|kettlebell)/i },
 ];
