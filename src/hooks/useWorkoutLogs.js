@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase, localDateKey } from '../lib/supabase.js';
 import { WORKOUT_WEEK } from '../data/workoutWeek.js';
+import { classifyExercise, suggestProgression } from '../lib/workoutIntelligence.js';
 
 const DAY_MAP = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -83,6 +84,48 @@ export function useWorkoutLogs(userId) {
     });
     return m;
   }, [mobility]);
+
+  /**
+   * Return the full row list from the most recent session for this
+   * (day_index, exercise_index) strictly BEFORE `excludeDate`. This is the
+   * input to suggestProgression — we need statuses, not just max weight.
+   */
+  const getLastSessionRows = useCallback(
+    (dayIdx, exIdx, excludeDate) => {
+      const byDate = {};
+      sets.forEach((row) => {
+        if (row.day_index !== dayIdx) return;
+        if (row.exercise_index !== exIdx) return;
+        if (excludeDate && row.session_date >= excludeDate) return;
+        if (!byDate[row.session_date]) byDate[row.session_date] = [];
+        byDate[row.session_date].push(row);
+      });
+      const dates = Object.keys(byDate).sort().reverse();
+      if (!dates.length) return { date: null, rows: [] };
+      return { date: dates[0], rows: byDate[dates[0]] };
+    },
+    [sets]
+  );
+
+  /**
+   * Dynamic recommendation for the next session of a specific exercise.
+   * The caller is responsible for the CURRENT date so we correctly exclude
+   * today's in-progress rows and base the suggestion on the last COMPLETED
+   * session. Returns a { display, reason, dynamic, delta, kind } object.
+   */
+  const getSuggestion = useCallback(
+    (dayIdx, exIdx, excludeDate) => {
+      const ex = WORKOUT_WEEK[dayIdx]?.exercises?.[exIdx];
+      if (!ex) return null;
+      const { rows } = getLastSessionRows(dayIdx, exIdx, excludeDate);
+      return suggestProgression({
+        ex,
+        priorRows: rows,
+        priorCountTarget: ex.sets,
+      });
+    },
+    [getLastSessionRows]
+  );
 
   /** Calculate best weight for (exercise_index, day_index) across all past dates except `excludeDate`. */
   const getPrevBest = useCallback(
@@ -335,6 +378,8 @@ export function useWorkoutLogs(userId) {
     mobilityMap,
     completedMap,
     getPrevBest,
+    getSuggestion,
+    classifyExercise,
     logSetField,
     cycleSetStatus,
     toggleMobility,

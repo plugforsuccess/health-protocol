@@ -277,6 +277,31 @@
   /* PR BADGE */
   .pr-badge { display:inline-block; font-family:DM Mono,monospace; font-size:9px; background:rgba(245,158,11,0.15); color:var(--g); border:1px solid rgba(245,158,11,0.3); border-radius:3px; padding:1px 6px; margin-left:6px; }
 
+  /* DYNAMIC PROGRESSION BADGES + REASON LINE */
+  .progress-badge { display:inline-block; font-family:DM Mono,monospace; font-size:9px; background:rgba(34,197,94,0.14); color:var(--check); border:1px solid rgba(34,197,94,0.3); border-radius:3px; padding:1px 6px; margin-left:6px; letter-spacing:0.06em; }
+  .hold-badge { display:inline-block; font-family:DM Mono,monospace; font-size:9px; background:rgba(139,92,246,0.14); color:var(--d); border:1px solid rgba(139,92,246,0.3); border-radius:3px; padding:1px 6px; margin-left:6px; letter-spacing:0.06em; text-transform:uppercase; }
+  .suggestion-reason { font-family:DM Mono,monospace; font-size:10px; color:var(--muted); line-height:1.5; margin-top:4px; padding:6px 10px; border-left:2px solid var(--border2); background:var(--surface2); border-radius:0 6px 6px 0; }
+  .suggestion-reason.dynamic { border-left-color:var(--s); color:var(--label); }
+
+  /* N/A CELL — replaces weight input for duration exercises only */
+  .set-na { background:var(--surface2); border:1px dashed var(--border2); border-radius:6px; padding:6px 8px; font-size:11px; color:var(--muted); width:100%; text-align:center; font-family:DM Mono,monospace; letter-spacing:0.05em; }
+
+  /* LOCKED SET ROW — sequential unlocking */
+  .set-row.locked { opacity:0.42; }
+  .set-row.locked .set-input { background:var(--bg); border-style:dashed; border-color:var(--border); cursor:not-allowed; color:var(--muted); }
+  .set-row.locked .set-check { cursor:not-allowed; border-style:dashed; color:var(--muted); font-size:12px; }
+  .set-input:disabled { cursor:not-allowed; }
+  .set-check:disabled { cursor:not-allowed; }
+
+  /* WARMUP ITEM — tappable with prep/work states */
+  .warmup-item { cursor:pointer; }
+  .warmup-item.running { border-color:var(--s); background:rgba(6,182,212,0.05); animation:warmupPulse 1.2s ease-in-out infinite; }
+  .warmup-item.running .mobility-check { background:var(--s); border-color:var(--s); color:#fff; }
+  @keyframes warmupPulse {
+    0%, 100% { box-shadow:0 0 0 0 rgba(6,182,212,0.0); }
+    50%      { box-shadow:0 0 0 4px rgba(6,182,212,0.25); }
+  }
+
   /* PROGRESS CHARTS */
   .progress-section { margin-top:20px; }
   .chart-container { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:14px; margin-bottom:10px; }

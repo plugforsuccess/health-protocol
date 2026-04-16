@@ -1,8 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { WORKOUT_WEEK } from '../../data/workoutWeek.js';
 import { workoutDateKey } from '../../hooks/useWorkoutLogs.js';
+import { classifyExercise } from '../../lib/workoutIntelligence.js';
 import { ExerciseCard } from './ExerciseCard.jsx';
 import { MobilityItem } from './MobilityItem.jsx';
+import { WarmupItem } from './WarmupItem.jsx';
 
 export function WorkoutDayModal({
   dayIdx,
@@ -10,9 +12,11 @@ export function WorkoutDayModal({
   setsMap,
   mobilityMap,
   getPrevBest,
+  getSuggestion,
   onLogField,
   onCycleStatus,
   onToggleMobility,
+  onStartWarmup,
   onComplete,
 }) {
   useEffect(() => {
@@ -77,8 +81,10 @@ export function WorkoutDayModal({
               sessionDate={sessionDate}
               setsMap={setsMap}
               getPrevBest={getPrevBest}
+              getSuggestion={getSuggestion}
               onLogField={onLogField}
               onCycleStatus={onCycleStatus}
+              onStartWarmup={onStartWarmup}
               onComplete={onComplete}
             />
           )}
@@ -145,47 +151,87 @@ function TrainBody({
   sessionDate,
   setsMap,
   getPrevBest,
+  getSuggestion,
   onLogField,
   onCycleStatus,
+  onStartWarmup,
   onComplete,
 }) {
+  // Warm-up completion lives in local state — warm-ups are a pre-flight
+  // checklist, not long-lived history, so they don't need to sync to
+  // Supabase. Each tap flips the item between idle → running → done.
+  // The running state auto-advances when the timer callback fires.
+  const [warmupStatus, setWarmupStatus] = useState({});
+
+  const handleWarmupTap = (idx, item) => {
+    const current = warmupStatus[idx];
+    if (current === 'done') {
+      // Un-check
+      setWarmupStatus((s) => ({ ...s, [idx]: undefined }));
+      return;
+    }
+    if (current === 'running') {
+      // User tapped again mid-countdown — treat as cancel.
+      setWarmupStatus((s) => ({ ...s, [idx]: undefined }));
+      onStartWarmup?.(null);
+      return;
+    }
+    setWarmupStatus((s) => ({ ...s, [idx]: 'running' }));
+    onStartWarmup?.(item, () => {
+      setWarmupStatus((s) => ({ ...s, [idx]: 'done' }));
+    });
+  };
+
   return (
     <>
       {day.warmup?.length > 0 && (
         <div className="wmodal-section">
           <div className="wmodal-section-title green">Warm-Up</div>
+          <div
+            style={{
+              fontSize: 11,
+              color: 'var(--muted)',
+              marginBottom: 12,
+              fontFamily: 'DM Mono, monospace',
+            }}
+          >
+            Tap a warm-up to start a 10-second prep countdown.
+            Timed warm-ups run the full work timer automatically.
+          </div>
           {day.warmup.map((w, i) => (
-            <div key={i} className="mobility-item" style={{ cursor: 'default' }}>
-              <div style={{ fontSize: 16 }}>🔥</div>
-              <div className="mobility-content">
-                <div className="mobility-name">
-                  {w.name}
-                  {w.sets ? (
-                    <span style={{ fontSize: 10, color: 'var(--muted)' }}> × {w.sets}</span>
-                  ) : null}
-                </div>
-                <div className="mobility-detail">{w.detail}</div>
-              </div>
-            </div>
+            <WarmupItem
+              key={i}
+              item={w}
+              status={warmupStatus[i]}
+              onToggle={() => handleWarmupTap(i, w)}
+            />
           ))}
         </div>
       )}
 
       <div className="wmodal-section">
         <div className="wmodal-section-title">Main Workout</div>
-        {day.exercises.map((ex, ei) => (
-          <ExerciseCard
-            key={ei}
-            ex={ex}
-            dayIdx={dayIdx}
-            exIdx={ei}
-            sessionDate={sessionDate}
-            setsMap={setsMap}
-            prevBest={getPrevBest(dayIdx, ei, sessionDate)}
-            onLogField={onLogField}
-            onCycleStatus={(d, e, s) => onCycleStatus(d, e, s, ex.name)}
-          />
-        ))}
+        {day.exercises.map((ex, ei) => {
+          const kind = classifyExercise(ex);
+          const suggestion = getSuggestion
+            ? getSuggestion(dayIdx, ei, sessionDate)
+            : null;
+          return (
+            <ExerciseCard
+              key={ei}
+              ex={ex}
+              dayIdx={dayIdx}
+              exIdx={ei}
+              sessionDate={sessionDate}
+              setsMap={setsMap}
+              prevBest={getPrevBest(dayIdx, ei, sessionDate)}
+              suggestion={suggestion}
+              kind={kind}
+              onLogField={onLogField}
+              onCycleStatus={(d, e, s) => onCycleStatus(d, e, s, ex.name)}
+            />
+          );
+        })}
       </div>
 
       {day.cooldown?.length > 0 && (
