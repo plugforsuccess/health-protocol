@@ -28,6 +28,7 @@ export function ExerciseCard({
   kind,
   onLogField,
   onCycleStatus,
+  onOpenCoach,
 }) {
   const dynamic = suggestion?.dynamic;
   const suggestedLine = suggestion?.display || ex.rec_weight;
@@ -51,6 +52,19 @@ export function ExerciseCard({
           )}
           {dynamic && suggestion?.delta === 0 && (
             <span className="hold-badge">hold</span>
+          )}
+          {onOpenCoach && (
+            <button
+              type="button"
+              className="coach-trigger-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenCoach(exIdx);
+              }}
+              aria-label="Ask coach"
+            >
+              🤖
+            </button>
           )}
         </div>
         <div className="exercise-meta">

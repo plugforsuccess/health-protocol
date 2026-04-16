@@ -1,10 +1,51 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { WORKOUT_WEEK } from '../../data/workoutWeek.js';
 import { workoutDateKey } from '../../hooks/useWorkoutLogs.js';
 import { classifyExercise } from '../../lib/workoutIntelligence.js';
+import { buildCoachingSystemPrompt } from '../../lib/coachingPrompt.js';
+import { useProfile } from '../../lib/profileContext.jsx';
+import { useCoachingChat } from '../../hooks/useCoachingChat.js';
+import { ChatDrawer } from '../chat/ChatDrawer.jsx';
+import { CoachingChat } from '../chat/CoachingChat.jsx';
 import { ExerciseCard } from './ExerciseCard.jsx';
 import { MobilityItem } from './MobilityItem.jsx';
 import { WarmupItem } from './WarmupItem.jsx';
+
+// Quick-tap prompts for workout coaching — base set always shown,
+// plus dynamic extras based on exercise type.
+const BASE_WORKOUT_PROMPTS = [
+  'How do I feel this in the right muscle?',
+  "I'm feeling pain \u2014 what should I modify?",
+  'Show me the form cues',
+  'Why is this in my program?',
+  'How much rest do I need?',
+];
+
+const DYNAMIC_PROMPTS = {
+  strength:     "What's the mind-muscle connection here?",
+  rehab:        'Am I doing this correctly for my injury?',
+  mobility:     'How deep should I go into this stretch?',
+  conditioning: 'How do I pace this correctly?',
+};
+
+function getWorkoutPrompts(exercise, dayType) {
+  const prompts = [...BASE_WORKOUT_PROMPTS];
+  // Add dynamic prompt based on exercise/day context
+  const name = (exercise?.name || '').toLowerCase();
+  const isRehab = name.includes('rehab') || name.includes('eccentric') || name.includes('wrist curl');
+  const isMobility = name.includes('stretch') || name.includes('mobility') || name.includes('foam roll');
+
+  if (isRehab) {
+    prompts.push(DYNAMIC_PROMPTS.rehab);
+  } else if (isMobility) {
+    prompts.push(DYNAMIC_PROMPTS.mobility);
+  } else if (dayType === 'conditioning') {
+    prompts.push(DYNAMIC_PROMPTS.conditioning);
+  } else {
+    prompts.push(DYNAMIC_PROMPTS.strength);
+  }
+  return prompts;
+}
 
 export function WorkoutDayModal({
   dayIdx,
@@ -19,6 +60,9 @@ export function WorkoutDayModal({
   onStartWarmup,
   onComplete,
 }) {
+  const { profile, injuries, surgeries } = useProfile();
+  const [coachExIdx, setCoachExIdx] = useState(null);
+
   useEffect(() => {
     if (dayIdx === null || dayIdx === undefined) return;
     const prevOverflow = document.body.style.overflow;
@@ -33,10 +77,52 @@ export function WorkoutDayModal({
     };
   }, [dayIdx, onClose]);
 
-  if (dayIdx === null || dayIdx === undefined) return null;
-  const day = WORKOUT_WEEK[dayIdx];
+  const day = (dayIdx !== null && dayIdx !== undefined) ? WORKOUT_WEEK[dayIdx] : null;
+  const sessionDate = day ? workoutDateKey(dayIdx) : null;
+
+  // Build coaching context for the currently selected exercise
+  const coachExercise = day?.exercises?.[coachExIdx] ?? null;
+  const coachSuggestion = (coachExIdx !== null && getSuggestion)
+    ? getSuggestion(dayIdx, coachExIdx, sessionDate)
+    : null;
+
+  // Gather today's logged sets for this exercise
+  const coachSessionLog = useMemo(() => {
+    if (coachExIdx === null || !sessionDate) return [];
+    const logs = [];
+    const setCount = coachExercise?.sets || 0;
+    for (let si = 0; si < setCount; si++) {
+      const key = `${sessionDate}::${dayIdx}::${coachExIdx}::${si}`;
+      if (setsMap[key]) logs.push(setsMap[key]);
+    }
+    return logs;
+  }, [coachExIdx, sessionDate, dayIdx, coachExercise, setsMap]);
+
+  const coachContext = useMemo(() => {
+    if (!coachExercise || !profile) return null;
+    return {
+      profile,
+      injuries: (injuries || []).filter((i) => i?.active !== false),
+      surgeries: surgeries || [],
+      currentExercise: coachExercise,
+      currentSet: 0,
+      suggestion: coachSuggestion,
+      sessionLog: coachSessionLog,
+    };
+  }, [profile, injuries, surgeries, coachExercise, coachSuggestion, coachSessionLog]);
+
+  const workoutChat = useCoachingChat({
+    systemPromptBuilder: buildCoachingSystemPrompt,
+    context: coachContext,
+    accentColor: 'var(--w)',
+  });
+
+  const handleOpenCoach = (exIdx) => {
+    setCoachExIdx(exIdx);
+    workoutChat.openChat(true);
+  };
+
   if (!day) return null;
-  const sessionDate = workoutDateKey(dayIdx);
 
   const overlayClick = (e) => {
     if (e.target === e.currentTarget) onClose();
@@ -86,10 +172,29 @@ export function WorkoutDayModal({
               onCycleStatus={onCycleStatus}
               onStartWarmup={onStartWarmup}
               onComplete={onComplete}
+              onOpenCoach={handleOpenCoach}
             />
           )}
         </div>
       </div>
+
+      <ChatDrawer
+        isOpen={workoutChat.isOpen}
+        onClose={workoutChat.closeChat}
+        title="Workout Coach"
+        subtitle={coachExercise?.name}
+        accentColor="var(--w)"
+      >
+        <CoachingChat
+          messages={workoutChat.messages}
+          loading={workoutChat.loading}
+          onSend={workoutChat.sendMessage}
+          onQuickTap={workoutChat.sendQuickTap}
+          quickTapPrompts={getWorkoutPrompts(coachExercise, day.type)}
+          accentColor="var(--w)"
+          emptyStateText="Ask anything about this exercise"
+        />
+      </ChatDrawer>
     </div>
   );
 }
@@ -156,6 +261,7 @@ function TrainBody({
   onCycleStatus,
   onStartWarmup,
   onComplete,
+  onOpenCoach,
 }) {
   // Warm-up completion lives in local state — warm-ups are a pre-flight
   // checklist, not long-lived history, so they don't need to sync to
@@ -229,6 +335,7 @@ function TrainBody({
               kind={kind}
               onLogField={onLogField}
               onCycleStatus={(d, e, s) => onCycleStatus(d, e, s, ex.name)}
+              onOpenCoach={onOpenCoach}
             />
           );
         })}
