@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useProfile } from '../../lib/profileContext.jsx';
 import { supabase } from '../../lib/supabase.js';
 import { generateWorkoutPlan } from '../../lib/workoutPlanGenerator.js';
+import { generateMealPlan } from '../../lib/mealPlanGenerator.js';
 import {
   ACTIVITY_LEVEL,
   AVG_SLEEP,
@@ -253,6 +254,13 @@ export function ProfileEditModal({ open, onClose, onError }) {
             >
               Programs
             </button>
+            <button
+              type="button"
+              className={`profile-tab${tab === 'meals' ? ' active' : ''}`}
+              onClick={() => setTab('meals')}
+            >
+              Meal Plans
+            </button>
           </div>
         </div>
         <div className="wmodal-body">
@@ -291,7 +299,11 @@ export function ProfileEditModal({ open, onClose, onError }) {
             />
           )}
 
-          {tab !== 'programs' && activeWorkoutPlan && (
+          {tab === 'meals' && (
+            <MealPlansPanel onError={onError} />
+          )}
+
+          {tab !== 'programs' && tab !== 'meals' && activeWorkoutPlan && (
             <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--border2)' }}>
               <button
                 type="button"
@@ -778,6 +790,221 @@ function ProgramsPanel({ onRegenerate, regenerating, onError }) {
           </h3>
           {previous.map((plan) => (
             <PlanCard
+              key={plan.id}
+              plan={plan}
+              isActive={false}
+              expandedId={expandedId}
+              onToggle={handleToggle}
+              onReactivate={handleReactivate}
+              reactivating={reactivating}
+            />
+          ))}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── Meal Plans Panel ──────────────────────────────────────────────────
+
+function MealPlanCard({ plan, isActive, expandedId, onToggle, onReactivate, reactivating }) {
+  const pd = plan.plan_data;
+  const expanded = expandedId === plan.id;
+  const days = pd?.days || [];
+  const mealCount = days.reduce((sum, d) => sum + (d.meals?.length || 0), 0);
+
+  return (
+    <div className={`onb-card${isActive ? '' : ' muted'}`}>
+      <div
+        className="onb-card-head"
+        style={{ cursor: 'pointer', marginBottom: expanded ? 10 : 0 }}
+        onClick={() => onToggle(plan.id)}
+      >
+        <div>
+          <span className="onb-card-title">
+            {isActive ? 'Current meal plan' : formatDate(plan.generated_at)}
+          </span>
+          <div className="onb-field-hint" style={{ marginTop: 2 }}>
+            {mealCount} meals / week
+            {isActive ? '' : ` · v${plan.generation_prompt_version || '1'}`}
+          </div>
+        </div>
+        <span style={{ fontSize: 14, color: 'var(--muted)', transition: 'transform 0.2s', transform: expanded ? 'rotate(180deg)' : 'none' }}>
+          ▾
+        </span>
+      </div>
+
+      {expanded && (
+        <div>
+          {pd?.planSummary && (
+            <div style={{ fontSize: 12, color: 'var(--text)', lineHeight: 1.5, marginBottom: 10, padding: '8px 10px', background: 'var(--surface2, var(--surface))', borderRadius: 6 }}>
+              {pd.planSummary}
+            </div>
+          )}
+          {days.map((day, i) => (
+            <div key={i} style={{ marginBottom: 6 }}>
+              <div style={{ fontSize: 11, fontFamily: 'DM Mono, monospace', fontWeight: 600, color: 'var(--text)', padding: '4px 0' }}>
+                {day.day}
+              </div>
+              {(day.meals || []).map((meal, j) => (
+                <div key={j} style={{ display: 'flex', gap: 8, padding: '2px 0 2px 12px' }}>
+                  <span style={{ fontSize: 10, fontFamily: 'DM Mono, monospace', color: 'var(--muted)', width: 55, flexShrink: 0 }}>
+                    {meal.time}
+                  </span>
+                  <span style={{ fontSize: 11, color: 'var(--text)' }}>
+                    {meal.name}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ))}
+          {isActive && (
+            <div className="onb-field-hint" style={{ marginTop: 8 }}>
+              Generated {formatDate(plan.generated_at)}
+            </div>
+          )}
+          {!isActive && onReactivate && (
+            <button
+              type="button"
+              className="onb-btn primary"
+              style={{ width: '100%', marginTop: 10 }}
+              onClick={() => onReactivate(plan.id)}
+              disabled={reactivating}
+            >
+              {reactivating ? 'Switching…' : 'Use this meal plan'}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MealPlansPanel({ onError }) {
+  const { activeMealPlan, refreshDietProfile } = useProfile();
+  const [allPlans, setAllPlans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [expandedId, setExpandedId] = useState(null);
+  const [reactivating, setReactivating] = useState(false);
+  const [building, setBuilding] = useState(false);
+
+  const loadPlans = useCallback(async () => {
+    setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setLoading(false); return; }
+    const { data, error } = await supabase
+      .from('user_meal_plans')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('generated_at', { ascending: false });
+    if (error) {
+      console.warn('[MealPlansPanel] load failed', error);
+      onError?.(error);
+    }
+    setAllPlans(data || []);
+    setLoading(false);
+  }, [onError]);
+
+  useEffect(() => {
+    loadPlans();
+  }, [loadPlans, activeMealPlan]);
+
+  const handleToggle = (id) => {
+    setExpandedId((prev) => (prev === id ? null : id));
+  };
+
+  const handleReactivate = useCallback(async (planId) => {
+    setReactivating(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not signed in');
+
+      await supabase
+        .from('user_meal_plans')
+        .update({ is_active: false })
+        .eq('user_id', user.id)
+        .eq('is_active', true);
+
+      const { error } = await supabase
+        .from('user_meal_plans')
+        .update({ is_active: true })
+        .eq('id', planId);
+
+      if (error) throw error;
+
+      await refreshDietProfile();
+      await loadPlans();
+    } catch (e) {
+      console.warn('[MealPlansPanel] reactivate failed', e?.message || e);
+      onError?.(e);
+    } finally {
+      setReactivating(false);
+    }
+  }, [refreshDietProfile, loadPlans, onError]);
+
+  const handleBuildNew = useCallback(async () => {
+    if (!window.confirm(
+      'This will build a new meal plan. Your current plan moves to Previous Meal Plans. Continue?'
+    )) return;
+    setBuilding(true);
+    try {
+      await generateMealPlan();
+      await refreshDietProfile();
+      await loadPlans();
+    } catch (e) {
+      console.warn('[MealPlansPanel] build failed', e?.message || e);
+      onError?.(e);
+    } finally {
+      setBuilding(false);
+    }
+  }, [refreshDietProfile, loadPlans, onError]);
+
+  if (loading) {
+    return (
+      <div className="onb-step-body">
+        <p className="onb-field-hint">Loading meal plans…</p>
+      </div>
+    );
+  }
+
+  const active = allPlans.find((p) => p.is_active);
+  const previous = allPlans.filter((p) => !p.is_active);
+
+  return (
+    <div className="onb-step-body">
+      <h3 className="profile-section-title">Current meal plan</h3>
+      {active ? (
+        <MealPlanCard
+          plan={active}
+          isActive
+          expandedId={expandedId}
+          onToggle={handleToggle}
+        />
+      ) : (
+        <div className="onb-card">
+          <p className="onb-field-hint" style={{ margin: 0 }}>
+            No AI-generated meal plan yet. You're using the default plan.
+          </p>
+        </div>
+      )}
+
+      <button
+        type="button"
+        className="onb-btn ghost"
+        style={{ width: '100%', marginTop: 12 }}
+        onClick={handleBuildNew}
+        disabled={building}
+      >
+        {building ? 'Building…' : active ? 'Build a new meal plan' : 'Build my meal plan'}
+      </button>
+
+      {previous.length > 0 && (
+        <>
+          <h3 className="profile-section-title" style={{ marginTop: 24 }}>
+            Previous meal plans ({previous.length})
+          </h3>
+          {previous.map((plan) => (
+            <MealPlanCard
               key={plan.id}
               plan={plan}
               isActive={false}
