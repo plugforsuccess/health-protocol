@@ -29,6 +29,7 @@ export const PRIMARY_GOALS = [
   'Fat Loss',
   'Muscle Gain',
   'Athletic Performance',
+  'Conditioning & Endurance',
   'Injury Rehab',
   'General Fitness',
   'Longevity',
@@ -177,7 +178,8 @@ export const TRAVEL_EQUIPMENT = [
 
 export const PRIMARY_SPORT = [
   'Basketball', 'Tennis', 'Golf', 'Running', 'Cycling',
-  'Swimming', 'Hiking', 'Combat Sports', 'None — general fitness',
+  'Swimming', 'Hiking', 'Boxing', 'Combat Sports (MMA/BJJ)',
+  'Soccer', 'Baseball', 'Football', 'None — general fitness',
 ];
 
 export const COMPETITION_STATUS = [

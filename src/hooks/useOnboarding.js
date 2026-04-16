@@ -86,7 +86,7 @@ function makeInitial() {
     recoveryLevel: null,
     travelFrequency: null,
     travelEquipmentAccess: null,
-    primarySport: null,
+    primarySport: [],
     competitionStatus: null,
     performanceGoals: [],
   };

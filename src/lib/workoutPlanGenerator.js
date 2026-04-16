@@ -111,7 +111,7 @@ Training location: ${profile?.training_location || 'Not specified'}
 Missing equipment user wishes they had: ${profile?.missing_equipment || 'None'}
 
 SPORT & PERFORMANCE:
-- Primary sport: ${profile?.primary_sport || 'None'}
+- Sports: ${Array.isArray(profile?.primary_sport) ? profile.primary_sport.join(', ') : profile?.primary_sport || 'None'}
 - Competition status: ${profile?.competition_status || 'Not competing'}
 - Performance goals: ${profile?.performance_goals?.join(', ') || 'None'}
 

@@ -10,12 +10,13 @@ import {
 export function Step6Sport({ form, update, error }) {
   return (
     <StepShell title="What are you training for?" error={error}>
-      <FieldGroup label="Primary sport or activity">
-        <SingleSelect
+      <FieldGroup label="Sports or activities (select all that apply)">
+        <MultiSelect
           name="primary-sport"
           options={PRIMARY_SPORT}
           value={form.primarySport}
           onChange={(v) => update({ primarySport: v })}
+          exclusive="None — general fitness"
         />
       </FieldGroup>
 
