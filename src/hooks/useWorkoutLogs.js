@@ -87,8 +87,10 @@ export function useWorkoutLogs(userId) {
 
   /**
    * Return the full row list from the most recent session for this
-   * (day_index, exercise_index) strictly BEFORE `excludeDate`. This is the
-   * input to suggestProgression — we need statuses, not just max weight.
+   * (day_index, exercise_index) strictly BEFORE `excludeDate`, plus the
+   * RPE that was logged for that session (if any). Both inputs feed
+   * suggestProgression — RPE gates progression so a maxed-out session
+   * doesn't trigger a +5lb bump even when all sets were completed.
    */
   const getLastSessionRows = useCallback(
     (dayIdx, exIdx, excludeDate) => {
@@ -101,27 +103,35 @@ export function useWorkoutLogs(userId) {
         byDate[row.session_date].push(row);
       });
       const dates = Object.keys(byDate).sort().reverse();
-      if (!dates.length) return { date: null, rows: [] };
-      return { date: dates[0], rows: byDate[dates[0]] };
+      if (!dates.length) return { date: null, rows: [], rpe: null };
+      const date = dates[0];
+      const session = sessions.find(
+        (s) => s.session_date === date && s.day_index === dayIdx
+      );
+      const rpe = Number.isFinite(session?.rpe) ? session.rpe : null;
+      return { date, rows: byDate[date], rpe };
     },
-    [sets]
+    [sets, sessions]
   );
 
   /**
    * Dynamic recommendation for the next session of a specific exercise.
    * The caller is responsible for the CURRENT date so we correctly exclude
    * today's in-progress rows and base the suggestion on the last COMPLETED
-   * session. Returns a { display, reason, dynamic, delta, kind } object.
+   * session. `prefs` carries the user's chosen progression increments
+   * (defaults baked into suggestProgression if undefined).
    */
   const getSuggestion = useCallback(
-    (dayIdx, exIdx, excludeDate) => {
+    (dayIdx, exIdx, excludeDate, prefs) => {
       const ex = WORKOUT_WEEK[dayIdx]?.exercises?.[exIdx];
       if (!ex) return null;
-      const { rows } = getLastSessionRows(dayIdx, exIdx, excludeDate);
+      const { rows, rpe } = getLastSessionRows(dayIdx, exIdx, excludeDate);
       return suggestProgression({
         ex,
         priorRows: rows,
         priorCountTarget: ex.sets,
+        priorRpe: rpe,
+        prefs,
       });
     },
     [getLastSessionRows]
@@ -347,22 +357,30 @@ export function useWorkoutLogs(userId) {
   );
 
   const completeWorkout = useCallback(
-    async (dayIdx) => {
+    async (dayIdx, rpe = null) => {
       if (!userId) return;
       const date = workoutDateKey(dayIdx);
       const volume = getVolumeFor(date, dayIdx);
       const prs = getPRsFor(date, dayIdx);
-      const { error } = await supabase.from('workout_sessions').upsert(
-        {
-          user_id: userId,
-          session_date: date,
-          day_index: dayIdx,
-          completed: true,
-          volume_lbs: volume,
-          prs_set: prs,
-        },
-        { onConflict: 'user_id,session_date,day_index' }
-      );
+      // RPE is optional — null means "user skipped the prompt" and the
+      // engine will fall back to "all sets done = bump" without a
+      // recovery signal. Clamp to 1–10 if provided.
+      const cleanRpe =
+        rpe == null
+          ? null
+          : Math.min(10, Math.max(1, parseInt(rpe, 10))) || null;
+      const payload = {
+        user_id: userId,
+        session_date: date,
+        day_index: dayIdx,
+        completed: true,
+        volume_lbs: volume,
+        prs_set: prs,
+      };
+      if (cleanRpe != null) payload.rpe = cleanRpe;
+      const { error } = await supabase
+        .from('workout_sessions')
+        .upsert(payload, { onConflict: 'user_id,session_date,day_index' });
       if (error) throw error;
       await loadAll();
     },

@@ -102,10 +102,18 @@ export function classifyExercise(ex) {
 }
 
 /** Pick the weight increment for a weighted lift. Rehab & iso moves jump
- *  in small steps; compound / lower body lifts jump in 5lb steps. */
-function weightStep(exerciseName) {
+ *  in small steps; compound / lower body lifts jump in 5lb steps.
+ *
+ *  Both defaults can be overridden by the caller via the `prefs` arg —
+ *  some users want +2.5lb across the board (smaller plates, older
+ *  athletes, injury recovery). The user-facing settings UI lives in
+ *  src/hooks/useProgressionPrefs.js.
+ */
+function weightStep(exerciseName, prefs) {
+  const compound = Number.isFinite(prefs?.compoundIncrement) ? prefs.compoundIncrement : 5;
+  const isolation = Number.isFinite(prefs?.isolationIncrement) ? prefs.isolationIncrement : 2.5;
   const n = (exerciseName || '').toLowerCase();
-  return SMALL_MUSCLE_KEYWORDS.some((k) => n.includes(k)) ? 2.5 : 5;
+  return SMALL_MUSCLE_KEYWORDS.some((k) => n.includes(k)) ? isolation : compound;
 }
 
 /** Best-effort pull of a starter weight from the hardcoded rec_weight string.
@@ -166,8 +174,11 @@ function parseStarterDuration(reps) {
  *   rows      — array of workout_sets rows, all for the SAME date/ex.
  *   targetSetCount — how many sets the programme prescribes (so we know
  *                    whether the user skipped some).
+ *   sessionRpe — the user's 1–10 RPE for that whole session, if logged.
+ *                Used to gate progression: completing all sets at RPE 9
+ *                means there's no headroom and we should HOLD, not BUMP.
  */
-function summariseLast(rows, targetSetCount) {
+function summariseLast(rows, targetSetCount, sessionRpe) {
   if (!rows || rows.length === 0) return null;
   const statuses = rows.map((r) => r.status || '');
   const loggedCount = statuses.filter((s) => s === 'done' || s === 'failed').length;
@@ -192,7 +203,17 @@ function summariseLast(rows, targetSetCount) {
     maxWeight: weights.length ? Math.max(...weights) : 0,
     minWeightUsed: weights.length ? Math.min(...weights) : 0,
     medianReps: reps.length ? reps.sort((a, b) => a - b)[Math.floor(reps.length / 2)] : 0,
+    rpe: Number.isFinite(sessionRpe) ? sessionRpe : null,
   };
+}
+
+/** RPE bucket used to pick coach-voice copy. */
+function rpeFlavor(rpe) {
+  if (!Number.isFinite(rpe)) return null;
+  if (rpe >= 9) return 'maxed';
+  if (rpe >= 7) return 'tough';
+  if (rpe >= 4) return 'solid';
+  return 'easy';
 }
 
 /**
@@ -208,9 +229,10 @@ function summariseLast(rows, targetSetCount) {
  *     delta,                // +5, 0, -2.5, +1round, etc. for UI badge
  *   }
  */
-export function suggestProgression({ ex, priorRows, priorCountTarget }) {
+export function suggestProgression({ ex, priorRows, priorCountTarget, priorRpe, prefs }) {
   const kind = classifyExercise(ex);
-  const last = summariseLast(priorRows, priorCountTarget || ex?.sets);
+  const last = summariseLast(priorRows, priorCountTarget || ex?.sets, priorRpe);
+  const flavor = rpeFlavor(priorRpe);
 
   const baseRepTarget = parseStarterReps(ex?.reps);
   const baseDuration = parseStarterDuration(ex?.reps);
@@ -223,7 +245,7 @@ export function suggestProgression({ ex, priorRows, priorCountTarget }) {
       return {
         kind: 'duration',
         display: ex.rec_weight || `${ex.reps}`,
-        reason: 'First time — use the programmed effort level.',
+        reason: 'First time on this one — settle into the programmed effort and learn the pace.',
         dynamic: false,
         delta: 0,
         prefillWeight: null,
@@ -234,7 +256,7 @@ export function suggestProgression({ ex, priorRows, priorCountTarget }) {
       return {
         kind: 'duration',
         display: ex.rec_weight || `${ex.reps}`,
-        reason: 'You bailed early last time — repeat same work at same effort.',
+        reason: `You came up short last session — repeat the same work and finish it clean this week.`,
         dynamic: true,
         delta: 0,
         prefillWeight: null,
@@ -242,6 +264,18 @@ export function suggestProgression({ ex, priorRows, priorCountTarget }) {
       };
     }
     if (last.allDone) {
+      // RPE gate: if last session crushed you, hold even though you finished.
+      if (flavor === 'maxed') {
+        return {
+          kind: 'duration',
+          display: ex.rec_weight || `${ex.reps}`,
+          reason: `You finished last week but RPE ${priorRpe} means you were on the edge — hold the same target and bank a clean rep.`,
+          dynamic: true,
+          delta: 0,
+          prefillWeight: null,
+          prefillReps: base ?? null,
+        };
+      }
       // Bump: for interval work, suggest an extra round or +15s per round.
       const isInterval = /min on|round|interval/i.test(
         (ex.reps || '') + ' ' + (ex.name || '')
@@ -249,8 +283,10 @@ export function suggestProgression({ ex, priorRows, priorCountTarget }) {
       if (isInterval) {
         return {
           kind: 'duration',
-          display: `+1 round or +0.3 mph next time`,
-          reason: 'All rounds completed last session — time to progress.',
+          display: `+1 round or +0.3 mph`,
+          reason: flavor === 'easy'
+            ? `Felt easy at this pace — add a round or push the speed up.`
+            : `Strong session last week — ready for an extra round or a touch more speed.`,
           dynamic: true,
           delta: 1,
           prefillWeight: null,
@@ -262,7 +298,9 @@ export function suggestProgression({ ex, priorRows, priorCountTarget }) {
       return {
         kind: 'duration',
         display: base ? `${next}s` : `+${bump}s`,
-        reason: 'All work completed last session — add 15s.',
+        reason: flavor === 'easy'
+          ? `Cruised through last week — let's add 15s and make it earn the work.`
+          : `Strong work last week — ready for an extra 15 seconds.`,
         dynamic: true,
         delta: bump,
         prefillWeight: null,
@@ -272,7 +310,7 @@ export function suggestProgression({ ex, priorRows, priorCountTarget }) {
     return {
       kind: 'duration',
       display: ex.rec_weight || `${ex.reps}`,
-      reason: 'Mixed result last session — hold the same work target.',
+      reason: `Last session was a mixed bag — hold the target and lock it in this week before pushing.`,
       dynamic: true,
       delta: 0,
       prefillWeight: null,
@@ -291,7 +329,7 @@ export function suggestProgression({ ex, priorRows, priorCountTarget }) {
       return {
         kind: 'bodyweight',
         display: `Bodyweight · ${ex.reps} reps`,
-        reason: 'First time — hit the programmed rep target. Add weight if it is too easy.',
+        reason: `First time on this — hit the programmed reps clean. If it feels easy, add a dumbbell next round.`,
         dynamic: false,
         delta: 0,
         prefillWeight: null,
@@ -302,7 +340,7 @@ export function suggestProgression({ ex, priorRows, priorCountTarget }) {
       return {
         kind: 'bodyweight',
         display: lastWeight ? `${lastWeight}lb · ${base} reps` : `Bodyweight · ${base} reps`,
-        reason: 'Form broke down last session — repeat same load and own the reps.',
+        reason: `Form started slipping last session — same load, own every rep this week.`,
         dynamic: true,
         delta: 0,
         prefillWeight: lastWeight,
@@ -310,11 +348,24 @@ export function suggestProgression({ ex, priorRows, priorCountTarget }) {
       };
     }
     if (last.allDone && base > 0) {
+      if (flavor === 'maxed') {
+        return {
+          kind: 'bodyweight',
+          display: lastWeight ? `${lastWeight}lb · ${base} reps` : `Bodyweight · ${base} reps`,
+          reason: `You finished but RPE ${priorRpe} says you had nothing left — repeat the same target and bank the win.`,
+          dynamic: true,
+          delta: 0,
+          prefillWeight: lastWeight,
+          prefillReps: base,
+        };
+      }
       const next = base + 2;
       return {
         kind: 'bodyweight',
         display: lastWeight ? `${lastWeight}lb · ${next} reps` : `Bodyweight · ${next} reps`,
-        reason: `Cleared all sets of ${base} reps — push to ${next}.`,
+        reason: flavor === 'easy'
+          ? `Coasted through ${base} reps — time to chase ${next}.`
+          : `Owned all your sets at ${base} reps — ready for ${next}.`,
         dynamic: true,
         delta: 2,
         prefillWeight: lastWeight,
@@ -324,7 +375,7 @@ export function suggestProgression({ ex, priorRows, priorCountTarget }) {
     return {
       kind: 'bodyweight',
       display: lastWeight ? `${lastWeight}lb · ${ex.reps} reps` : `Bodyweight · ${ex.reps} reps`,
-      reason: 'Hold the programmed rep target.',
+      reason: `Stick with the programmed reps and lock them in.`,
       dynamic: true,
       delta: 0,
       prefillWeight: lastWeight,
@@ -337,19 +388,19 @@ export function suggestProgression({ ex, priorRows, priorCountTarget }) {
     return {
       kind: 'weighted',
       display: ex.rec_weight || '',
-      reason: 'First time — start with the programmed weight.',
+      reason: `First time on this lift — start with the programmed load and dial in your form.`,
       dynamic: false,
       delta: 0,
       prefillWeight: baseWeight,
       prefillReps: baseRepTarget,
     };
   }
-  const step = weightStep(ex?.name);
+  const step = weightStep(ex?.name, prefs);
   if (last.anyFailed) {
     return {
       kind: 'weighted',
       display: `${last.maxWeight}lb`,
-      reason: `You missed a rep at ${last.maxWeight}lb — hold it and own the reps this week.`,
+      reason: `${last.maxWeight}lb beat you on a rep last week — own the same weight clean before we add to it.`,
       dynamic: true,
       delta: 0,
       prefillWeight: last.maxWeight,
@@ -357,11 +408,26 @@ export function suggestProgression({ ex, priorRows, priorCountTarget }) {
     };
   }
   if (last.allDone) {
+    if (flavor === 'maxed') {
+      return {
+        kind: 'weighted',
+        display: `${last.maxWeight}lb`,
+        reason: `Strong session at ${last.maxWeight}lb but RPE ${priorRpe} says you were maxed out — same weight, build a cleaner rep this week.`,
+        dynamic: true,
+        delta: 0,
+        prefillWeight: last.maxWeight,
+        prefillReps: baseRepTarget,
+      };
+    }
     const next = last.maxWeight + step;
     return {
       kind: 'weighted',
       display: `${next}lb`,
-      reason: `All sets cleared at ${last.maxWeight}lb — bump +${step}lb.`,
+      reason: flavor === 'easy'
+        ? `${last.maxWeight}lb felt light — ready for ${next}lb.`
+        : flavor === 'tough'
+        ? `Strong session at ${last.maxWeight}lb — ready for ${next}lb.`
+        : `Owned every set at ${last.maxWeight}lb — let's chase ${next}.`,
       dynamic: true,
       delta: step,
       prefillWeight: next,
@@ -372,7 +438,7 @@ export function suggestProgression({ ex, priorRows, priorCountTarget }) {
   return {
     kind: 'weighted',
     display: `${last.maxWeight}lb`,
-    reason: `Only ${last.doneCount}/${priorCountTarget || ex?.sets || '?'} sets last session — repeat before progressing.`,
+    reason: `Only ${last.doneCount} of ${priorCountTarget || ex?.sets || '?'} sets landed last week — same weight, finish them all this time.`,
     dynamic: true,
     delta: 0,
     prefillWeight: last.maxWeight,

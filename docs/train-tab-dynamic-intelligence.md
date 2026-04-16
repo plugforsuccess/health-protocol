@@ -1,7 +1,7 @@
 # Stakeholder Brief — Train Tab: Dynamic Workout Intelligence
 
 **Branch:** `claude/dynamic-workout-intelligence-lksto`
-**Commits:** `d0b2b7d`, `d801759`
+**Commits:** `d0b2b7d`, `d801759`, `3098f28`, _(plus review-feedback commit)_
 
 ---
 
@@ -142,14 +142,29 @@ Allows arbitrary multi-phase timer chains without forking a second timer hook.
 
 ---
 
-## Future Roadmap (not in this branch)
+## Review Feedback — Resolved Before Merge
+
+| # | Reviewer note | Resolution |
+|---|---|---|
+| 1 | +5 lb increment needs user override | **Done.** New `useProgressionPrefs` hook + collapsible `ProgressionSettings` strip on the train tab let users pick `1 / 2.5 / 5 / 10 lb` for compound and isolation lifts independently. Stored in localStorage, plumbed through `suggestProgression()`. |
+| 3 | Suggestion reasons feel cold | **Done.** Every reason string rewritten in coach voice. Examples: "Strong session at 35lb — ready for 40lb", "35lb beat you on a rep last week — own the same weight clean before we add to it", "Cruised through last week — let's add 15s and make it earn the work". RPE-aware variants pick warmer or more measured tone based on prior effort. |
+| 4 | RPE not tracked | **Done.** Migration `0004_workout_rpe.sql` adds nullable 1–10 column on `workout_sessions`. New `RpeDialog` slider intercepts "Mark Workout Complete" — user can submit or skip. The engine reads prior RPE: a finished session at RPE 9–10 now HOLDS the weight instead of bumping (no headroom = no progression). |
+
+## Committed Sprint Roadmap
+
+| Sprint | Item | Why now |
+|---|---|---|
+| **Next sprint** | Persist warm-up completion to Supabase | Self-flagged earlier; reviewer escalated. Closing the modal mid warm-up currently loses your place. Migration adds a `workout_warmup` table mirroring `workout_mobility`. |
+| **Sprint after next** | Weekly volume tracking + auto-deload trigger | Reviewer-requested. After 3–4 weeks of consistent progression the engine should detect rising volume and a flat/declining RPE trend, then prescribe a deload week (suggest -10% load across the board, "recovery week" banner). Builds on the RPE column shipped in this branch. |
+
+## Future Roadmap (not yet scheduled)
 
 - Optional LLM-backed `suggestProgressionAsync()` for nuanced coaching language.
-- Persist warm-up completion to Supabase so it survives modal close/reopen.
-- Track adherence to dynamic suggestions to feed a follow-up "your progression is +12% faster than baseline" stat card.
-- A/B framework to validate the +5 lb / +2.5 lb increments against actual user PR rates.
+- Track adherence to dynamic suggestions → "your progression is +12% faster than baseline" stat card.
+- A/B framework to validate the +5 lb / +2.5 lb defaults against actual user PR rates.
 
 ---
 
 **Branch ready to merge:** `claude/dynamic-workout-intelligence-lksto`
-**Reviewers needed:** product + design sign-off on copy of suggestion reasons; engineering review of the chained-timer state machine.
+**Schema migration to run before deploy:** `supabase/migrations/0004_workout_rpe.sql`
+**Reviewers needed:** engineering review of the chained-timer state machine; final QA pass on the RPE prompt + settings strip.

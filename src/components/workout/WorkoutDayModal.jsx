@@ -5,6 +5,7 @@ import { classifyExercise } from '../../lib/workoutIntelligence.js';
 import { ExerciseCard } from './ExerciseCard.jsx';
 import { MobilityItem } from './MobilityItem.jsx';
 import { WarmupItem } from './WarmupItem.jsx';
+import { RpeDialog } from './RpeDialog.jsx';
 
 export function WorkoutDayModal({
   dayIdx,
@@ -19,6 +20,14 @@ export function WorkoutDayModal({
   onStartWarmup,
   onComplete,
 }) {
+  // RPE prompt sits between "tap complete" and the actual save. The user
+  // can submit a 1–10 score or skip — either path resolves to onComplete.
+  const [rpePromptOpen, setRpePromptOpen] = useState(false);
+  const requestComplete = () => setRpePromptOpen(true);
+  const finishWith = (rpe) => {
+    setRpePromptOpen(false);
+    onComplete(dayIdx, rpe);
+  };
   useEffect(() => {
     if (dayIdx === null || dayIdx === undefined) return;
     const prevOverflow = document.body.style.overflow;
@@ -85,11 +94,16 @@ export function WorkoutDayModal({
               onLogField={onLogField}
               onCycleStatus={onCycleStatus}
               onStartWarmup={onStartWarmup}
-              onComplete={onComplete}
+              onRequestComplete={requestComplete}
             />
           )}
         </div>
       </div>
+      <RpeDialog
+        open={rpePromptOpen}
+        onSubmit={(rpe) => finishWith(rpe)}
+        onSkip={() => finishWith(null)}
+      />
     </div>
   );
 }
@@ -155,7 +169,7 @@ function TrainBody({
   onLogField,
   onCycleStatus,
   onStartWarmup,
-  onComplete,
+  onRequestComplete,
 }) {
   // Warm-up completion lives in local state — warm-ups are a pre-flight
   // checklist, not long-lived history, so they don't need to sync to
@@ -252,7 +266,7 @@ function TrainBody({
       <div className="wmodal-section">
         <button
           type="button"
-          onClick={() => onComplete(dayIdx)}
+          onClick={onRequestComplete}
           style={{
             width: '100%',
             padding: 14,

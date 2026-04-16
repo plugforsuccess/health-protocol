@@ -1,12 +1,14 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { DateBar } from '../shared/DateBar.jsx';
 import { WeekGrid } from '../workout/WeekGrid.jsx';
 import { WorkoutStats } from '../workout/WorkoutStats.jsx';
 import { VolumeChart } from '../workout/VolumeChart.jsx';
 import { WorkoutDayModal } from '../workout/WorkoutDayModal.jsx';
+import { ProgressionSettings } from '../workout/ProgressionSettings.jsx';
 import { WORKOUT_WEEK } from '../../data/workoutWeek.js';
 import { workoutDateKey } from '../../hooks/useWorkoutLogs.js';
 import { getRestDuration, getMobilityTimerDuration } from '../../hooks/useRestTimer.js';
+import { useProgressionPrefs } from '../../hooks/useProgressionPrefs.js';
 
 // Every warm-up gets a 10-second "get ready" prep. Users asked for this
 // universally so the experience is consistent — if the lifter is picking
@@ -26,6 +28,19 @@ export function WorkoutPanel({
 }) {
   const [openIdx, setOpenIdx] = useState(null);
   const [testing, setTesting] = useState(false);
+  const { prefs, update: updatePrefs, allowed } = useProgressionPrefs();
+
+  // Wrap getSuggestion so callers don't need to know about the prefs hook —
+  // they just receive a closure that already carries the user's chosen
+  // increment overrides into the engine.
+  const getSuggestionWithPrefs = useMemo(
+    () =>
+      workout.getSuggestion
+        ? (dayIdx, exIdx, excludeDate) =>
+            workout.getSuggestion(dayIdx, exIdx, excludeDate, prefs)
+        : null,
+    [workout.getSuggestion, prefs]
+  );
 
   // End-to-end push self-test. Schedules a push 10 seconds in the future and
   // asks the user to switch apps / lock the phone. If the buzz lands, the full
@@ -192,9 +207,9 @@ export function WorkoutPanel({
   );
 
   const handleComplete = useCallback(
-    async (dayIdx) => {
+    async (dayIdx, rpe = null) => {
       try {
-        await workout.completeWorkout(dayIdx);
+        await workout.completeWorkout(dayIdx, rpe);
         setOpenIdx(null);
       } catch (e) {
         onError?.(e);
@@ -210,6 +225,7 @@ export function WorkoutPanel({
           <DateBar />
           <WorkoutStats sessions={workout.sessions} />
           <WeekGrid completedMap={workout.completedMap} onOpen={setOpenIdx} />
+          <ProgressionSettings prefs={prefs} allowed={allowed} onChange={updatePrefs} />
           <VolumeChart sessions={workout.sessions} />
 
           {push?.schedule && (
@@ -237,7 +253,7 @@ export function WorkoutPanel({
           setsMap={workout.setsMap}
           mobilityMap={workout.mobilityMap}
           getPrevBest={workout.getPrevBest}
-          getSuggestion={workout.getSuggestion}
+          getSuggestion={getSuggestionWithPrefs}
           onLogField={handleLogField}
           onCycleStatus={handleCycleStatus}
           onToggleMobility={handleToggleMobility}
