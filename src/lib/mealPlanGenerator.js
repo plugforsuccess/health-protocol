@@ -149,14 +149,39 @@ export async function generateMealPlan() {
     workoutProfile: workoutProfile || {},
   });
 
-  // Call the Supabase Edge Function that proxies the Claude API
-  const { data, error } = await supabase.functions.invoke('generate-meal-plan', {
-    body: { prompt },
+  // Call Claude API directly (same pattern as workout generator and
+  // coaching chat). When edge functions are built for production,
+  // swap to: supabase.functions.invoke('generate-meal-plan', { body: { prompt } })
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': import.meta.env.VITE_ANTHROPIC_API_KEY || '',
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 8000,
+      messages: [{ role: 'user', content: prompt }],
+    }),
   });
 
-  if (error) throw error;
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err?.error?.message || `API error ${response.status}`);
+  }
 
-  const planData = data?.plan || data;
+  const data = await response.json();
+  const raw = data.content?.[0]?.text || '';
+
+  let planData;
+  try {
+    const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '');
+    planData = JSON.parse(cleaned);
+  } catch {
+    throw new Error('Failed to parse meal plan JSON');
+  }
 
   // If this is the user's first AI meal plan and they have been using
   // the hardcoded meal plan, snapshot it as a v0 row so it appears in
