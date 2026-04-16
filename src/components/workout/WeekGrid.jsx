@@ -1,12 +1,11 @@
-import { WORKOUT_WEEK } from '../../data/workoutWeek.js';
 import { workoutDateKey, getTodayWorkoutIdx } from '../../hooks/useWorkoutLogs.js';
 
-export function WeekGrid({ completedMap, onOpen }) {
+export function WeekGrid({ weekPlan, completedMap, onOpen }) {
   const todayIdx = getTodayWorkoutIdx();
   return (
     <div className="week-grid">
-      {WORKOUT_WEEK.map((d, i) => {
-        const date = workoutDateKey(i);
+      {weekPlan.map((d, i) => {
+        const date = workoutDateKey(i, undefined, weekPlan);
         const logged = !!completedMap[`${date}__${i}`];
         const classes = [
           'day-cell',

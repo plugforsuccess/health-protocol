@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useProfile } from '../../lib/profileContext.jsx';
+import { generateWorkoutPlan } from '../../lib/workoutPlanGenerator.js';
 import {
   ACTIVITY_LEVEL,
   AVG_SLEEP,
@@ -28,17 +29,38 @@ import { FieldGroup } from '../onboarding/components/StepShell.jsx';
 // they can mark a region "healed" (active=false) without losing the
 // historical record.
 
+// Fields that affect workout plan generation. Changes to any of these
+// trigger a regeneration prompt after saving.
+const PLAN_RELEVANT_FIELDS = [
+  'days_per_week', 'session_duration_min', 'primary_goal',
+  'equipment', 'training_location', 'excluded_exercises',
+  'primary_sport', 'performance_goals',
+];
+
+function planFieldsChanged(before, after) {
+  for (const key of PLAN_RELEVANT_FIELDS) {
+    const a = JSON.stringify(before?.[key] ?? null);
+    const b = JSON.stringify(after?.[key] ?? null);
+    if (a !== b) return true;
+  }
+  return false;
+}
+
 export function ProfileEditModal({ open, onClose, onError }) {
   const {
     profile,
     injuries,
+    activeWorkoutPlan,
     updateProfile,
     markInjuryHealed,
     reactivateInjury,
+    refreshWorkoutPlan,
   } = useProfile();
   const [tab, setTab] = useState('profile');
   const [draft, setDraft] = useState(() => profileToDraft(profile));
   const [saving, setSaving] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
+  const [confirmRegen, setConfirmRegen] = useState(false);
 
   // Reset the local draft every time the modal is opened, so cancel
   // really discards in-flight edits.
@@ -46,6 +68,8 @@ export function ProfileEditModal({ open, onClose, onError }) {
     if (open) {
       setDraft(profileToDraft(profile));
       setTab('profile');
+      setConfirmRegen(false);
+      setRegenerating(false);
     }
   }, [open, profile]);
 
@@ -65,7 +89,14 @@ export function ProfileEditModal({ open, onClose, onError }) {
   const save = async () => {
     setSaving(true);
     try {
-      await updateProfile(draftToPatch(draft));
+      const patch = draftToPatch(draft);
+      await updateProfile(patch);
+      // If plan-relevant fields changed and an AI plan exists, offer regeneration
+      if (activeWorkoutPlan && planFieldsChanged(profile, patch)) {
+        setConfirmRegen(true);
+        setSaving(false);
+        return;
+      }
       onClose?.();
     } catch (e) {
       onError?.(e);
@@ -74,10 +105,99 @@ export function ProfileEditModal({ open, onClose, onError }) {
     }
   };
 
+  const handleRegenerate = useCallback(async () => {
+    setConfirmRegen(false);
+    setRegenerating(true);
+    try {
+      await generateWorkoutPlan();
+      await refreshWorkoutPlan();
+    } catch (e) {
+      console.warn('[ProfileEdit] workout plan regeneration failed:', e?.message || e);
+    } finally {
+      setRegenerating(false);
+      onClose?.();
+    }
+  }, [refreshWorkoutPlan, onClose]);
+
+  const handleManualRegenerate = useCallback(async () => {
+    if (!window.confirm(
+      'This will replace your current workout program. Your logged sets and PRs are preserved. Continue?'
+    )) return;
+    setRegenerating(true);
+    try {
+      await generateWorkoutPlan();
+      await refreshWorkoutPlan();
+    } catch (e) {
+      console.warn('[ProfileEdit] manual regeneration failed:', e?.message || e);
+      onError?.(e);
+    } finally {
+      setRegenerating(false);
+    }
+  }, [refreshWorkoutPlan, onError]);
+
   const activeInjuries = useMemo(() => injuries.filter((i) => i.active !== false), [injuries]);
   const healedInjuries = useMemo(() => injuries.filter((i) => i.active === false), [injuries]);
 
   if (!open) return null;
+
+  // Regenerating loading state
+  if (regenerating) {
+    return (
+      <div className="wmodal-overlay open" role="dialog" aria-modal="true">
+        <div className="wmodal-sheet">
+          <div className="wmodal-handle" />
+          <div className="wmodal-body">
+            <div className="onb-generating">
+              <div className="onb-generating-icon">💪</div>
+              <h2 className="onb-generating-title">Regenerating your program…</h2>
+              <p className="onb-generating-sub">
+                Updating based on your new profile settings
+              </p>
+              <div className="onb-generating-spinner" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Confirmation dialog after saving plan-relevant changes
+  if (confirmRegen) {
+    return (
+      <div className="wmodal-overlay open" role="dialog" aria-modal="true">
+        <div className="wmodal-sheet">
+          <div className="wmodal-handle" />
+          <div className="wmodal-header">
+            <div className="wmodal-title-row">
+              <div className="wmodal-title">Update workout program?</div>
+            </div>
+          </div>
+          <div className="wmodal-body">
+            <p style={{ fontSize: 13, lineHeight: 1.5, color: 'var(--text)', marginBottom: 16 }}>
+              You changed settings that affect your workout plan. Would you like to regenerate your
+              program? Your logged sets and PRs are preserved.
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                type="button"
+                className="onb-btn ghost"
+                onClick={() => { setConfirmRegen(false); onClose?.(); }}
+              >
+                Keep current
+              </button>
+              <button
+                type="button"
+                className="onb-btn primary"
+                onClick={handleRegenerate}
+              >
+                Regenerate
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -134,6 +254,20 @@ export function ProfileEditModal({ open, onClose, onError }) {
               </button>
               <button type="button" className="onb-btn primary" onClick={save} disabled={saving}>
                 {saving ? 'Saving…' : 'Save changes'}
+              </button>
+            </div>
+          )}
+
+          {activeWorkoutPlan && (
+            <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--border2)' }}>
+              <button
+                type="button"
+                className="onb-btn ghost"
+                style={{ width: '100%' }}
+                onClick={handleManualRegenerate}
+                disabled={regenerating}
+              >
+                Regenerate my workout program
               </button>
             </div>
           )}

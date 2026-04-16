@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { WORKOUT_WEEK } from '../../data/workoutWeek.js';
 import { workoutDateKey } from '../../hooks/useWorkoutLogs.js';
 import { classifyExercise } from '../../lib/workoutIntelligence.js';
 import { buildCoachingSystemPrompt } from '../../lib/coachingPrompt.js';
@@ -49,6 +48,7 @@ function getWorkoutPrompts(exercise, dayType) {
 
 export function WorkoutDayModal({
   dayIdx,
+  weekPlan,
   onClose,
   setsMap,
   mobilityMap,
@@ -77,8 +77,8 @@ export function WorkoutDayModal({
     };
   }, [dayIdx, onClose]);
 
-  const day = (dayIdx !== null && dayIdx !== undefined) ? WORKOUT_WEEK[dayIdx] : null;
-  const sessionDate = day ? workoutDateKey(dayIdx) : null;
+  const day = (dayIdx !== null && dayIdx !== undefined) ? weekPlan?.[dayIdx] : null;
+  const sessionDate = day ? workoutDateKey(dayIdx, undefined, weekPlan) : null;
 
   // Build coaching context for the currently selected exercise
   const coachExercise = day?.exercises?.[coachExIdx] ?? null;

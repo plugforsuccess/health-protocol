@@ -2,13 +2,17 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase, localDateKey } from '../lib/supabase.js';
 import { WORKOUT_WEEK } from '../data/workoutWeek.js';
 import { classifyExercise, suggestProgression } from '../lib/workoutIntelligence.js';
+import { normalizeExerciseName } from '../lib/workoutPlanGenerator.js';
 
 const DAY_MAP = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-/** ISO date for the given day-index relative to this week's occurrence. */
-export function workoutDateKey(dayIdx, now = new Date()) {
+/** ISO date for the given day-index relative to this week's occurrence.
+ *  Accepts an optional weekPlan to read day abbreviations from; falls
+ *  back to the hardcoded WORKOUT_WEEK. */
+export function workoutDateKey(dayIdx, now = new Date(), weekPlan) {
+  const plan = weekPlan || WORKOUT_WEEK;
   const today = now.getDay();
-  const target = DAY_MAP.indexOf(WORKOUT_WEEK[dayIdx]?.day);
+  const target = DAY_MAP.indexOf(plan[dayIdx]?.day);
   if (target < 0) return localDateKey(now);
   const diff = target - today;
   const d = new Date(now);
@@ -18,7 +22,8 @@ export function workoutDateKey(dayIdx, now = new Date()) {
 
 export function getTodayWorkoutIdx() {
   const name = DAY_MAP[new Date().getDay()];
-  return WORKOUT_WEEK.findIndex((d) => d.day === name);
+  // Works for both hardcoded and AI plans — always 7 days Sun–Sat
+  return DAY_MAP.indexOf(name);
 }
 
 /**
@@ -30,12 +35,18 @@ export function getTodayWorkoutIdx() {
  *
  * Volume + PR are recomputed client-side on each set change, then the summary
  * is written to workout_sessions.
+ *
+ * `weekPlan` is the active plan (from useWorkoutPlan). It's used to look up
+ * exercise objects for progression suggestions.
  */
-export function useWorkoutLogs(userId) {
+export function useWorkoutLogs(userId, weekPlan) {
   const [sessions, setSessions] = useState([]);
   const [sets, setSets] = useState([]);
   const [mobility, setMobility] = useState([]);
   const [ready, setReady] = useState(false);
+
+  // Resolve the plan — callers may pass undefined during initial render
+  const plan = weekPlan || WORKOUT_WEEK;
 
   const loadAll = useCallback(async () => {
     if (!userId) return;
@@ -86,17 +97,31 @@ export function useWorkoutLogs(userId) {
   }, [mobility]);
 
   /**
-   * Return the full row list from the most recent session for this
-   * (day_index, exercise_index) strictly BEFORE `excludeDate`. This is the
-   * input to suggestProgression — we need statuses, not just max weight.
+   * Return the full row list from the most recent session for this exercise
+   * strictly BEFORE `excludeDate`. Uses name-based matching with
+   * normalization so progression survives plan regeneration.
+   *
+   * Falls back to index-based matching for old rows that don't have
+   * exercise_name populated yet.
    */
   const getLastSessionRows = useCallback(
     (dayIdx, exIdx, excludeDate) => {
+      const ex = plan[dayIdx]?.exercises?.[exIdx];
+      const targetName = ex ? normalizeExerciseName(ex.name) : null;
+
       const byDate = {};
       sets.forEach((row) => {
-        if (row.day_index !== dayIdx) return;
-        if (row.exercise_index !== exIdx) return;
         if (excludeDate && row.session_date >= excludeDate) return;
+
+        // Name-based match (preferred) — matches across plan regenerations
+        if (targetName && row.exercise_name) {
+          if (normalizeExerciseName(row.exercise_name) !== targetName) return;
+        } else {
+          // Legacy index-based match for rows without exercise_name
+          if (row.day_index !== dayIdx) return;
+          if (row.exercise_index !== exIdx) return;
+        }
+
         if (!byDate[row.session_date]) byDate[row.session_date] = [];
         byDate[row.session_date].push(row);
       });
@@ -104,18 +129,16 @@ export function useWorkoutLogs(userId) {
       if (!dates.length) return { date: null, rows: [] };
       return { date: dates[0], rows: byDate[dates[0]] };
     },
-    [sets]
+    [sets, plan]
   );
 
   /**
    * Dynamic recommendation for the next session of a specific exercise.
-   * The caller is responsible for the CURRENT date so we correctly exclude
-   * today's in-progress rows and base the suggestion on the last COMPLETED
-   * session. Returns a { display, reason, dynamic, delta, kind } object.
+   * Reads the exercise from the active plan (not hardcoded data).
    */
   const getSuggestion = useCallback(
     (dayIdx, exIdx, excludeDate) => {
-      const ex = WORKOUT_WEEK[dayIdx]?.exercises?.[exIdx];
+      const ex = plan[dayIdx]?.exercises?.[exIdx];
       if (!ex) return null;
       const { rows } = getLastSessionRows(dayIdx, exIdx, excludeDate);
       return suggestProgression({
@@ -124,23 +147,33 @@ export function useWorkoutLogs(userId) {
         priorCountTarget: ex.sets,
       });
     },
-    [getLastSessionRows]
+    [getLastSessionRows, plan]
   );
 
-  /** Calculate best weight for (exercise_index, day_index) across all past dates except `excludeDate`. */
+  /** Calculate best weight for an exercise across all past dates except `excludeDate`.
+   *  Uses name-based matching with fallback to index-based. */
   const getPrevBest = useCallback(
     (dayIdx, exIdx, excludeDate) => {
+      const ex = plan[dayIdx]?.exercises?.[exIdx];
+      const targetName = ex ? normalizeExerciseName(ex.name) : null;
+
       let best = 0;
       sets.forEach((row) => {
-        if (row.day_index !== dayIdx) return;
-        if (row.exercise_index !== exIdx) return;
         if (excludeDate && row.session_date === excludeDate) return;
+
+        if (targetName && row.exercise_name) {
+          if (normalizeExerciseName(row.exercise_name) !== targetName) return;
+        } else {
+          if (row.day_index !== dayIdx) return;
+          if (row.exercise_index !== exIdx) return;
+        }
+
         const w = parseFloat(row.weight_lbs) || 0;
         if (w > best) best = w;
       });
       return best > 0 ? best : null;
     },
-    [sets]
+    [sets, plan]
   );
 
   /** Calculate total volume for a given date+dayIdx. */
@@ -211,22 +244,23 @@ export function useWorkoutLogs(userId) {
     [userId, getVolumeFor, getPRsFor, sessions]
   );
 
-  /** Log a single field (weight | reps) on a set. Only writes that column so
-   *  it can't clobber a concurrent status update from the cycle button. */
+  /** Log a single field (weight | reps) on a set. Writes exercise_name
+   *  alongside the index columns so future name-based lookups work. */
   const logSetField = useCallback(
     async (dayIdx, exIdx, setIdx, field, value) => {
       if (!userId) return;
-      const date = workoutDateKey(dayIdx);
+      const date = workoutDateKey(dayIdx, undefined, plan);
+      const ex = plan[dayIdx]?.exercises?.[exIdx];
 
-      // Partial payload: PK + the one field we're touching. Supabase upserts
-      // only the columns present, so the other column's latest value is
-      // preserved on conflict (no blur/click race).
+      // exercise_name written on every new row for name-based progression.
+      // Index columns preserved for backwards compat (see migration 0006).
       const row = {
         user_id: userId,
         session_date: date,
         day_index: dayIdx,
         exercise_index: exIdx,
         set_index: setIdx,
+        exercise_name: ex?.name || null,
       };
       if (field === 'weight') row.weight_lbs = value === '' ? null : parseFloat(value);
       if (field === 'reps') row.reps = value === '' ? null : parseInt(value, 10);
@@ -258,21 +292,23 @@ export function useWorkoutLogs(userId) {
 
       await upsertSessionSummary(date, dayIdx);
     },
-    [userId, setsMap, upsertSessionSummary]
+    [userId, plan, upsertSessionSummary]
   );
 
   /** Cycle a set's status: '' → 'done' → 'failed' → ''. Returns the new status.
-   *  Only writes `status` so it can't clobber a concurrent weight/reps update. */
+   *  Writes exercise_name alongside index columns. */
   const cycleSetStatus = useCallback(
     async (dayIdx, exIdx, setIdx) => {
       if (!userId) return '';
-      const date = workoutDateKey(dayIdx);
+      const date = workoutDateKey(dayIdx, undefined, plan);
       const key = `${date}::${dayIdx}::${exIdx}::${setIdx}`;
       const prev = setsMap[key] || {};
       const current = prev.status || '';
       const next = current === '' ? 'done' : current === 'done' ? 'failed' : '';
 
-      // Partial upsert — PK + status only.
+      const ex = plan[dayIdx]?.exercises?.[exIdx];
+
+      // Partial upsert — PK + status + exercise_name.
       const row = {
         user_id: userId,
         session_date: date,
@@ -280,6 +316,7 @@ export function useWorkoutLogs(userId) {
         exercise_index: exIdx,
         set_index: setIdx,
         status: next,
+        exercise_name: ex?.name || null,
       };
 
       setSets((p) => {
@@ -306,13 +343,13 @@ export function useWorkoutLogs(userId) {
       if (error) throw error;
       return next;
     },
-    [userId, setsMap]
+    [userId, plan, setsMap]
   );
 
   const toggleMobility = useCallback(
     async (dayIdx, mobIdx) => {
       if (!userId) return false;
-      const date = workoutDateKey(dayIdx);
+      const date = workoutDateKey(dayIdx, undefined, plan);
       const key = `${date}::${dayIdx}::${mobIdx}`;
       const next = !mobilityMap[key];
 
@@ -343,13 +380,13 @@ export function useWorkoutLogs(userId) {
       if (error) throw error;
       return next;
     },
-    [userId, mobilityMap]
+    [userId, plan, mobilityMap]
   );
 
   const completeWorkout = useCallback(
     async (dayIdx) => {
       if (!userId) return;
-      const date = workoutDateKey(dayIdx);
+      const date = workoutDateKey(dayIdx, undefined, plan);
       const volume = getVolumeFor(date, dayIdx);
       const prs = getPRsFor(date, dayIdx);
       const { error } = await supabase.from('workout_sessions').upsert(
@@ -366,7 +403,7 @@ export function useWorkoutLogs(userId) {
       if (error) throw error;
       await loadAll();
     },
-    [userId, getVolumeFor, getPRsFor, loadAll]
+    [userId, plan, getVolumeFor, getPRsFor, loadAll]
   );
 
   return {
