@@ -51,10 +51,13 @@ export function buildCoachingSystemPrompt({
   const name = profile?.first_name || 'the user';
   const age = profile?.age ?? 'unknown age';
   const level = profile?.training_experience || 'unspecified training level';
+  const sportArr = Array.isArray(profile?.primary_sport) ? profile.primary_sport : [];
   const sport =
     profile?.sport_background?.length
       ? profile.sport_background.join(', ')
-      : profile?.primary_sport || 'general fitness';
+      : sportArr.length
+        ? sportArr.join(', ')
+        : 'general fitness';
   const goal = profile?.primary_goal || 'general fitness';
 
   const activeInjuries = injuries.filter((i) => i?.active !== false);

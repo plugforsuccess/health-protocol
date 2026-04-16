@@ -29,6 +29,7 @@ export const PRIMARY_GOALS = [
   'Fat Loss',
   'Muscle Gain',
   'Athletic Performance',
+  'Conditioning & Endurance',
   'Injury Rehab',
   'General Fitness',
   'Longevity',

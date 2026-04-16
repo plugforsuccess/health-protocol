@@ -339,7 +339,7 @@ function profileToDraft(profile) {
     stress_level: profile.stress_level || null,
     recovery_level: profile.recovery_level || null,
     travel_frequency: profile.travel_frequency || null,
-    primary_sport: profile.primary_sport || null,
+    primary_sport: profile.primary_sport || [],
     competition_status: profile.competition_status || null,
     performance_goals: profile.performance_goals || [],
     equipment: profile.equipment || [],
@@ -500,12 +500,13 @@ function ProfileFields({ draft, set }) {
           onChange={(v) => set({ travel_frequency: v })}
         />
       </FieldGroup>
-      <FieldGroup label="Primary sport">
-        <SingleSelect
+      <FieldGroup label="Sports (select all that apply)">
+        <MultiSelect
           name="ps"
           options={PRIMARY_SPORT}
           value={draft.primary_sport}
           onChange={(v) => set({ primary_sport: v })}
+          exclusive="None — general fitness"
         />
       </FieldGroup>
       <FieldGroup label="Competition status">
