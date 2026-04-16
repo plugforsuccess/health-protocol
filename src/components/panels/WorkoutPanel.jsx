@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { DateBar } from '../shared/DateBar.jsx';
 import { WeekGrid } from '../workout/WeekGrid.jsx';
 import { WorkoutStats } from '../workout/WorkoutStats.jsx';
@@ -25,7 +25,17 @@ export function WorkoutPanel({
   showToast,
 }) {
   const { weekPlan } = useWorkoutPlan();
+
+  // Snapshot the plan when the modal opens so a mid-workout regeneration
+  // can't swap exercises out from under the user. The grid always shows
+  // the latest plan; the modal uses the plan it started with.
+  const modalPlanRef = useRef(weekPlan);
   const [openIdx, setOpenIdx] = useState(null);
+
+  const handleOpen = useCallback((idx) => {
+    modalPlanRef.current = weekPlan; // snapshot at open time
+    setOpenIdx(idx);
+  }, [weekPlan]);
   const [testing, setTesting] = useState(false);
 
   // End-to-end push self-test. Schedules a push 10 seconds in the future and
@@ -210,7 +220,7 @@ export function WorkoutPanel({
         <div className="wrap">
           <DateBar />
           <WorkoutStats sessions={workout.sessions} />
-          <WeekGrid weekPlan={weekPlan} completedMap={workout.completedMap} onOpen={setOpenIdx} />
+          <WeekGrid weekPlan={weekPlan} completedMap={workout.completedMap} onOpen={handleOpen} />
           <VolumeChart sessions={workout.sessions} />
 
           {push?.schedule && (
@@ -231,10 +241,10 @@ export function WorkoutPanel({
         </div>
       </div>
 
-      {active && openIdx !== null && weekPlan[openIdx] && (
+      {active && openIdx !== null && modalPlanRef.current[openIdx] && (
         <WorkoutDayModal
           dayIdx={openIdx}
-          weekPlan={weekPlan}
+          weekPlan={modalPlanRef.current}
           onClose={() => setOpenIdx(null)}
           setsMap={workout.setsMap}
           mobilityMap={workout.mobilityMap}

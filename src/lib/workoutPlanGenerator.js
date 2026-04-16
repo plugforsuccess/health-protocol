@@ -213,17 +213,26 @@ export function validateWorkoutPlan(plan, profile) {
 
   for (let i = 0; i < plan.days.length; i++) {
     const d = plan.days[i];
-    if (!d.type || !d.title) return `Day ${i} missing type or title`;
+    if (!d.type) return `Day ${i} missing type`;
+    if (!d.title) return `Day ${i} missing title`;
+    if (!['strength', 'conditioning', 'mobility', 'rest'].includes(d.type)) {
+      return `Day ${i} has invalid type: ${d.type}`;
+    }
     if (!DAY_ABBREVS.includes(d.day)) return `Day ${i} has invalid day abbreviation: ${d.day}`;
 
     if (d.type === 'rest') {
-      // rest days should have rest_tips
-      if (!Array.isArray(d.rest_tips)) return `Day ${i} is rest but missing rest_tips array`;
+      if (!Array.isArray(d.rest_tips) || d.rest_tips.length === 0) {
+        return `Day ${i} is rest but has no rest_tips`;
+      }
     } else if (d.type === 'mobility') {
-      if (!Array.isArray(d.mobility)) return `Day ${i} is mobility but missing mobility array`;
+      if (!Array.isArray(d.mobility) || d.mobility.length === 0) {
+        return `Day ${i} is mobility but has no mobility items`;
+      }
     } else {
-      // strength or conditioning
-      if (!Array.isArray(d.exercises)) return `Day ${i} missing exercises array`;
+      // strength or conditioning — must have at least one exercise
+      if (!Array.isArray(d.exercises) || d.exercises.length === 0) {
+        return `Day ${i} is ${d.type} but has no exercises`;
+      }
       for (let j = 0; j < d.exercises.length; j++) {
         const ex = d.exercises[j];
         if (!ex.name) return `Day ${i} exercise ${j} missing name`;

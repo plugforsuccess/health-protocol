@@ -101,8 +101,12 @@ export function useWorkoutLogs(userId, weekPlan) {
    * strictly BEFORE `excludeDate`. Uses name-based matching with
    * normalization so progression survives plan regeneration.
    *
-   * Falls back to index-based matching for old rows that don't have
-   * exercise_name populated yet.
+   * Fallback logic is EXPLICIT:
+   *   - If the row HAS exercise_name → match by normalized name only.
+   *     If names don't match, skip. Never fall through to index.
+   *   - If the row has NO exercise_name (legacy) → match by index only.
+   *   - If we can't resolve a target name (no exercise at position) →
+   *     fall back to pure index matching for all rows.
    */
   const getLastSessionRows = useCallback(
     (dayIdx, exIdx, excludeDate) => {
@@ -113,11 +117,19 @@ export function useWorkoutLogs(userId, weekPlan) {
       sets.forEach((row) => {
         if (excludeDate && row.session_date >= excludeDate) return;
 
-        // Name-based match (preferred) — matches across plan regenerations
-        if (targetName && row.exercise_name) {
-          if (normalizeExerciseName(row.exercise_name) !== targetName) return;
+        if (targetName) {
+          if (row.exercise_name) {
+            // Row has a name → match by name exclusively. If the name
+            // doesn't match, this row belongs to a different exercise
+            // even if the indices happen to overlap from a prior plan.
+            if (normalizeExerciseName(row.exercise_name) !== targetName) return;
+          } else {
+            // Legacy row without exercise_name → fall back to index
+            if (row.day_index !== dayIdx) return;
+            if (row.exercise_index !== exIdx) return;
+          }
         } else {
-          // Legacy index-based match for rows without exercise_name
+          // No target name (can't resolve exercise) → pure index match
           if (row.day_index !== dayIdx) return;
           if (row.exercise_index !== exIdx) return;
         }
@@ -151,7 +163,7 @@ export function useWorkoutLogs(userId, weekPlan) {
   );
 
   /** Calculate best weight for an exercise across all past dates except `excludeDate`.
-   *  Uses name-based matching with fallback to index-based. */
+   *  Same explicit name/index branching as getLastSessionRows. */
   const getPrevBest = useCallback(
     (dayIdx, exIdx, excludeDate) => {
       const ex = plan[dayIdx]?.exercises?.[exIdx];
@@ -161,8 +173,13 @@ export function useWorkoutLogs(userId, weekPlan) {
       sets.forEach((row) => {
         if (excludeDate && row.session_date === excludeDate) return;
 
-        if (targetName && row.exercise_name) {
-          if (normalizeExerciseName(row.exercise_name) !== targetName) return;
+        if (targetName) {
+          if (row.exercise_name) {
+            if (normalizeExerciseName(row.exercise_name) !== targetName) return;
+          } else {
+            if (row.day_index !== dayIdx) return;
+            if (row.exercise_index !== exIdx) return;
+          }
         } else {
           if (row.day_index !== dayIdx) return;
           if (row.exercise_index !== exIdx) return;

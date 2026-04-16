@@ -31,14 +31,26 @@ import { FieldGroup } from '../onboarding/components/StepShell.jsx';
 
 // Fields that affect workout plan generation. Changes to any of these
 // trigger a regeneration prompt after saving.
+//
+// DO trigger: schedule, goals, equipment, exercise restrictions
+// DO NOT trigger: name, age, sex, sleep, stress, recovery, travel
 const PLAN_RELEVANT_FIELDS = [
-  'days_per_week', 'session_duration_min', 'primary_goal',
-  'equipment', 'training_location', 'excluded_exercises',
-  'primary_sport', 'performance_goals',
+  'days_per_week',
+  'preferred_days',
+  'session_duration_min',
+  'primary_goal',
+  'equipment',
+  'excluded_exercises',
+  'primary_sport',
+  'performance_goals',
 ];
 
 function planFieldsChanged(before, after) {
   for (const key of PLAN_RELEVANT_FIELDS) {
+    // Only compare fields that exist in the patch — fields not present
+    // in the edit form (like preferred_days) are not editable here and
+    // should not trigger a false positive.
+    if (!(key in after)) continue;
     const a = JSON.stringify(before?.[key] ?? null);
     const b = JSON.stringify(after?.[key] ?? null);
     if (a !== b) return true;
@@ -244,6 +256,11 @@ export function ProfileEditModal({ open, onClose, onError }) {
               onMarkHealed={markInjuryHealed}
               onReactivate={reactivateInjury}
               onError={onError}
+              hasAiPlan={!!activeWorkoutPlan}
+              onInjuryChanged={() => {
+                // Injury changes affect the plan — prompt regeneration
+                if (activeWorkoutPlan) setConfirmRegen(true);
+              }}
             />
           )}
 
@@ -509,10 +526,11 @@ function ProfileFields({ draft, set }) {
   );
 }
 
-function InjuriesPanel({ active, healed, onMarkHealed, onReactivate, onError }) {
+function InjuriesPanel({ active, healed, onMarkHealed, onReactivate, onError, onInjuryChanged }) {
   const handle = async (fn, id) => {
     try {
       await fn(id);
+      onInjuryChanged?.();
     } catch (e) {
       onError?.(e);
     }
