@@ -388,6 +388,37 @@ export async function generateWorkoutPlan() {
     rest_tips: d.rest_tips || [],
   }));
 
+  // If this is the user's first AI plan, check if they have workout
+  // history from the hardcoded plan. If so, snapshot it as a "v0" row
+  // so it appears in Previous Programs and can be reactivated.
+  const { count: existingPlanCount } = await supabase
+    .from('user_workout_plans')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id);
+
+  if (existingPlanCount === 0) {
+    const { count: setCount } = await supabase
+      .from('workout_sets')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id);
+
+    if (setCount > 0) {
+      // User has history against the hardcoded plan — preserve it
+      const { WORKOUT_WEEK } = await import('../data/workoutWeek.js');
+      await supabase.from('user_workout_plans').insert({
+        user_id: user.id,
+        plan_data: {
+          planSummary: 'Original hand-built program from app launch. Sport-specific for basketball, tennis, and golf with elbow rehab protocol.',
+          generatedAt: new Date().toISOString(),
+          days: WORKOUT_WEEK,
+        },
+        is_active: false,
+        generation_prompt_version: 'v0',
+        week_start_date: null,
+      });
+    }
+  }
+
   // Mark any existing active plan as inactive (keep for history)
   await supabase
     .from('user_workout_plans')

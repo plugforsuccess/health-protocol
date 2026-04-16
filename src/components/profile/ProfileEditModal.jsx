@@ -606,7 +606,7 @@ function PlanExerciseList({ day }) {
   );
 }
 
-function PlanCard({ plan, isActive, expandedId, onToggle }) {
+function PlanCard({ plan, isActive, expandedId, onToggle, onReactivate, reactivating }) {
   const pd = plan.plan_data;
   const expanded = expandedId === plan.id;
   const days = pd?.days || [];
@@ -651,6 +651,17 @@ function PlanCard({ plan, isActive, expandedId, onToggle }) {
               Generated {formatDate(plan.generated_at)}
             </div>
           )}
+          {!isActive && onReactivate && (
+            <button
+              type="button"
+              className="onb-btn primary"
+              style={{ width: '100%', marginTop: 10 }}
+              onClick={() => onReactivate(plan.id)}
+              disabled={reactivating}
+            >
+              {reactivating ? 'Switching…' : 'Use this program'}
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -658,37 +669,68 @@ function PlanCard({ plan, isActive, expandedId, onToggle }) {
 }
 
 function ProgramsPanel({ onRegenerate, regenerating, onError }) {
-  const { activeWorkoutPlan } = useProfile();
+  const { activeWorkoutPlan, refreshWorkoutPlan } = useProfile();
   const [allPlans, setAllPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
+  const [reactivating, setReactivating] = useState(false);
+
+  const loadPlans = useCallback(async () => {
+    setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setLoading(false); return; }
+    const { data, error } = await supabase
+      .from('user_workout_plans')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('generated_at', { ascending: false });
+    if (error) {
+      console.warn('[ProgramsPanel] load failed', error);
+      onError?.(error);
+    }
+    setAllPlans(data || []);
+    setLoading(false);
+  }, [onError]);
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || cancelled) { setLoading(false); return; }
-      const { data, error } = await supabase
-        .from('user_workout_plans')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('generated_at', { ascending: false });
-      if (!cancelled) {
-        if (error) {
-          console.warn('[ProgramsPanel] load failed', error);
-          onError?.(error);
-        }
-        setAllPlans(data || []);
-        setLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [activeWorkoutPlan, onError]);
+    loadPlans();
+  }, [loadPlans, activeWorkoutPlan]);
 
   const handleToggle = (id) => {
     setExpandedId((prev) => (prev === id ? null : id));
   };
+
+  const handleReactivate = useCallback(async (planId) => {
+    setReactivating(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not signed in');
+
+      // Deactivate current plan
+      await supabase
+        .from('user_workout_plans')
+        .update({ is_active: false })
+        .eq('user_id', user.id)
+        .eq('is_active', true);
+
+      // Reactivate selected plan
+      const { error } = await supabase
+        .from('user_workout_plans')
+        .update({ is_active: true })
+        .eq('id', planId);
+
+      if (error) throw error;
+
+      await refreshWorkoutPlan();
+      await loadPlans();
+    } catch (e) {
+      console.warn('[ProgramsPanel] reactivate failed', e?.message || e);
+      onError?.(e);
+    } finally {
+      setReactivating(false);
+    }
+  }, [refreshWorkoutPlan, loadPlans, onError]);
+
 
   if (loading) {
     return (
@@ -741,6 +783,8 @@ function ProgramsPanel({ onRegenerate, regenerating, onError }) {
               isActive={false}
               expandedId={expandedId}
               onToggle={handleToggle}
+              onReactivate={handleReactivate}
+              reactivating={reactivating}
             />
           ))}
         </>
