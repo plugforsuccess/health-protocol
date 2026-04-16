@@ -205,19 +205,75 @@ export function useOnboarding(initialFromProfile) {
     return null;
   }, [form]);
 
+  const validateMedical = useCallback(() => {
+    if (form.hasCardio === true && form.cardiovascularConditions.length === 0) {
+      return 'Please select at least one cardiovascular condition, or change to No.';
+    }
+    if (form.hasCardio === true && form.cardiovascularConditions.includes('Other') && !form.cardioOther.trim()) {
+      return 'Please describe your cardiovascular condition.';
+    }
+    if (form.hasMedications === true && !form.medicationsAffectingTraining.trim()) {
+      return 'Please list your medications, or change to No.';
+    }
+    if (form.hasRecentSurgery === true) {
+      for (const sx of form.surgeries || []) {
+        if (!sx.body_region) return 'Please select a body region for each surgery.';
+        if (!sx.surgery_year) return 'Please enter the year for each surgery.';
+        if (!sx.cleared_for_exercise) return 'Please indicate clearance status for each surgery.';
+      }
+    }
+    return null;
+  }, [form]);
+
+  const validateInjuries = useCallback(() => {
+    if (form.hasInjuries === true && (!form.injuryRegions || form.injuryRegions.length === 0)) {
+      return 'Please select at least one injured area, or go back and change to No.';
+    }
+    return null;
+  }, [form]);
+
+  const validateInjuryDetail = useCallback((regionId) => {
+    const detail = form.injuriesByRegion?.[regionId];
+    if (!detail) return null;
+    if (!detail.injuryType) return 'Please select the injury type.';
+    if (!detail.injuryDuration) return 'Please select how long you\'ve had this injury.';
+    if (!detail.injuryTrajectory) return 'Please select if it\'s improving, stable, or worsening.';
+    if (!detail.physicianCleared) return 'Please indicate if you\'ve been cleared by a physician.';
+    return null;
+  }, [form]);
+
+  const validateEquipment = useCallback(() => {
+    if (!form.equipment || form.equipment.length === 0) {
+      return 'Please select at least one equipment option.';
+    }
+    if (!form.trainingLocation) return 'Please select where you train.';
+    return null;
+  }, [form]);
+
+  const validateSport = useCallback(() => {
+    if (!form.primarySport || form.primarySport.length === 0) {
+      return 'Please select at least one sport or activity.';
+    }
+    return null;
+  }, [form]);
+
   const validateCurrent = useCallback(() => {
     setError(null);
     if (!currentStep) return null;
     let err = null;
-    switch (currentStep.key) {
-      case 'identity':  err = validateIdentity();  break;
-      case 'training':  err = validateTraining();  break;
-      case 'schedule':  err = validateSchedule();  break;
-      default: err = null;
-    }
+    const key = currentStep.key;
+    if (key === 'identity')          err = validateIdentity();
+    else if (key === 'training')     err = validateTraining();
+    else if (key === 'medical')      err = validateMedical();
+    else if (key === 'injuries')     err = validateInjuries();
+    else if (key.startsWith('injury_detail:'))
+      err = validateInjuryDetail(currentStep.regionId);
+    else if (key === 'equipment')    err = validateEquipment();
+    else if (key === 'schedule')     err = validateSchedule();
+    else if (key === 'sport')        err = validateSport();
     if (err) setError(err);
     return err;
-  }, [currentStep, validateIdentity, validateTraining, validateSchedule]);
+  }, [currentStep, validateIdentity, validateTraining, validateMedical, validateInjuries, validateInjuryDetail, validateEquipment, validateSchedule, validateSport]);
 
   const tryGoNext = useCallback(() => {
     const err = validateCurrent();
