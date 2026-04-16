@@ -17,6 +17,7 @@ export function StickyHeader({
   user,
   onSignOut,
   onConnectAccount,
+  onOpenProfile,
   progress,
   phases,
   streakCount,
@@ -60,6 +61,17 @@ export function StickyHeader({
               title="Connect an email or Google account to sync across devices"
             >
               🔗 CONNECT
+            </button>
+          )}
+          {onOpenProfile && (
+            <button
+              type="button"
+              className="signout-btn"
+              onClick={onOpenProfile}
+              title="Edit your profile"
+              aria-label="Edit profile"
+            >
+              ⚙
             </button>
           )}
           <button type="button" className="signout-btn" onClick={onSignOut}>

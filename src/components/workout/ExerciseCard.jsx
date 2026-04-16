@@ -1,3 +1,8 @@
+import { useProfile } from '../../lib/profileContext.jsx';
+import {
+  checkExerciseContraindications,
+  formatContraindicationMessage,
+} from '../../lib/workoutIntelligence.js';
 import { SetLogger } from './SetLogger.jsx';
 
 // The card renders a dynamic "Next session target" banner pulled from
@@ -27,6 +32,14 @@ export function ExerciseCard({
   const dynamic = suggestion?.dynamic;
   const suggestedLine = suggestion?.display || ex.rec_weight;
 
+  // Pull the user's active injuries from the profile context and flag any
+  // exercise whose movement pattern overlaps with those injury sites. This
+  // is rendered as a yellow banner above the exercise body so the user can
+  // adjust BEFORE attempting the lift.
+  const { injuries } = useProfile();
+  const conflicts = checkExerciseContraindications(ex, injuries);
+  const conflictMessage = formatContraindicationMessage(conflicts);
+
   return (
     <div className="exercise-card">
       <div className="exercise-header">
@@ -50,6 +63,11 @@ export function ExerciseCard({
           </div>
         )}
       </div>
+      {conflictMessage && (
+        <div className="exercise-contra-warn" role="status">
+          ⚠ {conflictMessage}
+        </div>
+      )}
       {ex.injury && <div className="exercise-injury-note">{ex.injury}</div>}
       <div className="exercise-note">{ex.note}</div>
       <SetLogger

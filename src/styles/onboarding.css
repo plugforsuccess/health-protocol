@@ -1,0 +1,338 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   ONBOARDING FLOW
+   Mobile-first multi-step questionnaire. Every step fits on one screen.
+   Animates left/right between steps with a slide transition.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── FULL-SCREEN CONTAINER ──────────────────────────────────────────────── */
+.onb-screen {
+  position: fixed; inset: 0;
+  z-index: 200;
+  display: flex; flex-direction: column;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+/* ── TOP BAR (back · logo · sign-out) ───────────────────────────────────── */
+.onb-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 18px 10px;
+  background: rgba(9,9,14,0.94);
+  backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.onb-topbar-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 17px; letter-spacing: 0.12em; color: var(--d);
+}
+
+/* ── PROGRESS BAR ────────────────────────────────────────────────────────── */
+.onb-progress {
+  flex-shrink: 0;
+  padding: 12px 18px 8px;
+}
+.onb-progress-bar {
+  height: 3px; border-radius: 2px;
+  background: var(--border2); overflow: hidden;
+}
+.onb-progress-fill {
+  height: 100%; border-radius: 2px;
+  background: linear-gradient(90deg, var(--d), var(--s));
+  transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
+}
+.onb-progress-label {
+  font-family: DM Mono, monospace; font-size: 10px;
+  color: var(--label); margin-top: 5px; text-align: right;
+}
+
+/* ── SLIDE STAGE ─────────────────────────────────────────────────────────── */
+.onb-stage {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 0 18px 100px;
+  animation: slideIn 0.3s ease;
+}
+.onb-stage.forward { animation-name: slideForward; }
+.onb-stage.back    { animation-name: slideBack; }
+
+@keyframes slideForward {
+  from { transform: translateX(60px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes slideBack {
+  from { transform: translateX(-60px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+
+/* ── STEP SHELL ──────────────────────────────────────────────────────────── */
+.onb-step { max-width: 440px; margin: 0 auto; }
+.onb-step-head { margin-bottom: 22px; margin-top: 4px; }
+.onb-step-title {
+  font-family: 'Bebas Neue', sans-serif; font-size: 26px;
+  letter-spacing: 0.06em; color: var(--text); margin: 0;
+}
+.onb-step-sub {
+  font-size: 12px; color: var(--label); margin-top: 4px;
+  font-family: DM Mono, monospace;
+}
+.onb-step-body { display: flex; flex-direction: column; gap: 18px; }
+.onb-step-error {
+  margin-top: 12px; padding: 10px 14px; border-radius: 6px;
+  background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.3);
+  color: var(--warn); font-size: 12px;
+}
+
+/* ── FIELD GROUP ─────────────────────────────────────────────────────────── */
+.onb-field { display: flex; flex-direction: column; gap: 6px; }
+.onb-field-label {
+  font-size: 12px; font-weight: 500; color: var(--text);
+  letter-spacing: 0.01em;
+}
+.onb-field-hint {
+  font-size: 11px; color: var(--muted); font-family: DM Mono, monospace;
+}
+
+/* ── TEXT / NUMBER INPUTS ────────────────────────────────────────────────── */
+.onb-text {
+  width: 100%; padding: 10px 12px; border-radius: 6px;
+  border: 1px solid var(--border2); background: var(--surface);
+  color: var(--text); font-family: inherit; font-size: 14px;
+  outline: none; transition: border-color 0.2s;
+}
+.onb-text:focus { border-color: var(--d); }
+.onb-text::placeholder { color: var(--muted); }
+.onb-textarea { resize: vertical; min-height: 56px; }
+.onb-row { display: flex; gap: 10px; }
+.onb-row .onb-text { flex: 1; }
+
+/* ── UNIT TOGGLE ─────────────────────────────────────────────────────────── */
+.onb-unit-toggle {
+  display: inline-flex; gap: 0; border-radius: 5px; overflow: hidden;
+  border: 1px solid var(--border2); margin-bottom: 6px; align-self: flex-start;
+}
+.onb-unit-btn {
+  padding: 5px 14px; font-family: DM Mono, monospace; font-size: 10px;
+  letter-spacing: 0.08em; background: transparent; border: none;
+  color: var(--muted); cursor: pointer; transition: all 0.2s;
+}
+.onb-unit-btn.active {
+  background: var(--d-dim); color: var(--d);
+}
+
+/* ── SINGLE SELECT ───────────────────────────────────────────────────────── */
+.onb-singleselect { display: grid; gap: 6px; }
+.onb-option {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 6px;
+  border: 1px solid var(--border2); background: var(--surface);
+  color: var(--text); font-size: 13px; cursor: pointer;
+  text-align: left; transition: all 0.2s; font-family: inherit;
+}
+.onb-option:hover { border-color: var(--d); }
+.onb-option.selected { border-color: var(--d); background: var(--d-dim); }
+.onb-option-radio {
+  width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0;
+  border: 1.5px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.2s;
+}
+.onb-option.selected .onb-option-radio { border-color: var(--d); }
+.onb-option-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--d);
+}
+.onb-option-label { flex: 1; }
+
+/* ── MULTI SELECT (chips) ────────────────────────────────────────────────── */
+.onb-multiselect { display: flex; flex-wrap: wrap; gap: 6px; }
+.onb-chip {
+  padding: 8px 14px; border-radius: 20px; font-size: 12px;
+  border: 1px solid var(--border2); background: transparent;
+  color: var(--muted); cursor: pointer; transition: all 0.2s;
+  font-family: inherit;
+}
+.onb-chip:hover { border-color: var(--d); color: var(--text); }
+.onb-chip.selected {
+  background: var(--d-dim); color: var(--d); border-color: var(--d);
+}
+
+/* ── BODY REGION GRID ────────────────────────────────────────────────────── */
+.onb-body-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;
+}
+.onb-body-cell {
+  padding: 10px 8px; border-radius: 6px; font-size: 12px;
+  border: 1px solid var(--border2); background: var(--surface);
+  color: var(--text); cursor: pointer; text-align: center;
+  transition: all 0.2s; font-family: inherit;
+}
+.onb-body-cell:hover { border-color: var(--s); }
+.onb-body-cell.selected {
+  border-color: var(--s); background: var(--s-dim); color: var(--s);
+}
+
+/* ── PAIN SLIDER ─────────────────────────────────────────────────────────── */
+.onb-pain-slider { display: flex; flex-direction: column; gap: 4px; }
+.onb-pain-row { display: flex; justify-content: space-between; align-items: center; }
+.onb-pain-label { font-size: 12px; color: var(--text); }
+.onb-pain-badge {
+  font-family: DM Mono, monospace; font-size: 11px;
+  padding: 2px 8px; border-radius: 12px; font-weight: 600;
+}
+.onb-pain-input {
+  width: 100%; cursor: pointer; height: 6px;
+  -webkit-appearance: none; appearance: none;
+  background: var(--border2); border-radius: 3px; outline: none;
+}
+.onb-pain-input::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 20px; height: 20px;
+  border-radius: 50%; cursor: pointer;
+}
+.onb-pain-scale {
+  display: flex; justify-content: space-between;
+  font-family: DM Mono, monospace; font-size: 9px; color: var(--muted);
+}
+
+/* ── BANNER / WARNING ────────────────────────────────────────────────────── */
+.onb-banner {
+  padding: 12px 14px; border-radius: 6px;
+  font-size: 12px; margin-top: 10px;
+}
+.onb-banner.warn {
+  background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.3);
+  color: var(--g);
+}
+
+/* ── CARD (surgery row, injury card) ─────────────────────────────────────── */
+.onb-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px; margin-top: 10px;
+}
+.onb-card.muted { opacity: 0.6; }
+.onb-card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.onb-card-title { font-size: 13px; font-weight: 500; color: var(--text); }
+
+/* ── LINK BUTTON ─────────────────────────────────────────────────────────── */
+.onb-link-btn {
+  background: none; border: none; font-family: DM Mono, monospace;
+  font-size: 11px; color: var(--d); cursor: pointer;
+  padding: 0; text-decoration: underline; text-underline-offset: 3px;
+}
+.onb-link-btn:disabled { opacity: 0.4; cursor: default; }
+.onb-link-btn.danger { color: var(--warn); }
+.onb-link-btn.muted  { color: var(--muted); text-decoration: none; }
+
+/* ── ACTION BUTTONS ──────────────────────────────────────────────────────── */
+.onb-btn {
+  width: 100%; padding: 14px; border: none; border-radius: 8px;
+  font-family: 'Bebas Neue', sans-serif; font-size: 17px;
+  letter-spacing: 0.1em; cursor: pointer; transition: all 0.2s;
+}
+.onb-btn.primary {
+  background: var(--d); color: #fff;
+}
+.onb-btn.primary:hover:not(:disabled) { opacity: 0.9; }
+.onb-btn.primary:disabled { opacity: 0.5; cursor: default; }
+.onb-btn.ghost {
+  background: transparent; border: 1px solid var(--border2);
+  color: var(--label);
+}
+.onb-btn.ghost:hover:not(:disabled) { border-color: var(--d); color: var(--d); }
+
+/* ── FOOTER (sticky next button) ─────────────────────────────────────────── */
+.onb-footer {
+  flex-shrink: 0; padding: 12px 18px 20px;
+  background: linear-gradient(to top, var(--bg) 70%, transparent);
+  display: flex; flex-direction: column; gap: 6px; align-items: stretch;
+  max-width: 440px; margin: 0 auto; width: 100%;
+}
+.onb-progress-mini {
+  text-align: center; font-family: DM Mono, monospace;
+  font-size: 10px; color: var(--muted);
+}
+
+/* ── SUMMARY CARD (confirmation step) ────────────────────────────────────── */
+.onb-summary-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 18px; margin-bottom: 18px;
+}
+.onb-summary-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 7px 0; border-bottom: 1px solid var(--border);
+}
+.onb-summary-row:last-child { border-bottom: none; }
+.onb-summary-row.column { flex-direction: column; align-items: flex-start; gap: 4px; }
+.onb-summary-label { font-size: 11px; color: var(--muted); font-family: DM Mono, monospace; }
+.onb-summary-value { font-size: 13px; color: var(--text); text-align: right; }
+.onb-summary-list {
+  list-style: none; padding: 0; margin: 0;
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.onb-summary-list li {
+  padding: 3px 10px; border-radius: 12px; font-size: 11px;
+  background: var(--s-dim); color: var(--s);
+  border: 1px solid rgba(6,182,212,0.2);
+}
+
+/* ── EXERCISE CONTRAINDICATION WARNING ───────────────────────────────────── */
+.exercise-contra-warn {
+  background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25);
+  color: var(--g); padding: 8px 12px; border-radius: 6px;
+  font-size: 11px; margin: 6px 0;
+  font-family: DM Mono, monospace;
+}
+
+/* ── PROFILE TABS (edit modal) ───────────────────────────────────────────── */
+.profile-tabs {
+  display: flex; gap: 4px; padding: 10px 0 0;
+}
+.profile-tab {
+  flex: 1; padding: 6px 0; text-align: center;
+  font-family: DM Mono, monospace; font-size: 11px;
+  letter-spacing: 0.08em; background: none; border: none;
+  color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+.profile-tab.active { color: var(--d); border-bottom-color: var(--d); }
+.profile-section-title {
+  font-family: 'Bebas Neue', sans-serif; font-size: 16px;
+  letter-spacing: 0.06em; color: var(--text); margin-bottom: 10px;
+}
+
+/* ── SURGERY LIST ────────────────────────────────────────────────────────── */
+.onb-surgery-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LIGHT MODE OVERRIDES
+   ═══════════════════════════════════════════════════════════════════════════ */
+body.light .onb-screen { background: var(--bg); }
+body.light .onb-topbar { background: rgba(240,240,245,0.97); border-bottom-color: #d4d4e4; }
+body.light .onb-topbar-title { color: #6d28d9; }
+body.light .onb-text { background: #fff; border-color: #c0c0d4; color: #12122a; }
+body.light .onb-text:focus { border-color: #6d28d9; }
+body.light .onb-text::placeholder { color: #6060a0; }
+body.light .onb-option { background: #fff; border-color: #c0c0d4; color: #12122a; }
+body.light .onb-option.selected { border-color: #6d28d9; background: rgba(109,40,217,0.06); }
+body.light .onb-option-radio { border-color: #c0c0d4; }
+body.light .onb-option.selected .onb-option-radio { border-color: #6d28d9; }
+body.light .onb-option-dot { background: #6d28d9; }
+body.light .onb-chip { border-color: #c0c0d4; color: #6060a0; }
+body.light .onb-chip.selected { background: rgba(109,40,217,0.06); color: #6d28d9; border-color: #6d28d9; }
+body.light .onb-body-cell { background: #fff; border-color: #c0c0d4; color: #12122a; }
+body.light .onb-body-cell.selected { border-color: #0369a1; background: rgba(3,105,161,0.06); color: #0369a1; }
+body.light .onb-card { background: #fff; border-color: #d4d4e4; }
+body.light .onb-summary-card { background: #fff; border-color: #d4d4e4; }
+body.light .onb-summary-row { border-bottom-color: #e8e8f0; }
+body.light .onb-progress-bar { background: #c0c0d4; }
+body.light .onb-unit-toggle { border-color: #c0c0d4; }
+body.light .onb-unit-btn { color: #6060a0; }
+body.light .onb-unit-btn.active { background: rgba(109,40,217,0.06); color: #6d28d9; }
+body.light .onb-btn.primary { background: #6d28d9; }
+body.light .onb-btn.ghost { border-color: #c0c0d4; color: #45457a; }
+body.light .onb-footer { background: linear-gradient(to top, #f0f0f5 70%, transparent); }
+body.light .exercise-contra-warn { background: rgba(180,83,9,0.06); border-color: rgba(180,83,9,0.25); color: #b45309; }
+body.light .onb-pain-input { background: #c0c0d4; }
+body.light .profile-tab { color: #6060a0; }
+body.light .profile-tab.active { color: #6d28d9; border-bottom-color: #6d28d9; }
