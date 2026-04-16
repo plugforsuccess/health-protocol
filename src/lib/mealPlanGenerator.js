@@ -158,6 +158,29 @@ export async function generateMealPlan() {
 
   const planData = data?.plan || data;
 
+  // If this is the user's first AI meal plan and they have been using
+  // the hardcoded meal plan, snapshot it as a v0 row so it appears in
+  // previous plans and can be reactivated.
+  const { count: existingMealPlanCount } = await supabase
+    .from('user_meal_plans')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id);
+
+  if (existingMealPlanCount === 0) {
+    const { WEEK_MEALS } = await import('../data/weekMeals.js');
+    await supabase.from('user_meal_plans').insert({
+      user_id: user.id,
+      plan_data: {
+        planSummary: 'Original hand-built meal plan from app launch. Anti-inflammatory, gut-healing focus with batch cooking strategy.',
+        generatedAt: new Date().toISOString(),
+        days: WEEK_MEALS.map((d) => ({ day: d.label, meals: d.meals })),
+      },
+      is_active: false,
+      generation_prompt_version: 'v0',
+      week_start_date: null,
+    });
+  }
+
   // Mark any existing active plan as inactive
   await supabase
     .from('user_meal_plans')
