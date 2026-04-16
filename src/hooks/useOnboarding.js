@@ -196,12 +196,83 @@ export function useOnboarding(initialFromProfile) {
 
   const validateTraining = useCallback(() => {
     if (!form.trainingExperience) return 'Please pick a training level.';
+    if (form.formerAthlete === null) return 'Please indicate if you were a former athlete.';
+    if (form.formerAthlete === true && form.sportBackground.length === 0) {
+      return 'Please select at least one sport, or change to No.';
+    }
+    if (!form.activityLevel) return 'Please select your current activity level.';
     return null;
   }, [form]);
 
   const validateSchedule = useCallback(() => {
     if (!form.daysPerWeek) return 'Please pick how many days per week you train.';
+    if (!form.preferredDays || form.preferredDays.length === 0) return 'Please select your preferred training days.';
     if (!form.sessionDuration) return 'Please pick a session length.';
+    if (!form.avgSleep) return 'Please select your average sleep.';
+    if (!form.stressLevel) return 'Please select your stress level.';
+    if (!form.recoveryLevel) return 'Please select your recovery level.';
+    if (!form.travelFrequency) return 'Please select how often you travel.';
+    const needsEquip = ['1–2x per month', 'Weekly', 'Most of the time'].includes(form.travelFrequency);
+    if (needsEquip && !form.travelEquipmentAccess) {
+      return 'Please select what equipment you have access to when traveling.';
+    }
+    return null;
+  }, [form]);
+
+  const validateMedical = useCallback(() => {
+    if (form.hasCardio === null) return 'Please indicate if you have any cardiovascular conditions.';
+    if (form.hasCardio === true && form.cardiovascularConditions.length === 0) {
+      return 'Please select at least one cardiovascular condition, or change to No.';
+    }
+    if (form.hasCardio === true && form.cardiovascularConditions.includes('Other') && !form.cardioOther.trim()) {
+      return 'Please describe your cardiovascular condition.';
+    }
+    if (form.hasMedications === null) return 'Please indicate if you take medications affecting training.';
+    if (form.hasMedications === true && !form.medicationsAffectingTraining.trim()) {
+      return 'Please list your medications, or change to No.';
+    }
+    if (form.hasRecentSurgery === null) return 'Please indicate if you\'ve had recent surgeries.';
+    if (form.hasRecentSurgery === true) {
+      for (const sx of form.surgeries || []) {
+        if (!sx.body_region) return 'Please select a body region for each surgery.';
+        if (!sx.surgery_year) return 'Please enter the year for each surgery.';
+        if (!sx.cleared_for_exercise) return 'Please indicate clearance status for each surgery.';
+      }
+    }
+    return null;
+  }, [form]);
+
+  const validateInjuries = useCallback(() => {
+    if (form.hasInjuries === null) return 'Please indicate if you have any injuries or chronic pain.';
+    if (form.hasInjuries === true && (!form.injuryRegions || form.injuryRegions.length === 0)) {
+      return 'Please select at least one injured area, or change to No.';
+    }
+    return null;
+  }, [form]);
+
+  const validateInjuryDetail = useCallback((regionId) => {
+    const detail = form.injuriesByRegion?.[regionId];
+    if (!detail) return null;
+    if (!detail.injuryType) return 'Please select the injury type.';
+    if (!detail.injuryDuration) return 'Please select how long you\'ve had this injury.';
+    if (!detail.injuryTrajectory) return 'Please select if it\'s improving, stable, or worsening.';
+    if (!detail.physicianCleared) return 'Please indicate if you\'ve been cleared by a physician.';
+    return null;
+  }, [form]);
+
+  const validateEquipment = useCallback(() => {
+    if (!form.equipment || form.equipment.length === 0) {
+      return 'Please select at least one equipment option.';
+    }
+    if (!form.trainingLocation) return 'Please select where you train.';
+    return null;
+  }, [form]);
+
+  const validateSport = useCallback(() => {
+    if (!form.primarySport || form.primarySport.length === 0) {
+      return 'Please select at least one sport or activity.';
+    }
+    if (!form.competitionStatus) return 'Please select your competition status.';
     return null;
   }, [form]);
 
@@ -209,15 +280,19 @@ export function useOnboarding(initialFromProfile) {
     setError(null);
     if (!currentStep) return null;
     let err = null;
-    switch (currentStep.key) {
-      case 'identity':  err = validateIdentity();  break;
-      case 'training':  err = validateTraining();  break;
-      case 'schedule':  err = validateSchedule();  break;
-      default: err = null;
-    }
+    const key = currentStep.key;
+    if (key === 'identity')          err = validateIdentity();
+    else if (key === 'training')     err = validateTraining();
+    else if (key === 'medical')      err = validateMedical();
+    else if (key === 'injuries')     err = validateInjuries();
+    else if (key.startsWith('injury_detail:'))
+      err = validateInjuryDetail(currentStep.regionId);
+    else if (key === 'equipment')    err = validateEquipment();
+    else if (key === 'schedule')     err = validateSchedule();
+    else if (key === 'sport')        err = validateSport();
     if (err) setError(err);
     return err;
-  }, [currentStep, validateIdentity, validateTraining, validateSchedule]);
+  }, [currentStep, validateIdentity, validateTraining, validateMedical, validateInjuries, validateInjuryDetail, validateEquipment, validateSchedule, validateSport]);
 
   const tryGoNext = useCallback(() => {
     const err = validateCurrent();
