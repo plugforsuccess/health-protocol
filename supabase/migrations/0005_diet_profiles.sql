@@ -67,7 +67,7 @@ CREATE POLICY "Users own their diet profile"
 
 CREATE TRIGGER user_diet_profiles_updated_at
   BEFORE UPDATE ON user_diet_profiles
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- AI-generated meal plans
 
