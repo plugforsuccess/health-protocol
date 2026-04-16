@@ -134,7 +134,7 @@ export function ProfileEditModal({ open, onClose, onError }) {
 
   const handleManualRegenerate = useCallback(async () => {
     if (!window.confirm(
-      'This will replace your current workout program. Your logged sets and PRs are preserved. Continue?'
+      'This will build a new workout program. Your logged sets and PRs are preserved. Continue?'
     )) return;
     setRegenerating(true);
     try {
@@ -162,9 +162,9 @@ export function ProfileEditModal({ open, onClose, onError }) {
           <div className="wmodal-body">
             <div className="onb-generating">
               <div className="onb-generating-icon">💪</div>
-              <h2 className="onb-generating-title">Regenerating your program…</h2>
+              <h2 className="onb-generating-title">Building your new program…</h2>
               <p className="onb-generating-sub">
-                Updating based on your new profile settings
+                Analyzing your goals, schedule, injuries, and equipment
               </p>
               <div className="onb-generating-spinner" />
             </div>
@@ -182,12 +182,12 @@ export function ProfileEditModal({ open, onClose, onError }) {
           <div className="wmodal-handle" />
           <div className="wmodal-header">
             <div className="wmodal-title-row">
-              <div className="wmodal-title">Update workout program?</div>
+              <div className="wmodal-title">Build a new program?</div>
             </div>
           </div>
           <div className="wmodal-body">
             <p style={{ fontSize: 13, lineHeight: 1.5, color: 'var(--text)', marginBottom: 16 }}>
-              You changed settings that affect your workout plan. Would you like to regenerate your
+              You changed settings that affect your workout plan. Would you like to build a new
               program? Your logged sets and PRs are preserved.
             </p>
             <div style={{ display: 'flex', gap: 10 }}>
@@ -203,7 +203,7 @@ export function ProfileEditModal({ open, onClose, onError }) {
                 className="onb-btn primary"
                 onClick={handleRegenerate}
               >
-                Regenerate
+                Build new program
               </button>
             </div>
           </div>
@@ -299,7 +299,7 @@ export function ProfileEditModal({ open, onClose, onError }) {
                 onClick={handleManualRegenerate}
                 disabled={regenerating}
               >
-                Regenerate my workout program
+                Build a new program
               </button>
             </div>
           )}
@@ -725,7 +725,7 @@ function ProgramsPanel({ onRegenerate, regenerating, onError }) {
         onClick={onRegenerate}
         disabled={regenerating}
       >
-        {active ? 'Regenerate my program' : 'Generate my first program'}
+        {active ? 'Build a new program' : 'Build my program'}
       </button>
 
       {previous.length > 0 && (
