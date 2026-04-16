@@ -1,8 +1,9 @@
 /**
  * Meal card — tap anywhere to open the recipe modal (replaces the legacy
- * inline drawer).
+ * inline drawer). Optional onOpenChat callback adds a small chat icon for
+ * asking the nutrition coach about this specific meal.
  */
-export function MealCard({ meal, onOpen }) {
+export function MealCard({ meal, onOpen, onOpenChat }) {
   return (
     <div className="meal-card">
       <div className="meal-header" onClick={() => onOpen(meal)}>
@@ -13,6 +14,19 @@ export function MealCard({ meal, onOpen }) {
             <span key={i} className={`benefit-dot ${b}`} />
           ))}
         </div>
+        {onOpenChat && (
+          <button
+            type="button"
+            className="meal-coach-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenChat(meal);
+            }}
+            aria-label="Ask nutritionist about this meal"
+          >
+            💬
+          </button>
+        )}
         <button
           type="button"
           className="expand-btn"

@@ -46,6 +46,7 @@ export function buildCoachingSystemPrompt({
   currentExercise,
   currentSet,
   suggestion,
+  sessionLog = [],
 }) {
   const name = profile?.first_name || 'the user';
   const age = profile?.age ?? 'unknown age';
@@ -105,6 +106,7 @@ CURRENT WORKOUT CONTEXT:
 - Set: ${setNum}
 - Target: ${target}${reps ? ` × ${reps} reps` : ''}
 - Progression note: ${reason}
+${sessionLog.length ? `- Sets logged today: ${sessionLog.map((s, i) => `Set ${i + 1}: ${s.weight_lbs ?? '?'}lb × ${s.reps ?? '?'} (${s.status || 'pending'})`).join(', ')}` : '- No sets logged yet for this exercise today.'}
 
 COACHING RULES:
 - Lead with the single most actionable cue.
