@@ -34,6 +34,19 @@ function normalizePlanDays(planData) {
   const sorted = DAY_ORDER.map((abbr) => {
     const d = byDay[abbr];
     if (!d) return null;
+    // Normalize hotel_variant inner arrays if present
+    const hv = d.hotel_variant
+      ? {
+          ...d.hotel_variant,
+          warmup: d.hotel_variant.warmup || [],
+          exercises: (d.hotel_variant.exercises || []).map((ex) => ({
+            ...ex,
+            injury: ex.injury ?? null,
+          })),
+          cooldown: d.hotel_variant.cooldown || [],
+        }
+      : null;
+
     return {
       ...d,
       // Ensure all arrays exist so downstream never crashes
@@ -45,6 +58,7 @@ function normalizePlanDays(planData) {
       cooldown: d.cooldown || [],
       mobility: d.mobility || [],
       rest_tips: d.rest_tips || [],
+      hotel_variant: hv,
     };
   });
 

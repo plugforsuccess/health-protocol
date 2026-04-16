@@ -33,14 +33,15 @@ import { FieldGroup } from '../onboarding/components/StepShell.jsx';
 // Fields that affect workout plan generation. Changes to any of these
 // trigger a regeneration prompt after saving.
 //
-// DO trigger: schedule, goals, equipment, exercise restrictions
-// DO NOT trigger: name, age, sex, sleep, stress, recovery, travel
+// DO trigger: schedule, goals, equipment, exercise restrictions, travel equipment
+// DO NOT trigger: name, age, sex, sleep, stress, recovery, travel frequency
 const PLAN_RELEVANT_FIELDS = [
   'days_per_week',
   'preferred_days',
   'session_duration_min',
   'primary_goal',
   'equipment',
+  'travel_equipment_access',
   'excluded_exercises',
   'primary_sport',
   'performance_goals',

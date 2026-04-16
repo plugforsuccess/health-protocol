@@ -63,6 +63,36 @@ export function WorkoutDayModal({
   const { profile, injuries, surgeries } = useProfile();
   const [coachExIdx, setCoachExIdx] = useState(null);
 
+  // Traveling toggle — persists per session date via localStorage
+  const day = (dayIdx !== null && dayIdx !== undefined) ? weekPlan?.[dayIdx] : null;
+  const sessionDate = day ? workoutDateKey(dayIdx, undefined, weekPlan) : null;
+  const hasHotelVariant = Boolean(day?.hotel_variant);
+
+  const [isTraveling, setIsTraveling] = useState(() => {
+    if (!sessionDate) return false;
+    try { return localStorage.getItem(`traveling_${sessionDate}`) === 'true'; } catch { return false; }
+  });
+
+  const handleTravelToggle = () => {
+    const next = !isTraveling;
+    setIsTraveling(next);
+    try { localStorage.setItem(`traveling_${sessionDate}`, String(next)); } catch {}
+  };
+
+  // Derive active content from toggle state
+  const activeWarmup = (isTraveling && hasHotelVariant)
+    ? day.hotel_variant.warmup || []
+    : day?.warmup || [];
+  const activeExercises = (isTraveling && hasHotelVariant)
+    ? day.hotel_variant.exercises || []
+    : day?.exercises || [];
+  const activeCooldown = (isTraveling && hasHotelVariant)
+    ? day.hotel_variant.cooldown || []
+    : day?.cooldown || [];
+  const activeTitle = (isTraveling && hasHotelVariant)
+    ? day.hotel_variant.title || day?.title
+    : day?.title;
+
   useEffect(() => {
     if (dayIdx === null || dayIdx === undefined) return;
     const prevOverflow = document.body.style.overflow;
@@ -76,9 +106,6 @@ export function WorkoutDayModal({
       document.removeEventListener('keydown', onKey);
     };
   }, [dayIdx, onClose]);
-
-  const day = (dayIdx !== null && dayIdx !== undefined) ? weekPlan?.[dayIdx] : null;
-  const sessionDate = day ? workoutDateKey(dayIdx, undefined, weekPlan) : null;
 
   // Build coaching context for the currently selected exercise
   const coachExercise = day?.exercises?.[coachExIdx] ?? null;
@@ -135,7 +162,7 @@ export function WorkoutDayModal({
         <div className="wmodal-header">
           <div className="wmodal-title-row">
             <span className={`wmodal-type-badge ${day.type}`}>{day.type}</span>
-            <div className="wmodal-title">{day.title}</div>
+            <div className="wmodal-title">{activeTitle}</div>
             <button
               type="button"
               className="wmodal-close"
@@ -146,7 +173,17 @@ export function WorkoutDayModal({
             </button>
           </div>
           <div className="wmodal-meta">
-            ⏱ {day.duration} &nbsp;·&nbsp; 🎯 {day.focus}
+            <span>⏱ {day.duration} &nbsp;·&nbsp; 🎯 {day.focus}</span>
+            {hasHotelVariant && (
+              <button
+                type="button"
+                className={`travel-toggle${isTraveling ? ' travel-toggle--active' : ''}`}
+                onClick={handleTravelToggle}
+                aria-label={isTraveling ? 'Switch to home gym workout' : 'Switch to hotel workout'}
+              >
+                {isTraveling ? '✈️ Traveling' : '🏠 Home gym'}
+              </button>
+            )}
           </div>
         </div>
         <div className="wmodal-body">
@@ -164,6 +201,10 @@ export function WorkoutDayModal({
             <TrainBody
               dayIdx={dayIdx}
               day={day}
+              activeWarmup={activeWarmup}
+              activeExercises={activeExercises}
+              activeCooldown={activeCooldown}
+              isTraveling={isTraveling && hasHotelVariant}
               sessionDate={sessionDate}
               setsMap={setsMap}
               getPrevBest={getPrevBest}
@@ -253,6 +294,10 @@ function MobilityBody({ dayIdx, sessionDate, items, mobilityMap, onToggle }) {
 function TrainBody({
   dayIdx,
   day,
+  activeWarmup,
+  activeExercises,
+  activeCooldown,
+  isTraveling,
   sessionDate,
   setsMap,
   getPrevBest,
@@ -290,7 +335,24 @@ function TrainBody({
 
   return (
     <>
-      {day.warmup?.length > 0 && (
+      {isTraveling && day.hotel_variant?.equipment && (
+        <div className="wmodal-section">
+          <div
+            style={{
+              fontSize: 11,
+              color: 'var(--s)',
+              fontFamily: 'DM Mono, monospace',
+              padding: '8px 10px',
+              background: 'var(--s-dim, rgba(99,102,241,0.08))',
+              borderRadius: 6,
+            }}
+          >
+            ✈️ Hotel variant · {day.hotel_variant.equipment}
+          </div>
+        </div>
+      )}
+
+      {activeWarmup.length > 0 && (
         <div className="wmodal-section">
           <div className="wmodal-section-title green">Warm-Up</div>
           <div
@@ -304,7 +366,7 @@ function TrainBody({
             Tap a warm-up to start a 10-second prep countdown.
             Timed warm-ups run the full work timer automatically.
           </div>
-          {day.warmup.map((w, i) => (
+          {activeWarmup.map((w, i) => (
             <WarmupItem
               key={i}
               item={w}
@@ -317,7 +379,7 @@ function TrainBody({
 
       <div className="wmodal-section">
         <div className="wmodal-section-title">Main Workout</div>
-        {day.exercises.map((ex, ei) => {
+        {activeExercises.map((ex, ei) => {
           const kind = classifyExercise(ex);
           const suggestion = getSuggestion
             ? getSuggestion(dayIdx, ei, sessionDate)
@@ -341,10 +403,10 @@ function TrainBody({
         })}
       </div>
 
-      {day.cooldown?.length > 0 && (
+      {activeCooldown.length > 0 && (
         <div className="wmodal-section">
           <div className="wmodal-section-title green">Cool Down</div>
-          {day.cooldown.map((c, i) => (
+          {activeCooldown.map((c, i) => (
             <div key={i} className="mobility-item" style={{ cursor: 'default' }}>
               <div style={{ fontSize: 16 }}>🧊</div>
               <div className="mobility-content">

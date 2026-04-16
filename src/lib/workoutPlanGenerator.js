@@ -133,6 +133,10 @@ ${profile?.injury_causing_exercises || 'None'}
 TRAINING NOTES:
 ${profile?.training_history_notes || 'None'}
 
+TRAVEL CONTEXT:
+- Travel frequency: ${profile?.travel_frequency || 'rarely'}
+- Equipment when traveling: ${profile?.travel_equipment_access || 'Unknown — assume bodyweight only'}
+
 OUTPUT REQUIREMENTS:
 Return valid JSON only — no markdown, no explanation outside JSON.
 
@@ -173,7 +177,14 @@ Schema:
         }
       ],
       "mobility": [],
-      "rest_tips": []
+      "rest_tips": [],
+      "hotel_variant": null | {
+        "title": "Hotel Session Title",
+        "equipment": "Equipment available description",
+        "warmup": [{ "name": "...", "detail": "...", "sets": 2 }],
+        "exercises": [{ "name": "...", "sets": 4, "reps": "10", "rec_weight": "...", "note": "..." }],
+        "cooldown": [{ "name": "...", "detail": "..." }]
+      }
     }
   ]
 }
@@ -198,6 +209,18 @@ RULES:
 17. For weighted exercises, rec_weight format: "Xlb description" (e.g. "30lb dumbbell", "25lb each hand")
 18. For bodyweight exercises, rec_weight: "Bodyweight" or "Bodyweight — add Xlb when ready"
 19. For timed/cardio exercises, reps format: "Xs" or "X min ON / X min OFF"
+20. HOTEL VARIANTS — travel frequency is "${profile?.travel_frequency || 'rarely'}":
+    - If travel_frequency is "rarely": set hotel_variant to null on ALL days
+    - Otherwise: for every strength and conditioning day, generate a hotel_variant object
+    - hotel_variant uses ONLY the equipment from travel_equipment_access: "${profile?.travel_equipment_access || 'bodyweight only'}"
+    - If travel equipment is "bodyweight only": zero equipment exercises only
+    - If travel equipment is "hotel gym (basic)": dumbbells + treadmill + bench only
+    - If travel equipment is "full commercial gym": same as primary plan, different exercise order
+    - If travel equipment is "resistance bands only": bands + bodyweight only
+    - hotel_variant must hit the same muscle groups as the primary session
+    - hotel_variant duration must match session_duration_min (${profile?.session_duration_min || 45} min)
+    - hotel_variant exercises must include sets, reps, rec_weight, and coaching note
+    - Rest days and mobility days: set hotel_variant to null
 `.trim();
 }
 
@@ -261,6 +284,20 @@ export function validateWorkoutPlan(plan, profile) {
           }
         }
       }
+    }
+  }
+
+  // Hotel variant check — warn but never fail the plan
+  if (profile?.travel_frequency && profile.travel_frequency !== 'rarely') {
+    const trainingDays = plan.days.filter(
+      (d) => d.type === 'strength' || d.type === 'conditioning'
+    );
+    const missingVariants = trainingDays.filter((d) => !d.hotel_variant);
+    if (missingVariants.length > 0) {
+      console.warn(
+        `[WorkoutPlan] Missing hotel variants for: ${missingVariants.map((d) => d.day).join(', ')}. ` +
+        `Primary plan is valid — hotel variants will be unavailable for these days.`
+      );
     }
   }
 
