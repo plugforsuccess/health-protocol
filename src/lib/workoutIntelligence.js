@@ -41,6 +41,148 @@ const SMALL_MUSCLE_KEYWORDS = [
   'pallof', 'band', 'dead bug', 'plank', 'calf',
 ];
 
+// ─────────────────────────────────────────────────────────────────────────
+// EXERCISE CONTRAINDICATIONS
+// ─────────────────────────────────────────────────────────────────────────
+//
+// Maps high-level movement patterns to body regions that they tend to
+// aggravate. The IDs on the right match the body_region values stored on
+// user_injuries (see src/lib/onboardingOptions.js → BODY_REGIONS), and
+// the keys on the left match the IDs in AGGRAVATING_MOVEMENTS so a user
+// who flagged "no overhead pressing" automatically gets shoulder warnings.
+//
+// This is intentionally a thin static lookup. If a richer model emerges
+// (per-exercise tags from the data file, ML scoring), swap the lookup out
+// without touching the warning UI.
+
+export const MOVEMENT_CONTRAINDICATIONS = {
+  'overhead-pressing': ['left-shoulder', 'right-shoulder', 'neck-cervical-spine', 'left-elbow', 'right-elbow'],
+  'pushing':           ['left-shoulder', 'right-shoulder', 'left-elbow', 'right-elbow', 'left-wrist-hand', 'right-wrist-hand'],
+  'pulling':           ['left-shoulder', 'right-shoulder', 'left-elbow', 'right-elbow', 'left-wrist-hand', 'right-wrist-hand'],
+  'squatting':         ['left-knee', 'right-knee', 'left-hip', 'right-hip', 'lower-back-lumbar'],
+  'hinging':           ['lower-back-lumbar', 'left-hip', 'right-hip', 'left-knee', 'right-knee'],
+  'rotation':          ['lower-back-lumbar', 'upper-back-thoracic', 'left-shoulder', 'right-shoulder'],
+  'impact':            ['left-knee', 'right-knee', 'left-ankle-foot', 'right-ankle-foot', 'lower-back-lumbar'],
+  'gripping':          ['left-elbow', 'right-elbow', 'left-wrist-hand', 'right-wrist-hand'],
+};
+
+// Body region id → human-readable label used in warning copy.
+const REGION_LABEL = {
+  'neck-cervical-spine':  'neck',
+  'left-shoulder':        'left shoulder',
+  'right-shoulder':       'right shoulder',
+  'left-elbow':           'left elbow',
+  'right-elbow':          'right elbow',
+  'left-wrist-hand':      'left wrist',
+  'right-wrist-hand':     'right wrist',
+  'upper-back-thoracic':  'upper back',
+  'lower-back-lumbar':    'lower back',
+  'left-hip':             'left hip',
+  'right-hip':            'right hip',
+  'left-knee':            'left knee',
+  'right-knee':           'right knee',
+  'left-ankle-foot':      'left ankle',
+  'right-ankle-foot':     'right ankle',
+};
+
+// Best-effort movement-pattern inference from the exercise name, so the
+// programme JSON doesn't have to be re-tagged today. Each rule is the
+// least-surprising plain-English match — when the WORKOUT_WEEK rows get
+// explicit movementPatterns: [...] later, that overrides everything here.
+const PATTERN_RULES = [
+  { pattern: 'overhead-pressing', test: /(overhead|shoulder press|push press|jerk|landmine press)/i },
+  { pattern: 'pushing',           test: /(bench press|push[- ]?up|push press|chest press|dip\b|tricep)/i },
+  { pattern: 'pulling',           test: /(\brow\b|pull[- ]?up|chin[- ]?up|lat pulldown|face pull|deadlift|reverse fly)/i },
+  { pattern: 'squatting',         test: /(squat|lunge|step[- ]?up|leg press)/i },
+  { pattern: 'hinging',           test: /(deadlift|romanian|rdl|hip thrust|kettlebell swing|good morning|hinge)/i },
+  { pattern: 'rotation',          test: /(rotation|twist|wood chop|pallof|russian twist|landmine rotation)/i },
+  { pattern: 'impact',            test: /(jump|sprint|bound|hop\b|plyo|run\b|sled|interval)/i },
+  { pattern: 'gripping',          test: /(farmer carry|farmer's walk|deadlift|grip|hang|hold|carry|kettlebell)/i },
+];
+
+/**
+ * Resolve the movement patterns that an exercise involves. Honors an
+ * explicit `movementPatterns` array on the row when present, otherwise
+ * falls back to keyword inference so legacy rows still get safety checks.
+ */
+export function inferMovementPatterns(exercise) {
+  if (!exercise) return [];
+  if (Array.isArray(exercise.movementPatterns) && exercise.movementPatterns.length > 0) {
+    return exercise.movementPatterns;
+  }
+  const name = String(exercise.name || '');
+  const matched = new Set();
+  for (const rule of PATTERN_RULES) {
+    if (rule.test.test(name)) matched.add(rule.pattern);
+  }
+  return Array.from(matched);
+}
+
+/**
+ * Produce a list of injury conflicts for an exercise.
+ * Returns array of { movement, region, regionLabel } — empty array means
+ * "safe to proceed". Caller renders a warning banner if non-empty.
+ */
+export function checkExerciseContraindications(exercise, injuries = []) {
+  if (!exercise || !injuries.length) return [];
+  const activeRegions = injuries
+    .filter((i) => i?.active !== false)
+    .map((i) => i.body_region)
+    .filter(Boolean);
+  if (activeRegions.length === 0) return [];
+
+  const patterns = inferMovementPatterns(exercise);
+  if (patterns.length === 0) return [];
+
+  // Also honor a per-injury aggravating_movements override — a user who
+  // marked "rotation" as a flare for their lower back gets warned even if
+  // the static map doesn't have rotation → lower-back-lumbar listed.
+  const movementOverrides = new Map();
+  for (const inj of injuries) {
+    if (!inj || inj.active === false) continue;
+    for (const m of inj.aggravating_movements || []) {
+      if (!movementOverrides.has(m)) movementOverrides.set(m, new Set());
+      movementOverrides.get(m).add(inj.body_region);
+    }
+  }
+
+  const conflicts = [];
+  const seen = new Set();
+  for (const movement of patterns) {
+    const staticRisks = MOVEMENT_CONTRAINDICATIONS[movement] || [];
+    const dynamicRisks = movementOverrides.get(movement) || new Set();
+    const all = new Set([...staticRisks, ...dynamicRisks]);
+    for (const region of all) {
+      if (!activeRegions.includes(region)) continue;
+      const key = `${movement}::${region}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      conflicts.push({
+        movement,
+        region,
+        regionLabel: REGION_LABEL[region] || region,
+      });
+    }
+  }
+  return conflicts;
+}
+
+/**
+ * Compose a single human-readable warning string from a list of conflicts.
+ * Used by the exercise card banner copy.
+ */
+export function formatContraindicationMessage(conflicts) {
+  if (!conflicts || conflicts.length === 0) return null;
+  const regions = Array.from(new Set(conflicts.map((c) => c.regionLabel)));
+  const regionList =
+    regions.length === 1
+      ? `your ${regions[0]}`
+      : regions.length === 2
+        ? `your ${regions[0]} and ${regions[1]}`
+        : `your ${regions.slice(0, -1).join(', ')}, and ${regions[regions.length - 1]}`;
+  return `This movement may aggravate ${regionList}. Consider a modification or skip if it flares up.`;
+}
+
 const DURATION_REP_KEYWORDS = [
   'min on', 'min off', 'sec', 'minute', ' min', 'yards', 'yard',
   'meters', 'metres', 'rounds', 'round',

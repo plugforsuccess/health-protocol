@@ -12,6 +12,9 @@ import { usePushSubscription } from './hooks/usePushSubscription.js';
 
 import { AuthScreen } from './components/AuthScreen.jsx';
 import { ConnectAccountDialog } from './components/ConnectAccountDialog.jsx';
+import { OnboardingGate } from './components/onboarding/OnboardingGate.jsx';
+import { ProfileEditModal } from './components/profile/ProfileEditModal.jsx';
+import { ProfileProvider } from './lib/profileContext.jsx';
 import { StickyHeader } from './components/layout/StickyHeader.jsx';
 import { NTPanel } from './components/panels/NTPanel.jsx';
 import { GutPanel } from './components/panels/GutPanel.jsx';
@@ -97,18 +100,22 @@ export default function App() {
   }
 
   return (
-    <SignedInApp
-      user={user}
-      tab={tab}
-      setTab={setTab}
-      signOut={signOut}
-      linkWithGoogle={linkWithGoogle}
-      linkWithEmail={linkWithEmail}
-      showToast={showToast}
-      toast={toast}
-      isLight={isLight}
-      toggleTheme={toggleTheme}
-    />
+    <ProfileProvider userId={user.id}>
+      <OnboardingGate onSignOut={signOut}>
+        <SignedInApp
+          user={user}
+          tab={tab}
+          setTab={setTab}
+          signOut={signOut}
+          linkWithGoogle={linkWithGoogle}
+          linkWithEmail={linkWithEmail}
+          showToast={showToast}
+          toast={toast}
+          isLight={isLight}
+          toggleTheme={toggleTheme}
+        />
+      </OnboardingGate>
+    </ProfileProvider>
   );
 }
 
@@ -125,6 +132,7 @@ function SignedInApp({
   toggleTheme,
 }) {
   const [connectOpen, setConnectOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const nt = useProtocolState(user.id, 'nt');
   const gut = useProtocolState(user.id, 'gut');
   const ntStreak = useStreak(user.id, 'nt');
@@ -325,6 +333,7 @@ function SignedInApp({
         user={user}
         onSignOut={signOut}
         onConnectAccount={() => setConnectOpen(true)}
+        onOpenProfile={() => setProfileOpen(true)}
         progress={headerProgress}
         phases={headerPhases}
         streakCount={headerStreak}
@@ -380,6 +389,12 @@ function SignedInApp({
         onClose={() => setConnectOpen(false)}
         onLinkGoogle={linkWithGoogle}
         onLinkEmail={linkWithEmail}
+      />
+
+      <ProfileEditModal
+        open={profileOpen}
+        onClose={() => setProfileOpen(false)}
+        onError={onWorkoutError}
       />
 
       <Toast toast={toast} />
