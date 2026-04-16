@@ -58,6 +58,13 @@ WORKOUT CONTEXT (from training profile):
 - Training days: ${(workoutProfile?.preferred_days || []).join(', ') || 'Not specified'}
 - Session duration: ${workoutProfile?.session_duration_min || 'Not specified'} min
 
+TRAINING SCHEDULE RULES:
+- On training days (${(workoutProfile?.preferred_days || []).join(', ') || 'not specified'}): increase carbohydrates at the meal before the training session, include 25-40g protein within 60 min after the session ends
+- On rest days: reduce overall carbohydrate load, maintain protein intake at the same level as training days
+- If user trains in the morning: breakfast must be light and fast-digesting pre-workout, substantial post-workout meal follows
+- If user trains in the evening: the largest meal of the day should follow the training session
+- If user's biggest meal preference conflicts with training timing, training timing takes priority for protein delivery — adjust the non-training meal to be the larger volume meal
+
 OUTPUT REQUIREMENTS:
 Return valid JSON only. No preamble, no markdown, no explanation outside the JSON.
 
