@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useProfile } from '../../lib/profileContext.jsx';
+import { supabase } from '../../lib/supabase.js';
 import { generateWorkoutPlan } from '../../lib/workoutPlanGenerator.js';
 import {
   ACTIVITY_LEVEL,
@@ -244,38 +245,52 @@ export function ProfileEditModal({ open, onClose, onError }) {
             >
               Injuries ({activeInjuries.length})
             </button>
+            <button
+              type="button"
+              className={`profile-tab${tab === 'programs' ? ' active' : ''}`}
+              onClick={() => setTab('programs')}
+            >
+              Programs
+            </button>
           </div>
         </div>
         <div className="wmodal-body">
-          {tab === 'profile' ? (
-            <ProfileFields draft={draft} set={set} />
-          ) : (
+          {tab === 'profile' && (
+            <>
+              <ProfileFields draft={draft} set={set} />
+              <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+                <button type="button" className="onb-btn ghost" onClick={onClose} disabled={saving}>
+                  Cancel
+                </button>
+                <button type="button" className="onb-btn primary" onClick={save} disabled={saving}>
+                  {saving ? 'Saving…' : 'Save changes'}
+                </button>
+              </div>
+            </>
+          )}
+
+          {tab === 'injuries' && (
             <InjuriesPanel
               active={activeInjuries}
               healed={healedInjuries}
               onMarkHealed={markInjuryHealed}
               onReactivate={reactivateInjury}
               onError={onError}
-              hasAiPlan={!!activeWorkoutPlan}
               onInjuryChanged={() => {
-                // Injury changes affect the plan — prompt regeneration
                 if (activeWorkoutPlan) setConfirmRegen(true);
               }}
             />
           )}
 
-          {tab === 'profile' && (
-            <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-              <button type="button" className="onb-btn ghost" onClick={onClose} disabled={saving}>
-                Cancel
-              </button>
-              <button type="button" className="onb-btn primary" onClick={save} disabled={saving}>
-                {saving ? 'Saving…' : 'Save changes'}
-              </button>
-            </div>
+          {tab === 'programs' && (
+            <ProgramsPanel
+              onRegenerate={handleManualRegenerate}
+              regenerating={regenerating}
+              onError={onError}
+            />
           )}
 
-          {activeWorkoutPlan && (
+          {tab !== 'programs' && activeWorkoutPlan && (
             <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--border2)' }}>
               <button
                 type="button"
@@ -525,6 +540,215 @@ function ProfileFields({ draft, set }) {
     </div>
   );
 }
+
+// ── Programs Panel ────────────────────────────────────────────────────
+// Shows all workout plans (active + archived). Each card is expandable
+// to reveal the day-by-day breakdown. Previous plans are kept with
+// is_active=false for audit purposes.
+
+const TYPE_ICON = { strength: '🏋️', conditioning: '⚡', mobility: '🧘', rest: '😴' };
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function PlanDayRow({ day }) {
+  const icon = TYPE_ICON[day.type] || '📋';
+  const exerciseCount =
+    day.type === 'mobility'
+      ? day.mobility?.length || 0
+      : day.exercises?.length || 0;
+  const label =
+    day.type === 'rest'
+      ? 'Rest'
+      : `${exerciseCount} exercise${exerciseCount !== 1 ? 's' : ''}`;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3px 0' }}>
+      <span style={{ fontSize: 14, width: 22, textAlign: 'center' }}>{icon}</span>
+      <span style={{ fontSize: 11, fontFamily: 'DM Mono, monospace', color: 'var(--muted)', width: 32 }}>
+        {day.day}
+      </span>
+      <span style={{ fontSize: 12, color: 'var(--text)', flex: 1 }}>{day.title}</span>
+      <span style={{ fontSize: 10, fontFamily: 'DM Mono, monospace', color: 'var(--muted)' }}>
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function PlanExerciseList({ day }) {
+  if (day.type === 'rest') {
+    return (
+      <div style={{ paddingLeft: 30, marginTop: 4 }}>
+        {(day.rest_tips || []).map((tip, i) => (
+          <div key={i} style={{ fontSize: 11, color: 'var(--muted)', fontFamily: 'DM Mono, monospace', padding: '2px 0' }}>
+            {tip}
+          </div>
+        ))}
+      </div>
+    );
+  }
+  const items = day.type === 'mobility' ? day.mobility : day.exercises;
+  if (!items?.length) return null;
+  return (
+    <div style={{ paddingLeft: 30, marginTop: 4 }}>
+      {items.map((ex, i) => (
+        <div key={i} style={{ fontSize: 11, color: 'var(--muted)', fontFamily: 'DM Mono, monospace', padding: '2px 0' }}>
+          {ex.name}
+          {ex.sets ? ` · ${ex.sets}×${ex.reps}` : ''}
+          {ex.detail ? ` — ${ex.detail}` : ''}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function PlanCard({ plan, isActive, expandedId, onToggle }) {
+  const pd = plan.plan_data;
+  const expanded = expandedId === plan.id;
+  const days = pd?.days || [];
+  const trainingDays = days.filter((d) => d.type !== 'rest').length;
+
+  return (
+    <div className={`onb-card${isActive ? '' : ' muted'}`}>
+      <div
+        className="onb-card-head"
+        style={{ cursor: 'pointer', marginBottom: expanded ? 10 : 0 }}
+        onClick={() => onToggle(plan.id)}
+      >
+        <div>
+          <span className="onb-card-title">
+            {isActive ? 'Current program' : formatDate(plan.generated_at)}
+          </span>
+          <div className="onb-field-hint" style={{ marginTop: 2 }}>
+            {trainingDays} training day{trainingDays !== 1 ? 's' : ''} / week
+            {isActive ? '' : ` · v${plan.generation_prompt_version || '1'}`}
+          </div>
+        </div>
+        <span style={{ fontSize: 14, color: 'var(--muted)', transition: 'transform 0.2s', transform: expanded ? 'rotate(180deg)' : 'none' }}>
+          ▾
+        </span>
+      </div>
+
+      {expanded && (
+        <div>
+          {pd?.planSummary && (
+            <div style={{ fontSize: 12, color: 'var(--text)', lineHeight: 1.5, marginBottom: 10, padding: '8px 10px', background: 'var(--surface2, var(--surface))', borderRadius: 6 }}>
+              {pd.planSummary}
+            </div>
+          )}
+          {days.map((day, i) => (
+            <div key={i}>
+              <PlanDayRow day={day} />
+              <PlanExerciseList day={day} />
+            </div>
+          ))}
+          {isActive && (
+            <div className="onb-field-hint" style={{ marginTop: 8 }}>
+              Generated {formatDate(plan.generated_at)}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProgramsPanel({ onRegenerate, regenerating, onError }) {
+  const { activeWorkoutPlan } = useProfile();
+  const [allPlans, setAllPlans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [expandedId, setExpandedId] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || cancelled) { setLoading(false); return; }
+      const { data, error } = await supabase
+        .from('user_workout_plans')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('generated_at', { ascending: false });
+      if (!cancelled) {
+        if (error) {
+          console.warn('[ProgramsPanel] load failed', error);
+          onError?.(error);
+        }
+        setAllPlans(data || []);
+        setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [activeWorkoutPlan, onError]);
+
+  const handleToggle = (id) => {
+    setExpandedId((prev) => (prev === id ? null : id));
+  };
+
+  if (loading) {
+    return (
+      <div className="onb-step-body">
+        <p className="onb-field-hint">Loading programs…</p>
+      </div>
+    );
+  }
+
+  const active = allPlans.find((p) => p.is_active);
+  const previous = allPlans.filter((p) => !p.is_active);
+
+  return (
+    <div className="onb-step-body">
+      <h3 className="profile-section-title">Current program</h3>
+      {active ? (
+        <PlanCard
+          plan={active}
+          isActive
+          expandedId={expandedId}
+          onToggle={handleToggle}
+        />
+      ) : (
+        <div className="onb-card">
+          <p className="onb-field-hint" style={{ margin: 0 }}>
+            No AI-generated program yet. You're using the default plan.
+          </p>
+        </div>
+      )}
+
+      <button
+        type="button"
+        className="onb-btn ghost"
+        style={{ width: '100%', marginTop: 12 }}
+        onClick={onRegenerate}
+        disabled={regenerating}
+      >
+        {active ? 'Regenerate my program' : 'Generate my first program'}
+      </button>
+
+      {previous.length > 0 && (
+        <>
+          <h3 className="profile-section-title" style={{ marginTop: 24 }}>
+            Previous programs ({previous.length})
+          </h3>
+          {previous.map((plan) => (
+            <PlanCard
+              key={plan.id}
+              plan={plan}
+              isActive={false}
+              expandedId={expandedId}
+              onToggle={handleToggle}
+            />
+          ))}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── Injuries Panel ────────────────────────────────────────────────────
 
 function InjuriesPanel({ active, healed, onMarkHealed, onReactivate, onError, onInjuryChanged }) {
   const handle = async (fn, id) => {
