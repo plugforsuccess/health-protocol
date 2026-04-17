@@ -13,7 +13,7 @@ import { getRestDuration, getMobilityTimerDuration } from '../../hooks/useRestTi
 // up a jump rope or just easing into glute bridges, those 10 seconds of
 // silence let them breathe and brace before the timer starts counting
 // meaningful work.
-const WARMUP_PREP_SECONDS = 10;
+const WARMUP_PREP_SECONDS = 5;
 
 export function WorkoutPanel({
   active,
