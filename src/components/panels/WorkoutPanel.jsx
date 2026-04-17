@@ -143,7 +143,10 @@ export function WorkoutPanel({
         return;
       }
       const workDur = getMobilityTimerDuration(item);
-      const totalRounds = Math.max(1, parseInt(item.sets, 10) || 1);
+      // Only chain multiple rounds if there's an actual work duration.
+      // Rep-based items (no workDur) get a single prep → done regardless
+      // of sets count — chaining empty preps back-to-back is confusing.
+      const totalRounds = workDur ? Math.max(1, parseInt(item.sets, 10) || 1) : 1;
 
       const finish = () => {
         try { onDone?.(); } catch {}
