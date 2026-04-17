@@ -130,6 +130,15 @@ export function SetLogger({
           title={locked ? 'Finish the previous set first' : undefined}
           onClick={() => {
             if (locked) return;
+            // Save prefilled values if the user never blurred the inputs.
+            // Without this, tapping the check button without touching the
+            // inputs loses the suggested weight/reps.
+            if (setLog.weight_lbs == null && weightPrefill != null && mode !== 'duration') {
+              onLogField(dayIdx, exIdx, si, 'weight', weightPrefill);
+            }
+            if (setLog.reps == null && repsPrefill != null) {
+              onLogField(dayIdx, exIdx, si, 'reps', repsPrefill);
+            }
             onCycleStatus(dayIdx, exIdx, si);
           }}
         >

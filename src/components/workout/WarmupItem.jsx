@@ -25,15 +25,23 @@ export function WarmupItem({ item, status, onToggle }) {
   const dur = getMobilityTimerDuration(item);
   const isRunning = status === 'running';
   const isDone = status === 'done';
+  const isRoundPause = typeof status === 'string' && status.startsWith('round-');
+  const completedRound = isRoundPause ? parseInt(status.split('-')[1], 10) : 0;
+  const totalSets = Math.max(1, parseInt(item.sets, 10) || 1);
+
+  let checkLabel = '';
+  if (isDone) checkLabel = '✓';
+  else if (isRunning) checkLabel = '…';
+  else if (isRoundPause) checkLabel = `${completedRound}/${totalSets}`;
 
   return (
     <div
-      className={`mobility-item warmup-item${isDone ? ' done-mob' : ''}${isRunning ? ' running' : ''}`}
+      className={`mobility-item warmup-item${isDone ? ' done-mob' : ''}${isRunning ? ' running' : ''}${isRoundPause ? ' round-pause' : ''}`}
       onClick={onToggle}
       role="button"
       tabIndex={0}
     >
-      <div className="mobility-check">{isDone ? '✓' : isRunning ? '…' : ''}</div>
+      <div className="mobility-check">{checkLabel}</div>
       <div className="mobility-content">
         <div className="mobility-name">
           {item.name}

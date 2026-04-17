@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { workoutDateKey } from '../../hooks/useWorkoutLogs.js';
 import { classifyExercise } from '../../lib/workoutIntelligence.js';
+import { getMobilityTimerDuration } from '../../hooks/useRestTimer.js';
 import { buildCoachingSystemPrompt } from '../../lib/coachingPrompt.js';
 import { useProfile } from '../../lib/profileContext.jsx';
 import { useCoachingChat } from '../../hooks/useCoachingChat.js';
@@ -315,41 +316,53 @@ function TrainBody({
   const [warmupStatus, setWarmupStatus] = useState({});
   const [cooldownStatus, setCooldownStatus] = useState({});
 
-  const handleWarmupTap = (idx, item) => {
-    const current = warmupStatus[idx];
+  // Shared tap handler for warmup and cooldown items.
+  // Rep-based items with multiple sets: each tap fires one prep → advances
+  // to next round. User controls the pace. Last round → done.
+  // Timed items with multiple sets: auto-chain all rounds on first tap.
+  const makeTapHandler = (statusState, setStatusState) => (idx, item) => {
+    const current = statusState[idx];
+    const workDur = getMobilityTimerDuration(item);
+    const totalSets = Math.max(1, parseInt(item.sets, 10) || 1);
+    const isRepBased = !workDur;
+
     if (current === 'done') {
-      // Un-check
-      setWarmupStatus((s) => ({ ...s, [idx]: undefined }));
+      setStatusState((s) => ({ ...s, [idx]: undefined }));
       return;
     }
     if (current === 'running') {
-      // User tapped again mid-countdown — treat as cancel.
-      setWarmupStatus((s) => ({ ...s, [idx]: undefined }));
+      setStatusState((s) => ({ ...s, [idx]: undefined }));
       onStartWarmup?.(null);
       return;
     }
-    setWarmupStatus((s) => ({ ...s, [idx]: 'running' }));
+
+    // Rep-based multi-set: track rounds manually via 'round-N' status
+    if (isRepBased && totalSets > 1) {
+      let completedRound = 0;
+      if (typeof current === 'string' && current.startsWith('round-')) {
+        completedRound = parseInt(current.split('-')[1], 10) || 0;
+      }
+      const nextRound = completedRound + 1;
+      setStatusState((s) => ({ ...s, [idx]: 'running' }));
+      onStartWarmup?.({ ...item, sets: 1 }, () => {
+        if (nextRound >= totalSets) {
+          setStatusState((s) => ({ ...s, [idx]: 'done' }));
+        } else {
+          setStatusState((s) => ({ ...s, [idx]: `round-${nextRound}` }));
+        }
+      });
+      return;
+    }
+
+    // Single set or timed multi-set: existing behavior
+    setStatusState((s) => ({ ...s, [idx]: 'running' }));
     onStartWarmup?.(item, () => {
-      setWarmupStatus((s) => ({ ...s, [idx]: 'done' }));
+      setStatusState((s) => ({ ...s, [idx]: 'done' }));
     });
   };
 
-  const handleCooldownTap = (idx, item) => {
-    const current = cooldownStatus[idx];
-    if (current === 'done') {
-      setCooldownStatus((s) => ({ ...s, [idx]: undefined }));
-      return;
-    }
-    if (current === 'running') {
-      setCooldownStatus((s) => ({ ...s, [idx]: undefined }));
-      onStartWarmup?.(null);
-      return;
-    }
-    setCooldownStatus((s) => ({ ...s, [idx]: 'running' }));
-    onStartWarmup?.(item, () => {
-      setCooldownStatus((s) => ({ ...s, [idx]: 'done' }));
-    });
-  };
+  const handleWarmupTap = makeTapHandler(warmupStatus, setWarmupStatus);
+  const handleCooldownTap = makeTapHandler(cooldownStatus, setCooldownStatus);
 
   return (
     <>
