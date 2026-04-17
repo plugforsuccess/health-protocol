@@ -28,6 +28,17 @@ export function Step1Identity({ form, update, error }) {
         />
       </FieldGroup>
 
+      <FieldGroup label="Last name">
+        <input
+          type="text"
+          className="onb-text"
+          value={form.lastName}
+          onChange={(e) => update({ lastName: e.target.value })}
+          placeholder="Your last name"
+          autoComplete="family-name"
+        />
+      </FieldGroup>
+
       <FieldGroup label="Age">
         <input
           type="number"

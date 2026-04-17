@@ -50,6 +50,7 @@ function makeInitial() {
   const units = defaultUnitsForLocale(locale);
   return {
     firstName: '',
+    lastName: '',
     age: '',
     biologicalSex: null,
     dominantHand: 'right',
@@ -175,6 +176,7 @@ export function useOnboarding(initialFromProfile) {
   // ── Validation ────────────────────────────────────────────────────────
   const validateIdentity = useCallback(() => {
     if (!form.firstName.trim()) return 'Please tell us your first name.';
+    if (!form.lastName.trim()) return 'Please tell us your last name.';
     const age = Number(form.age);
     if (!Number.isFinite(age) || age < 13 || age > 120) {
       return 'Please enter a valid age between 13 and 120.';
@@ -331,6 +333,7 @@ export function useOnboarding(initialFromProfile) {
 
       const profilePatch = {
         first_name: form.firstName.trim() || null,
+        last_name: form.lastName.trim() || null,
         age: Number(form.age) || null,
         biological_sex: form.biologicalSex,
         dominant_hand: form.dominantHand,
