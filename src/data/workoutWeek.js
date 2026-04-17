@@ -19,9 +19,9 @@ export const WORKOUT_WEEK = [
     ],
     cooldown: [
       { name: 'Incline Treadmill Walk', detail: '20 min — incline 8-10, speed 3.5 mph. Your second cardio session of the week. Zero elbow impact, high cardiovascular output. Non-negotiable for summer sport readiness.' },
-      { name: 'Pigeon Pose', detail: '90 sec each side — deep hip flexor and glute release' },
-      { name: 'Standing Quad Stretch', detail: '45 sec each side' },
-      { name: 'Supine Hamstring Stretch', detail: '60 sec each side — on your back, leg straight up' },
+      { name: 'Pigeon Pose', detail: '90 sec each side — deep hip flexor and glute release', sets: 2 },
+      { name: 'Standing Quad Stretch', detail: '45 sec each side', sets: 2 },
+      { name: 'Supine Hamstring Stretch', detail: '60 sec each side — on your back, leg straight up', sets: 2 },
       { name: 'Child\'s Pose', detail: '60 sec — spinal decompression' },
     ]
   },
@@ -45,10 +45,10 @@ export const WORKOUT_WEEK = [
       { name: 'Tricep Pushdown (Cable)', sets: 3, reps: '12', rec_weight: '30lb (week 1)', note: 'Rope or straight bar. Locks out elbow joint and builds stability around the tendon.', injury: null },
     ],
     cooldown: [
-      { name: 'Cross-Body Shoulder Stretch', detail: '60 sec each side — posterior capsule release for right shoulder tightness' },
+      { name: 'Cross-Body Shoulder Stretch', detail: '60 sec each side — posterior capsule release for right shoulder tightness', sets: 2 },
       { name: 'Sleeper Stretch', detail: '60 sec right side only — specific for posterior shoulder tightness' },
       { name: 'Forearm Extensor Stretch', detail: '45 sec each arm — arm extended, palm down, other hand pulls fingers toward floor' },
-      { name: 'Doorway Pec Stretch', detail: '45 sec each side' },
+      { name: 'Doorway Pec Stretch', detail: '45 sec each side', sets: 2 },
     ]
   },
   {
@@ -104,9 +104,9 @@ export const WORKOUT_WEEK = [
       { name: 'Plank with Hip Tap', sets: 3, reps: '10 each side', rec_weight: 'Bodyweight', note: 'Standard plank, rotate hip to touch floor each side. Anti-rotation under fatigue.', injury: null },
     ],
     cooldown: [
-      { name: 'Figure 4 Stretch', detail: '60 sec each side — glute and external rotator release after rotational work' },
-      { name: 'Lunge with Twist', detail: '5 each side slow — hip flexor and thoracic combined' },
-      { name: 'Seated Thoracic Rotation', detail: '10 each side — hands behind head, rotate fully' },
+      { name: 'Figure 4 Stretch', detail: '60 sec each side — glute and external rotator release after rotational work', sets: 2 },
+      { name: 'Lunge with Twist', detail: '5 each side slow — hip flexor and thoracic combined', sets: 2 },
+      { name: 'Seated Thoracic Rotation', detail: '10 each side — hands behind head, rotate fully', sets: 2 },
     ]
   },
   {
@@ -128,8 +128,8 @@ export const WORKOUT_WEEK = [
     ],
     cooldown: [
       { name: 'Easy Walk or Bike', detail: '5 min — heart rate recovery' },
-      { name: 'Hip Flexor Stretch', detail: '60 sec each side — mandatory after running intervals' },
-      { name: 'Calf Stretch', detail: '60 sec each side — wall stretch, straight and bent knee versions' },
+      { name: 'Hip Flexor Stretch', detail: '60 sec each side — mandatory after running intervals', sets: 2 },
+      { name: 'Calf Stretch', detail: '60 sec each side — wall stretch, straight and bent knee versions', sets: 2 },
       { name: 'Full Body Shake Out', detail: '2 min — loose limbs, breathe, release tension' },
     ]
   },

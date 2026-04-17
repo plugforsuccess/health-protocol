@@ -209,7 +209,8 @@ RULES:
 17. For weighted exercises, rec_weight format: "Xlb description" (e.g. "30lb dumbbell", "25lb each hand")
 18. For bodyweight exercises, rec_weight: "Bodyweight" or "Bodyweight — add Xlb when ready"
 19. For timed/cardio exercises, reps format: "Xs" or "X min ON / X min OFF"
-20. HOTEL VARIANTS — travel frequency is "${profile?.travel_frequency || 'rarely'}":
+20. For warmup, cooldown, and mobility items that say "each side": set sets: 2 so the timer runs once per side automatically. Single-side items get sets: 1 or omit sets.
+21. HOTEL VARIANTS — travel frequency is "${profile?.travel_frequency || 'rarely'}":
     - If travel_frequency is "rarely": set hotel_variant to null on ALL days
     - Otherwise: for every strength and conditioning day, generate a hotel_variant object
     - hotel_variant uses ONLY the equipment from travel_equipment_access: "${profile?.travel_equipment_access || 'bodyweight only'}"
