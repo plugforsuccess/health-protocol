@@ -326,6 +326,7 @@ function profileToDraft(profile) {
   if (!profile) return {};
   return {
     first_name: profile.first_name || '',
+    last_name: profile.last_name || '',
     age: profile.age ?? '',
     biological_sex: profile.biological_sex || null,
     dominant_hand: profile.dominant_hand || 'right',
@@ -351,6 +352,7 @@ function profileToDraft(profile) {
 function draftToPatch(draft) {
   return {
     first_name: draft.first_name?.trim() || null,
+    last_name: draft.last_name?.trim() || null,
     age: Number(draft.age) || null,
     biological_sex: draft.biological_sex,
     dominant_hand: draft.dominant_hand,
@@ -384,6 +386,14 @@ function ProfileFields({ draft, set }) {
           className="onb-text"
           value={draft.first_name || ''}
           onChange={(e) => set({ first_name: e.target.value })}
+        />
+      </FieldGroup>
+      <FieldGroup label="Last name">
+        <input
+          type="text"
+          className="onb-text"
+          value={draft.last_name || ''}
+          onChange={(e) => set({ last_name: e.target.value })}
         />
       </FieldGroup>
       <FieldGroup label="Age">
