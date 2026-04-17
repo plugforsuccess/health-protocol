@@ -6,7 +6,7 @@ export const WORKOUT_WEEK = [
     warmup: [
       { name: 'Hip Flexor Stretch', detail: '60 sec each side — kneeling lunge position, tuck pelvis under', sets: 2 },
       { name: 'Glute Bridge', detail: '15 reps — activate glutes before loading them', sets: 2 },
-      { name: 'Leg Swing', detail: '10 forward + 10 lateral each leg — hip mobility', sets: 1 },
+      { name: 'Leg Swing', detail: '10 forward + 10 lateral each leg — hip mobility', sets: 2 },
       { name: 'Bodyweight Squat', detail: '10 reps slow — prime movement pattern', sets: 2 },
     ],
     exercises: [
@@ -47,7 +47,7 @@ export const WORKOUT_WEEK = [
     cooldown: [
       { name: 'Cross-Body Shoulder Stretch', detail: '60 sec each side — posterior capsule release for right shoulder tightness', sets: 2 },
       { name: 'Sleeper Stretch', detail: '60 sec right side only — specific for posterior shoulder tightness' },
-      { name: 'Forearm Extensor Stretch', detail: '45 sec each arm — arm extended, palm down, other hand pulls fingers toward floor' },
+      { name: 'Forearm Extensor Stretch', detail: '45 sec each arm — arm extended, palm down, other hand pulls fingers toward floor', sets: 2 },
       { name: 'Doorway Pec Stretch', detail: '45 sec each side', sets: 2 },
     ]
   },
@@ -58,15 +58,15 @@ export const WORKOUT_WEEK = [
     warmup: [],
     exercises: [],
     mobility: [
-      { name: '90/90 Hip Stretch', detail: '90 sec each side — front leg at 90°, back leg at 90°. Best hip flexor and external rotator stretch for golf rotation.', sets: '2 rounds' },
-      { name: 'Couch Stretch', detail: '90 sec each side — rear foot on couch or wall, forward knee on floor. Most aggressive hip flexor release.', sets: '2 rounds' },
-      { name: 'Thoracic Spine Rotation', detail: '10 each side on all fours — thread needle. Opens thoracic spine for golf backswing and tennis serve.', sets: '3 rounds' },
-      { name: 'World\'s Greatest Stretch', detail: '5 each side slow — combines hip flexor, thoracic, hamstring. One movement for full chain.', sets: '2 rounds' },
+      { name: '90/90 Hip Stretch', detail: '90 sec each side — front leg at 90°, back leg at 90°. Best hip flexor and external rotator stretch for golf rotation.', sets: 2 },
+      { name: 'Couch Stretch', detail: '90 sec each side — rear foot on couch or wall, forward knee on floor. Most aggressive hip flexor release.', sets: 2 },
+      { name: 'Thoracic Spine Rotation', detail: '10 each side on all fours — thread needle. Opens thoracic spine for golf backswing and tennis serve.', sets: 3 },
+      { name: 'World\'s Greatest Stretch', detail: '5 each side slow — combines hip flexor, thoracic, hamstring. One movement for full chain.', sets: 2 },
       { name: 'Sleeper Stretch', detail: '90 sec right shoulder only — lie on right side, right arm at 90°, use left hand to gently press forearm toward floor.', sets: '3 rounds' },
-      { name: 'Band Shoulder Distraction', detail: '60 sec each arm — loop band around rack, step back, arm straight, let band pull and distract the joint.', sets: '2 rounds' },
+      { name: 'Band Shoulder Distraction', detail: '60 sec each arm — loop band around rack, step back, arm straight, let band pull and distract the joint.', sets: 2 },
       { name: 'Deep Squat Hold', detail: '60 sec — heels flat if possible, elbows press knees out. Ankle and hip mobility for basketball.', sets: '3 rounds' },
-      { name: 'Supine Hip Flexor Release', detail: '60 sec each side — lie on back, pull one knee to chest, let other leg fully relax flat.', sets: '2 rounds' },
-      { name: 'Child\'s Pose with Reach', detail: '60 sec each side — reach arm as far as possible, breathe into stretch.', sets: '2 rounds' },
+      { name: 'Supine Hip Flexor Release', detail: '60 sec each side — lie on back, pull one knee to chest, let other leg fully relax flat.', sets: 2 },
+      { name: 'Child\'s Pose with Reach', detail: '60 sec each side — reach arm as far as possible, breathe into stretch.', sets: 2 },
       { name: 'Foam Roll — IT Band + Quads', detail: '60 sec each — slow roll, pause on tight spots. Critical for knee health in court sports.', sets: '1 round' },
     ],
     cooldown: []
