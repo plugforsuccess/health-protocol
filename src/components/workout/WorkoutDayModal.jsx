@@ -313,6 +313,7 @@ function TrainBody({
   // Supabase. Each tap flips the item between idle → running → done.
   // The running state auto-advances when the timer callback fires.
   const [warmupStatus, setWarmupStatus] = useState({});
+  const [cooldownStatus, setCooldownStatus] = useState({});
 
   const handleWarmupTap = (idx, item) => {
     const current = warmupStatus[idx];
@@ -330,6 +331,23 @@ function TrainBody({
     setWarmupStatus((s) => ({ ...s, [idx]: 'running' }));
     onStartWarmup?.(item, () => {
       setWarmupStatus((s) => ({ ...s, [idx]: 'done' }));
+    });
+  };
+
+  const handleCooldownTap = (idx, item) => {
+    const current = cooldownStatus[idx];
+    if (current === 'done') {
+      setCooldownStatus((s) => ({ ...s, [idx]: undefined }));
+      return;
+    }
+    if (current === 'running') {
+      setCooldownStatus((s) => ({ ...s, [idx]: undefined }));
+      onStartWarmup?.(null);
+      return;
+    }
+    setCooldownStatus((s) => ({ ...s, [idx]: 'running' }));
+    onStartWarmup?.(item, () => {
+      setCooldownStatus((s) => ({ ...s, [idx]: 'done' }));
     });
   };
 
@@ -406,14 +424,23 @@ function TrainBody({
       {activeCooldown.length > 0 && (
         <div className="wmodal-section">
           <div className="wmodal-section-title green">Cool Down</div>
+          <div
+            style={{
+              fontSize: 11,
+              color: 'var(--muted)',
+              marginBottom: 12,
+              fontFamily: 'DM Mono, monospace',
+            }}
+          >
+            Tap a stretch to start a countdown timer.
+          </div>
           {activeCooldown.map((c, i) => (
-            <div key={i} className="mobility-item" style={{ cursor: 'default' }}>
-              <div style={{ fontSize: 16 }}>🧊</div>
-              <div className="mobility-content">
-                <div className="mobility-name">{c.name}</div>
-                <div className="mobility-detail">{c.detail}</div>
-              </div>
-            </div>
+            <WarmupItem
+              key={i}
+              item={c}
+              status={cooldownStatus[i]}
+              onToggle={() => handleCooldownTap(i, c)}
+            />
           ))}
         </div>
       )}
