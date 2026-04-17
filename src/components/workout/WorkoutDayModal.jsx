@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { workoutDateKey } from '../../hooks/useWorkoutLogs.js';
 import { classifyExercise } from '../../lib/workoutIntelligence.js';
 import { getMobilityTimerDuration } from '../../hooks/useRestTimer.js';
@@ -108,6 +108,27 @@ export function WorkoutDayModal({
     };
   }, [dayIdx, onClose]);
 
+  // Global workout timer — user taps "Start" to begin, ticks every
+  // second, duration saved to workout_sessions on complete.
+  const startedAtRef = useRef(null);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const isTrainingDay = day && day.type !== 'rest' && day.type !== 'mobility';
+
+  const handleStartTimer = () => {
+    startedAtRef.current = Date.now();
+    setTimerRunning(true);
+    setElapsed(0);
+  };
+
+  useEffect(() => {
+    if (!timerRunning) return;
+    const interval = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - startedAtRef.current) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [timerRunning]);
+
   // Build coaching context for the currently selected exercise
   const coachExercise = day?.exercises?.[coachExIdx] ?? null;
   const coachSuggestion = (coachExIdx !== null && getSuggestion)
@@ -174,7 +195,24 @@ export function WorkoutDayModal({
             </button>
           </div>
           <div className="wmodal-meta">
-            <span>⏱ {day.duration} &nbsp;·&nbsp; 🎯 {day.focus}</span>
+            <span>
+              {isTrainingDay && timerRunning ? (
+                <>⏱ {formatElapsed(elapsed)} &nbsp;·&nbsp; 🎯 {day.focus}</>
+              ) : isTrainingDay && !timerRunning ? (
+                <>
+                  <button
+                    type="button"
+                    className="travel-toggle"
+                    onClick={handleStartTimer}
+                  >
+                    ⏱ Start timer
+                  </button>
+                  &nbsp;·&nbsp; 🎯 {day.focus}
+                </>
+              ) : (
+                <>⏱ {day.duration} &nbsp;·&nbsp; 🎯 {day.focus}</>
+              )}
+            </span>
             {hasHotelVariant && (
               <button
                 type="button"
@@ -213,7 +251,15 @@ export function WorkoutDayModal({
               onLogField={onLogField}
               onCycleStatus={onCycleStatus}
               onStartWarmup={onStartWarmup}
-              onComplete={onComplete}
+              onComplete={(di) => {
+                const duration = timerRunning
+                  ? Math.floor((Date.now() - startedAtRef.current) / 1000)
+                  : null;
+                const startedAt = startedAtRef.current
+                  ? new Date(startedAtRef.current).toISOString()
+                  : null;
+                onComplete(di, { duration_sec: duration, started_at: startedAt });
+              }}
               onOpenCoach={handleOpenCoach}
             />
           )}
@@ -239,6 +285,12 @@ export function WorkoutDayModal({
       </ChatDrawer>
     </div>
   );
+}
+
+function formatElapsed(sec) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
 }
 
 function RestBody({ tips }) {

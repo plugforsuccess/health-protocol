@@ -401,20 +401,23 @@ export function useWorkoutLogs(userId, weekPlan) {
   );
 
   const completeWorkout = useCallback(
-    async (dayIdx) => {
+    async (dayIdx, timing) => {
       if (!userId) return;
       const date = workoutDateKey(dayIdx, undefined, plan);
       const volume = getVolumeFor(date, dayIdx);
       const prs = getPRsFor(date, dayIdx);
+      const payload = {
+        user_id: userId,
+        session_date: date,
+        day_index: dayIdx,
+        completed: true,
+        volume_lbs: volume,
+        prs_set: prs,
+      };
+      if (timing?.started_at) payload.started_at = timing.started_at;
+      if (timing?.duration_sec != null) payload.duration_sec = timing.duration_sec;
       const { error } = await supabase.from('workout_sessions').upsert(
-        {
-          user_id: userId,
-          session_date: date,
-          day_index: dayIdx,
-          completed: true,
-          volume_lbs: volume,
-          prs_set: prs,
-        },
+        payload,
         { onConflict: 'user_id,session_date,day_index' }
       );
       if (error) throw error;

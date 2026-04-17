@@ -203,9 +203,9 @@ export function WorkoutPanel({
   );
 
   const handleComplete = useCallback(
-    async (dayIdx) => {
+    async (dayIdx, timing) => {
       try {
-        await workout.completeWorkout(dayIdx);
+        await workout.completeWorkout(dayIdx, timing);
         setOpenIdx(null);
       } catch (e) {
         onError?.(e);
