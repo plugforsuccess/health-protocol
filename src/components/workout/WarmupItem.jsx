@@ -57,7 +57,7 @@ export function WarmupItem({ item, status, onToggle }) {
               marginLeft: 6,
             }}
           >
-            {dur ? `⏱ 10s prep + ${formatDur(dur)}` : '⏱ 10s prep'}
+            {dur ? `⏱ 5s prep + ${formatDur(dur)}` : '⏱ 5s prep'}
           </span>
         </div>
         <div className="mobility-detail">{item.detail}</div>
