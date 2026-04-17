@@ -375,7 +375,10 @@ function TrainBody({
   const makeTapHandler = (statusState, setStatusState) => (idx, item) => {
     const current = statusState[idx];
     const workDur = getMobilityTimerDuration(item);
-    const totalSets = Math.max(1, parseInt(item.sets, 10) || 1);
+    const baseSets = Math.max(1, parseInt(item.sets, 10) || 1);
+    const detail = ((item.name || '') + ' ' + (item.detail || '')).toLowerCase();
+    const isEachSide = detail.includes('each side') || detail.includes('each leg') || detail.includes('each arm');
+    const totalSets = isEachSide ? baseSets * 2 : baseSets;
     const isRepBased = !workDur;
 
     if (current === 'done') {
@@ -406,9 +409,9 @@ function TrainBody({
       return;
     }
 
-    // Single set or timed multi-set: existing behavior
+    // Timed: pass through with correct total rounds (already doubled for each-side)
     setStatusState((s) => ({ ...s, [idx]: 'running' }));
-    onStartWarmup?.(item, () => {
+    onStartWarmup?.(isEachSide ? { ...item, sets: totalSets } : item, () => {
       setStatusState((s) => ({ ...s, [idx]: 'done' }));
     });
   };

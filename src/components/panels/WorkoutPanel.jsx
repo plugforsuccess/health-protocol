@@ -143,10 +143,19 @@ export function WorkoutPanel({
         return;
       }
       const workDur = getMobilityTimerDuration(item);
-      const totalRounds = Math.max(1, parseInt(item.sets, 10) || 1);
+      const baseSets = Math.max(1, parseInt(item.sets, 10) || 1);
+      const detail = ((item.name || '') + ' ' + (item.detail || '')).toLowerCase();
+      const isEachSide = detail.includes('each side') || detail.includes('each leg') || detail.includes('each arm');
+      // "each side" items: sets means rounds PER side, so double for total
+      const totalRounds = isEachSide ? baseSets * 2 : baseSets;
 
       const finish = () => {
         try { onDone?.(); } catch {}
+      };
+
+      const sideLabel = (round) => {
+        if (!isEachSide) return '';
+        return round % 2 === 1 ? ' (Left)' : ' (Right)';
       };
 
       // Round N work phase. If the warm-up isn't timed, skip straight to
@@ -159,20 +168,18 @@ export function WorkoutPanel({
           return;
         }
         const title = totalRounds > 1
-          ? `${item.name} — Round ${round}/${totalRounds}`
+          ? `${item.name}${sideLabel(round)} — Round ${round}/${totalRounds}`
           : item.name;
         onStartRestTimer(workDur, title, {
           label: 'Warm-up · Work',
           onComplete: next,
-          // Brief lingering on the last round so the user sees "GO";
-          // shorter when chaining into another prep phase.
           autoHideMs: isLast ? 1200 : 200,
         });
       };
 
       const runPrepPhase = (round) => {
         const title = totalRounds > 1
-          ? `Get ready — Round ${round}/${totalRounds} — ${item.name}`
+          ? `Get ready${sideLabel(round)} — ${item.name}`
           : `Get ready — ${item.name}`;
         onStartRestTimer(WARMUP_PREP_SECONDS, title, {
           label: totalRounds > 1

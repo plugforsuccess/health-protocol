@@ -27,12 +27,15 @@ export function WarmupItem({ item, status, onToggle }) {
   const isDone = status === 'done';
   const isRoundPause = typeof status === 'string' && status.startsWith('round-');
   const completedRound = isRoundPause ? parseInt(status.split('-')[1], 10) : 0;
-  const totalSets = Math.max(1, parseInt(item.sets, 10) || 1);
+  const baseSets = Math.max(1, parseInt(item.sets, 10) || 1);
+  const detail = ((item.name || '') + ' ' + (item.detail || '')).toLowerCase();
+  const isEachSide = detail.includes('each side') || detail.includes('each leg') || detail.includes('each arm');
+  const displayTotal = isEachSide ? baseSets * 2 : baseSets;
 
   let checkLabel = '';
   if (isDone) checkLabel = '✓';
   else if (isRunning) checkLabel = '…';
-  else if (isRoundPause) checkLabel = `${completedRound}/${totalSets}`;
+  else if (isRoundPause) checkLabel = `${completedRound}/${displayTotal}`;
 
   return (
     <div
