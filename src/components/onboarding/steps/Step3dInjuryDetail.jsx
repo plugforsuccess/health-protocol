@@ -35,7 +35,7 @@ export function Step3dInjuryDetail({ regionId, form, updateInjury, error }) {
   return (
     <StepShell
       title={`${label} — tell us more`}
-      subtitle="All of these are optional. Skip anything you'd rather not answer."
+      subtitle="The more detail you share, the safer your program will be."
       error={error}
     >
       <FieldGroup label="Type">
