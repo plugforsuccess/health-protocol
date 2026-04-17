@@ -253,10 +253,10 @@ export function useOnboarding(initialFromProfile) {
   const validateInjuryDetail = useCallback((regionId) => {
     const detail = form.injuriesByRegion?.[regionId];
     if (!detail) return null;
-    if (!detail.injuryType) return 'Please select the injury type.';
-    if (!detail.injuryDuration) return 'Please select how long you\'ve had this injury.';
-    if (!detail.injuryTrajectory) return 'Please select if it\'s improving, stable, or worsening.';
-    if (!detail.physicianCleared) return 'Please indicate if you\'ve been cleared by a physician.';
+    if (!detail.injury_type) return 'Please select the injury type.';
+    if (!detail.injury_duration) return 'Please select how long you\'ve had this injury.';
+    if (!detail.injury_trajectory) return 'Please select if it\'s improving, stable, or worsening.';
+    if (!detail.physician_cleared) return 'Please indicate if you\'ve been cleared by a physician.';
     return null;
   }, [form]);
 
